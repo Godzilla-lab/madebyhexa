@@ -1,0 +1,8 @@
+{
+  "name": "hexa-ai-content-website",
+  "private": true,
+  "description": "Hexa AI marketing site. Static HTML/CSS/JS + one Netlify Function for lead auto-reply.",
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}

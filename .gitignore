@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Netlify CLI local state (project linkage, build cache)
+.netlify/
+
+# Env files (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Build/log noise
+*.log
+npm-debug.log*

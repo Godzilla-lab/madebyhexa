@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Hexa AI · X-Mode · 18+</title>
+  <meta name="description" content="Mature content showcase. Access restricted to 18+." />
+  <meta name="theme-color" content="#0a0608" />
+
+  <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
+  <link rel="apple-touch-icon" href="assets/brand/hexa-logo.avif" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://d8j0ntlcm91z4.cloudfront.net" crossorigin />
+  <link rel="dns-prefetch" href="https://d8j0ntlcm91z4.cloudfront.net" />
+  <link rel="preconnect" href="https://v1.pinimg.com" crossorigin />
+  <link rel="dns-prefetch" href="https://v1.pinimg.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <script src="pixels.js"></script>
+</head>
+<body data-mode="nsfw">
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="nav">
+    <a class="brand" href="index.html" aria-label="Hexa AI home">
+      <img class="brand-logo" src="assets/brand/hexa-logo.avif" alt="Hexa AI" width="32" height="32" decoding="async" />
+      <span class="brand-name">Hexa<span class="brand-dot">·</span>AI</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">Back to site</a>
+      <a href="mailto:hello@hexaaiagency.com?subject=Hexa%20AI%20X-Mode%20Inquiry" class="nav-cta">Inquire</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="reel reel-nsfw">
+      <div class="section-head">
+        <div class="eyebrow eyebrow-center eyebrow-mature">
+          <span class="bolt">⚡</span>
+          <span>X-Mode · 18+</span>
+        </div>
+        <h1 class="section-title">Showcase</h1>
+        <p class="section-sub">Mature content workflows. Click any tile to reveal. By browsing this page, you confirm you are 18+.</p>
+      </div>
+
+      <div id="gallery" class="gallery" aria-busy="true"></div>
+      <p id="gallery-empty" class="gallery-empty" hidden></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> Hexa AI</span>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="index.html">Main site</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="mailto:hello@hexaaiagency.com">hello@hexaaiagency.com</a>
+  </footer>
+
+  <!-- Lightbox modal -->
+  <dialog id="lightbox" class="lightbox" aria-label="Video player">
+    <button class="lightbox-close" type="button" aria-label="Close video">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="6" y1="6" x2="18" y2="18" />
+        <line x1="6" y1="18" x2="18" y2="6" />
+      </svg>
+    </button>
+    <div class="lightbox-stage">
+      <video id="lightbox-video" controls playsinline preload="auto"></video>
+    </div>
+    <div class="lightbox-meta">
+      <span id="lightbox-label" class="lightbox-label">Showcase</span>
+    </div>
+  </dialog>
+
+  <!-- 18+ age gate -->
+  <div id="age-gate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-gate-title">
+    <div class="age-gate-card">
+      <div class="age-gate-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+          <circle cx="12" cy="12" r="3"/>
+          <line x1="3" y1="3" x2="21" y2="21"/>
+        </svg>
+        <span>18+</span>
+      </div>
+      <h2 id="age-gate-title">Mature content ahead.</h2>
+      <p>This page contains adult creative work intended for visitors aged 18 and over. By continuing, you confirm you meet that requirement and consent to viewing this material.</p>
+      <div class="age-gate-actions">
+        <button class="btn btn-primary" type="button" data-action="confirm">I'm 18 or older. Continue</button>
+        <button class="btn btn-ghost" type="button" data-action="leave">Take me back</button>
+      </div>
+      <p class="age-gate-fine">Your confirmation is stored locally on this device only.</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

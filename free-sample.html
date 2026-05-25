@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Hexa AI · Get a free sample video of your product</title>
+  <meta name="description" content="Send us your product. We'll make you a free sample video so real no one can tell it's AI. Brand-ready in 48 hours, for a fraction of a shoot." />
+  <meta name="theme-color" content="#0a0608" />
+
+  <meta property="og:title" content="Get a free sample video of your product · Hexa AI" />
+  <meta property="og:description" content="Brand videos so real no one can tell they're AI. Send your product, get a free sample in 48 hours." />
+  <meta property="og:type" content="website" />
+
+  <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
+  <link rel="apple-touch-icon" href="assets/brand/hexa-logo.avif" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://d8j0ntlcm91z4.cloudfront.net" crossorigin />
+  <link rel="dns-prefetch" href="https://d8j0ntlcm91z4.cloudfront.net" />
+  <link rel="preconnect" href="https://v1.pinimg.com" crossorigin />
+  <link rel="dns-prefetch" href="https://v1.pinimg.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <script src="pixels.js"></script>
+</head>
+<body data-mode="main">
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="nav nav-minimal">
+    <a class="brand" href="index.html" aria-label="Hexa AI home">
+      <img class="brand-logo" src="assets/brand/hexa-logo.avif" alt="Hexa AI" width="32" height="32" decoding="async" />
+      <span class="brand-name">Hexa<span class="brand-dot">·</span>AI</span>
+    </a>
+    <a href="#claim" class="nav-cta">Get a free sample</a>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="eyebrow">
+          <span class="bolt">⚡</span>
+          <span>Free sample for your brand</span>
+        </div>
+        <h1 class="hero-title">
+          Brand videos so real, <em>no one can tell</em> they're AI.
+        </h1>
+        <p class="hero-sub">
+          Cinematic product videos and AI influencers for your brand. No studios, no crews, no shoot days. Brand-ready in 48 hours, for a fraction of a shoot.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" href="#claim">Get a free sample of your product</a>
+          <a class="btn btn-ghost btn-lg" href="#proof">See the work first</a>
+        </div>
+        <ul class="stat-chips" aria-label="Why brands choose Hexa AI">
+          <li><strong>100%</strong> AI, looks 100% real</li>
+          <li><strong>48h</strong> turnaround</li>
+          <li><strong>1/100th</strong> the cost of a shoot</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="proof" class="reel">
+      <div class="section-head">
+        <div class="eyebrow eyebrow-center">
+          <span class="bolt">⚡</span>
+          <span>Real output. 100% AI.</span>
+        </div>
+        <h2 class="section-title">Every clip below was generated. <em>No camera.</em></h2>
+        <p class="section-sub">UGC, product spots, lip sync, hyper-motion, and more. Not a single shoot day between them. Tap any tile to watch.</p>
+      </div>
+      <div id="gallery" class="gallery" aria-busy="true"></div>
+      <p id="gallery-empty" class="gallery-empty" hidden>Couldn't load the reel. Refresh to try again.</p>
+    </section>
+
+    <section id="claim" class="lead">
+      <div class="lead-inner">
+        <div class="lead-copy">
+          <div class="eyebrow"><span class="bolt">⚡</span><span>Your free sample</span></div>
+          <h2 class="lead-title">See your product as a video. <em>Free.</em></h2>
+          <p class="lead-sub">Tell us about your brand and we'll produce a short sample video of your product, on us. No cost, no commitment. If you love it, we'll talk about a full campaign.</p>
+          <ul class="lead-points">
+            <li>Made from photos you already have</li>
+            <li>Delivered within 48 hours</li>
+            <li>You keep it, whether or not you hire us</li>
+          </ul>
+        </div>
+
+        <form name="free-sample" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/thanks.html" class="lead-form">
+          <input type="hidden" name="form-name" value="free-sample" />
+          <p class="lead-hp" hidden aria-hidden="true">
+            <label>Leave this empty: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+          </p>
+
+          <div class="field">
+            <label for="lf-name">Your name</label>
+            <input id="lf-name" name="name" type="text" required autocomplete="name" placeholder="Alex Rivera" />
+          </div>
+          <div class="field">
+            <label for="lf-email">Work email</label>
+            <input id="lf-email" name="email" type="email" required autocomplete="email" placeholder="alex@yourbrand.com" />
+          </div>
+          <div class="field">
+            <label for="lf-brand">Brand / company</label>
+            <input id="lf-brand" name="brand" type="text" required placeholder="Your Brand Co." />
+          </div>
+          <div class="field">
+            <label for="lf-website">Website or store link</label>
+            <input id="lf-website" name="website" type="url" required placeholder="https://yourbrand.com" />
+          </div>
+          <div class="field">
+            <label for="lf-product">What do you sell?</label>
+            <input id="lf-product" name="product" type="text" required placeholder="e.g. skincare, sneakers, supplements" />
+          </div>
+          <div class="field">
+            <label for="lf-link">Link to the product you want sampled <span class="field-opt">(optional)</span></label>
+            <input id="lf-link" name="product_link" type="url" placeholder="https://yourbrand.com/product" />
+          </div>
+
+          <button class="btn btn-primary btn-lg lead-submit" type="submit">Get my free sample</button>
+          <p class="lead-form-fine">No cost, no commitment. We'll send your sample within 48 hours.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> Hexa AI</span>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="index.html">Full site</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="mailto:hello@hexaaiagency.com">hello@hexaaiagency.com</a>
+  </footer>
+
+  <!-- Lightbox modal -->
+  <dialog id="lightbox" class="lightbox" aria-label="Video player">
+    <button class="lightbox-close" type="button" aria-label="Close video">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="6" y1="6" x2="18" y2="18" />
+        <line x1="6" y1="18" x2="18" y2="6" />
+      </svg>
+    </button>
+    <div class="lightbox-stage">
+      <video id="lightbox-video" controls playsinline preload="auto"></video>
+    </div>
+    <div class="lightbox-meta">
+      <span id="lightbox-label" class="lightbox-label">Showreel</span>
+    </div>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
