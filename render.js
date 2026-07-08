@@ -179,11 +179,15 @@
     }, 200);
   }
 
-  /* Live: poll the backend until every segment job resolves. */
-  function pollLive(order, jobsCsv) {
+  /* Live: poll the backend until every segment job resolves. paidSession
+   * rides along so the backend can write the finished result to the buyer's
+   * library, and refund automatically if the render dies. */
+  function pollLive(order, jobsCsv, paidSession) {
     var pct = 4;
+    var qs = '?jobs=' + encodeURIComponent(jobsCsv) +
+      (paidSession ? '&paid=' + encodeURIComponent(paidSession) : '');
     function tick() {
-      fetch(STATUS_URL + '?jobs=' + encodeURIComponent(jobsCsv))
+      fetch(STATUS_URL + qs)
         .then(function (r) { return r.json(); })
         .then(function (s) {
           if (s.step) setStep(STEPS.indexOf(s.step));
@@ -218,7 +222,7 @@
         if (!d.jobs || !d.jobs.length) return Promise.reject(d);
         order.jobs = d.jobs;
         try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
-        pollLive(order, d.jobs.map(function (j) { return j.id; }).join(','));
+        pollLive(order, d.jobs.map(function (j) { return j.id; }).join(','), sessionId);
       })
       .catch(function (d) {
         console.error('paid create failed', d);
@@ -279,7 +283,7 @@
     var jobsCsv = params.get('jobs') ||
       (order.jobs && order.jobs.map(function (j) { return j.id; }).join(','));
     if (jobsCsv) {
-      pollLive(order, jobsCsv);
+      pollLive(order, jobsCsv, params.get('paid'));
       return;
     }
 

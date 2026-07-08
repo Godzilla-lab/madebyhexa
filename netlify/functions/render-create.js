@@ -29,8 +29,64 @@
 const hf = require('./lib/hf');
 const promptLib = require('./lib/prompts');
 const { priceStudioOrder } = require('./lib/pricing');
+const { getUser } = require('./lib/auth');
+const sb = require('./lib/supabase');
+const { allow } = require('./lib/ratelimit');
 
 const SEGMENT_SECONDS = 15;
+
+/* Products whose output is stills, for the creations.type column. */
+const IMAGE_PRODUCTS = ['photoshoot', 'adpack'];
+
+/* Write the library row for this render. Owner precedence: the paid order's
+ * owner (webhook/checkout wrote it), else the signed-in caller (dev-key
+ * renders while testing logged in). Anonymous dev renders own nothing and
+ * write nothing. Failures only log: the render itself must never break
+ * because bookkeeping hiccuped. Returns the creation id or null. */
+async function persistCreation(order, engine, paidSessionId, event) {
+  try {
+    if (!sb.configured()) return null;
+    const db = sb.admin();
+    let userId = null;
+    let orderId = null;
+    if (paidSessionId) {
+      const { data: o } = await db.from('orders')
+        .select('id,user_id,status')
+        .eq('stripe_session_id', paidSessionId).maybeSingle();
+      if (o) {
+        userId = o.user_id;
+        orderId = o.id;
+        if (o.status === 'pending') {
+          await db.from('orders').update({ status: 'paid' }).eq('id', o.id);
+        }
+      }
+    }
+    if (!userId) {
+      const user = await getUser(event);
+      if (user) userId = user.userId;
+    }
+    if (!userId) return null;
+
+    const sel = (order.selections && typeof order.selections === 'object') ? order.selections : {};
+    const product = String(order.product || '');
+    const title = [sel.productName, sel.styleName].filter(Boolean).join(' · ') ||
+      product.replace(/^mode:/, '').replace(/_/g, ' ');
+    const { data: row, error } = await db.from('creations').insert({
+      user_id: userId,
+      order_id: orderId,
+      engine: engine || null,
+      type: IMAGE_PRODUCTS.indexOf(product) >= 0 ? 'image' : 'video',
+      title: title.slice(0, 120),
+      prompt: typeof sel.notes === 'string' ? sel.notes.slice(0, 2000) : null,
+      status: 'rendering',
+    }).select('id').single();
+    if (error) { console.error('creation insert failed:', error.message); return null; }
+    return row ? row.id : null;
+  } catch (e) {
+    console.error('creation persist failed:', e.message);
+    return null;
+  }
+}
 
 /*
  * Validate a paid Stripe session against the order. Returns:
@@ -443,6 +499,10 @@ exports.handler = async (event) => {
   const given = (event.headers && (event.headers['x-render-key'] || event.headers['X-Render-Key'])) || '';
   const devAuthorized = !!devKey && given === devKey;
 
+  if (!devAuthorized && !(await allow('render', event, 12))) {
+    return json(429, { error: 'Too many render requests. Please wait a bit and try again.' });
+  }
+
   let stampJobs = null;
   if (!devAuthorized) {
     if (!paidSessionId) return json(403, { error: 'payment required' });
@@ -462,7 +522,8 @@ exports.handler = async (event) => {
       jobs.push({ id: created.id, segment: i + 1, of: plan.paramsList.length });
     }
     if (stampJobs) await stampJobs(jobs, plan.jobType);
-    return json(200, { jobs: jobs, engine: plan.jobType });
+    const creationId = await persistCreation(order, plan.jobType, paidSessionId, event);
+    return json(200, { jobs: jobs, engine: plan.jobType, creation: creationId });
   } catch (e) {
     return json(e.status === 402 ? 402 : 502, { error: String(e.message), detail: e.detail || null });
   }

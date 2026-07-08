@@ -62,6 +62,59 @@ const TIERS = {
 // Studio pricing oracle: catalog/pricing.json via lib/pricing.js. studio.js
 // mirrors the same math client-side for display; this copy is authoritative.
 const { priceStudioOrder } = require('./lib/pricing');
+const { getUser } = require('./lib/auth');
+const sb = require('./lib/supabase');
+const { allow } = require('./lib/ratelimit');
+
+/* EU digital goods: buyer must actively waive the 14-day withdrawal right
+ * before instant delivery, or they can demand a refund for two weeks. Stripe
+ * renders this as an un-pre-ticked required checkbox on the payment page. */
+const WITHDRAWAL_WAIVER =
+  'I request immediate delivery of my render and acknowledge that I lose my ' +
+  '14-day right of withdrawal once generation begins.';
+
+/* Find (or create once) the Stripe Customer for this account, so every
+ * charge, receipt and refund lands on one customer record. */
+async function stripeCustomerFor(stripe, user) {
+  const db = sb.configured() ? sb.admin() : null;
+  if (db) {
+    const { data } = await db.from('profiles')
+      .select('stripe_customer_id').eq('id', user.userId).maybeSingle();
+    if (data && data.stripe_customer_id) return data.stripe_customer_id;
+  }
+  const customer = await stripe.customers.create({
+    email: user.email || undefined,
+    metadata: { user_id: user.userId },
+  });
+  if (db) {
+    await db.from('profiles')
+      .update({ stripe_customer_id: customer.id }).eq('id', user.userId);
+  }
+  return customer.id;
+}
+
+/* Stripe Tax and the consent checkbox both need one-time dashboard setup
+ * (tax registration + a Terms of Service URL). Until that happens a session
+ * create including them errors; strip the extras and retry once so checkout
+ * never goes down, and log loudly so the gap gets closed. */
+async function createSessionResilient(stripe, params) {
+  try {
+    return await stripe.checkout.sessions.create(params);
+  } catch (err) {
+    const trimmed = { ...params };
+    let stripped = false;
+    if (trimmed.automatic_tax) { delete trimmed.automatic_tax; stripped = true; }
+    if (trimmed.consent_collection) {
+      delete trimmed.consent_collection;
+      if (trimmed.custom_text) delete trimmed.custom_text.terms_of_service_acceptance;
+      stripped = true;
+    }
+    if (!stripped) throw err;
+    console.error('checkout: session rejected with tax/consent enabled (' +
+      (err && err.message) + '); retried without. Configure Stripe Tax + ToS URL in the dashboard.');
+    return await stripe.checkout.sessions.create(trimmed);
+  }
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -98,6 +151,22 @@ exports.handler = async (event) => {
     const priced = priceStudioOrder(studioOrder);
     if (!priced) return json(400, { error: 'Unknown studio product' });
 
+    // Studio sells to accounts only: the order must land in a library and on
+    // a Stripe Customer. studio.js gates the button, this enforces it.
+    const user = await getUser(event);
+    if (!user) return json(401, { error: 'Please sign in to check out.' });
+    if (!(await allow('checkout', event, 20))) {
+      return json(429, { error: 'Too many checkout attempts. Please try again in a bit.' });
+    }
+
+    let customerId = null;
+    try {
+      customerId = await stripeCustomerFor(stripe, user);
+    } catch (e) {
+      console.error('checkout: could not resolve Stripe customer:', e.message);
+      // charge still works without a saved customer; receipts just get weaker
+    }
+
     // Show the buyer what they are buying: the peeked product image (already
     // an absolute https URL) plus the chosen style's thumbnail, made absolute
     // from the site origin. Stripe fetches these server-side, so a localhost
@@ -116,11 +185,16 @@ exports.handler = async (event) => {
     }
 
     try {
-      const session = await stripe.checkout.sessions.create({
+      const session = await createSessionResilient(stripe, {
         mode: 'payment',
         submit_type: 'pay',
         allow_promotion_codes: true,
         billing_address_collection: 'auto',
+        ...(customerId ? { customer: customerId, customer_update: { address: 'auto', name: 'auto' } } : {}),
+        invoice_creation: { enabled: true }, // real receipt/invoice per order
+        automatic_tax: { enabled: true },    // Stripe Tax (EU VAT etc.)
+        consent_collection: { terms_of_service: 'required' },
+        custom_text: { terms_of_service_acceptance: { message: WITHDRAWAL_WAIVER } },
         line_items: [{
           quantity: 1,
           price_data: {
@@ -129,14 +203,34 @@ exports.handler = async (event) => {
             product_data: {
               name: priced.name,
               description: priced.description,
+              tax_code: 'txcd_10000000', // electronically supplied services
               ...(images.length ? { images: images.slice(0, 2) } : {}),
             },
           },
         }],
-        metadata: priced.meta,
+        metadata: { ...priced.meta, user_id: user.userId },
+        client_reference_id: user.userId,
         success_url: `${origin}/render.html?paid={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/`,
       });
+
+      // Bookkeeping row so the webhook and library can attach to this order.
+      // Never blocks checkout: a miss here just means the webhook inserts it.
+      try {
+        if (sb.configured()) {
+          await sb.admin().from('orders').insert({
+            user_id: user.userId,
+            stripe_session_id: session.id,
+            product: String(studioOrder.product || ''),
+            selections: sel,
+            amount_cents: priced.amountCents,
+            status: 'pending',
+          });
+        }
+      } catch (e) {
+        console.error('checkout: pending order insert failed:', e.message);
+      }
+
       return json(200, { url: session.url });
     } catch (err) {
       console.error('Stripe studio session create failed:', err && err.message);

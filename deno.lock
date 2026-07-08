@@ -13,6 +13,7 @@
       "dependencies": [
         "npm:@anthropic-ai/sdk@0.110",
         "npm:@netlify/blobs@^10.7.9",
+        "npm:@supabase/supabase-js@^2.110.1",
         "npm:nodemailer@^8.0.11",
         "npm:stripe@^17.5.0"
       ]

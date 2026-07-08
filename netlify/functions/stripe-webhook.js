@@ -94,6 +94,35 @@ exports.handler = async (event) => {
   const email = session.customer_details && session.customer_details.email;
   const isStudio = !!(session.metadata && session.metadata.studio_product);
 
+  // Make the order row exist and read 'paid' even if the buyer's tab never
+  // reopened (checkout wrote it 'pending'; a lost insert is recreated here).
+  // Never flips a refunded order back to paid, and never blocks the email.
+  if (isStudio) {
+    try {
+      const sb = require('./lib/supabase');
+      const userId = session.client_reference_id ||
+        (session.metadata && session.metadata.user_id) || null;
+      if (sb.configured() && userId) {
+        const db = sb.admin();
+        const { data: existing } = await db.from('orders')
+          .select('id,status').eq('stripe_session_id', session.id).maybeSingle();
+        if (!existing) {
+          await db.from('orders').insert({
+            user_id: userId,
+            stripe_session_id: session.id,
+            product: session.metadata.studio_product || null,
+            amount_cents: session.amount_total || null,
+            status: 'paid',
+          });
+        } else if (existing.status === 'pending') {
+          await db.from('orders').update({ status: 'paid' }).eq('id', existing.id);
+        }
+      }
+    } catch (e) {
+      console.error('stripe-webhook: order upsert failed:', e.message);
+    }
+  }
+
   // Legacy tier orders get their email from the intake form's auto-reply;
   // this webhook only owns the studio flow.
   if (!isStudio || !email) return resp(200, { ok: true, skipped: !isStudio ? 'not studio' : 'no email' });
