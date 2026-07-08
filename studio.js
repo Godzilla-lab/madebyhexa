@@ -13,11 +13,12 @@
 
   /* ── Product peek: read the pasted link server-side ── */
   var PEEK_URL = '/.netlify/functions/product-peek';
-  var PEEK_SOFT_MS = 7000;  // stage gives up waiting and docks to the chooser
-  var PEEK_HARD_MS = 9500;  // absolute cap on the stage, whatever is loading
+  var PEEK_SOFT_MS = 12000; // stage gives up waiting and docks to the chooser
+  var PEEK_HARD_MS = 14000; // absolute cap on the stage, whatever is loading
   var PEEK_MIN_MS = 900;    // minimum stage time, so the beat never flashes
-  var PEEK_IMG_MS = 1500;   // budget for preloading the product image
+  var PEEK_IMG_MS = 2800;   // budget for preloading the product image (re-hosted scrapes run large)
   var PEEK_HOLD_MS = 1400;  // how long the identified product holds the stage
+  var GUESS_HOLD_MS = 16000; // extra stage time while the scrape fetches the photo of a blocked page
 
   /* ── Video modes (rendered as tiles) ── */
   var MODE_CONFIG = {
@@ -1906,6 +1907,23 @@
       if (docked || identified) return;
       identified = true;
       frame.classList.add('peek-settle');
+
+      // A social post is not a product page: say so plainly and point at the
+      // paths that do work. No fake product name, no dead-end.
+      if (pk.social && !pk.image && !pk.title) {
+        mono.textContent = pk.social.charAt(0).toUpperCase();
+        mono.hidden = false;
+        card.classList.add('peek-found');
+        eyebrow.textContent = pk.social + ' link';
+        lbl.textContent = '';
+        titleEl.textContent = 'That is a post on ' + pk.social + ', not a product page';
+        titleEl.hidden = false;
+        priceEl.textContent = "Paste the product's own store page, or start with photos or a description.";
+        priceEl.hidden = false;
+        revealTimers.push(setTimeout(function () { dock(pk); }, 4600));
+        return;
+      }
+
       if (withImage) {
         imgEl.hidden = false;
       } else if (pk.title) {
@@ -1921,7 +1939,33 @@
       if (pk.title) { titleEl.textContent = pk.title; titleEl.hidden = false; }
       var priceStr = formatPeekPrice(pk);
       if (priceStr) { priceEl.textContent = priceStr + (pk.siteName ? ' at ' + pk.siteName : ''); priceEl.hidden = false; }
-      else if (pk.guessed) {
+
+      // Blocked page with the engine's scrape still running: hold the stage
+      // and wait for the real photo instead of rushing past it. The moment
+      // it lands (peekUpgraded paints it), give it a beat, then move on.
+      if (pk.guessed && !pk.image && pk.webProductId) {
+        priceEl.textContent = 'That page is blocking us, so we are pulling the product photo another way…';
+        priceEl.hidden = false;
+        clearRevealTimers();
+        var waited = 0;
+        var waiter = setInterval(function () {
+          waited += 400;
+          if (pk.image) {
+            clearInterval(waiter);
+            eyebrow.textContent = pk.siteName ? 'Product found · ' + pk.siteName : 'Product found';
+            if (pk.title) titleEl.textContent = pk.title;
+            priceEl.hidden = true;
+            revealTimers.push(setTimeout(function () { dock(pk); }, 2200));
+          } else if (waited >= GUESS_HOLD_MS) {
+            clearInterval(waiter);
+            priceEl.textContent = 'Still working on the photo. It will appear on the next step when ready.';
+            revealTimers.push(setTimeout(function () { dock(pk); }, 1600));
+          }
+        }, 400);
+        revealTimers.push(waiter); // clearTimeout clears intervals too
+        return;
+      }
+      if (pk.guessed && !pk.image) {
         priceEl.textContent = 'That page would not let us read it, so check the name on the next step.';
         priceEl.hidden = false;
       }
@@ -1932,6 +1976,9 @@
     revealTimers.push(setTimeout(function () {
       if (!identified && !docked) lbl.textContent = 'Finding your product';
     }, 1200));
+    revealTimers.push(setTimeout(function () {
+      if (!identified && !docked) lbl.textContent = 'The page is slow, still reading it';
+    }, 5500));
     // soft cap: nothing identified yet, fall through to the plain chooser
     revealTimers.push(setTimeout(function () {
       if (!identified) dock(peekFor(link));
@@ -1963,7 +2010,16 @@
           if (settled) return; settled = true; reveal(false);
         }, PEEK_IMG_MS);
         pre.onload = function () {
-          if (settled) return; settled = true; clearTimeout(imgTimer);
+          if (settled) {
+            // arrived after the budget: if the stage is still up, paint it anyway
+            if (!stage.hidden && !overlay.hidden) {
+              imgEl.src = pk.image;
+              imgEl.hidden = false;
+              mono.hidden = true;
+            }
+            return;
+          }
+          settled = true; clearTimeout(imgTimer);
           imgEl.src = pk.image;
           reveal(true);
         };

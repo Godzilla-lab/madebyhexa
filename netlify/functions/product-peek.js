@@ -25,6 +25,35 @@ const CACHE_MAX = 200;
 
 const cache = new Map(); // url -> { ts, data }
 
+/* Scraped product images are large cold PNGs on Higgsfield's CloudFront
+ * (10s+ first load). Serve them through the Netlify Image CDN instead:
+ * small cached webp, same-origin. Hosts must match netlify.toml
+ * [images].remote_images. */
+const CDN_IMAGE_HOSTS = /^https:\/\/(d2ol7oe51mr4n9|d8j0ntlcm91z4)\.cloudfront\.net\//i;
+
+function cdnImage(u) {
+  if (!u || !CDN_IMAGE_HOSTS.test(u)) return u;
+  return '/.netlify/images?url=' + encodeURIComponent(u) + '&w=560&fit=cover&fm=webp';
+}
+
+/* Social posts are not product pages: no price, no clean product image, and
+ * the engine's scraper cannot ground a render in them. Recognize them so the
+ * UI can say so honestly instead of showing slug gibberish. */
+const SOCIAL_HOSTS = {
+  'instagram.com': 'Instagram', 'tiktok.com': 'TikTok', 'facebook.com': 'Facebook',
+  'fb.com': 'Facebook', 'x.com': 'X', 'twitter.com': 'X', 'youtube.com': 'YouTube',
+  'youtu.be': 'YouTube', 'threads.net': 'Threads', 'snapchat.com': 'Snapchat',
+  'pinterest.com': 'Pinterest', 'reddit.com': 'Reddit',
+};
+
+function socialLabel(hostname) {
+  const h = hostname.toLowerCase().replace(/^www\./, '');
+  for (const key of Object.keys(SOCIAL_HOSTS)) {
+    if (h === key || h.endsWith('.' + key)) return SOCIAL_HOSTS[key];
+  }
+  return null;
+}
+
 function json(statusCode, data, cacheControl) {
   return {
     statusCode,
@@ -402,7 +431,7 @@ exports.handler = async (event) => {
       if (!hf.configured()) return json(200, { ok: false, ready: true });
       const wp = await hf.getWebProduct(wpId);
       const media = wp && Array.isArray(wp.medias) && wp.medias[0];
-      const image = media && /^https:\/\//i.test(media.url || '') ? media.url : null;
+      const image = media && /^https:\/\//i.test(media.url || '') ? cdnImage(media.url) : null;
       const status = (wp && wp.status) || '';
       const done = !!image || /complet|ready|success|failed|error/i.test(status);
       // only surface the scraped title when it is a real name, not the host echo
@@ -446,21 +475,27 @@ exports.handler = async (event) => {
     try { knownWpId = await peekStore.get(wpKey); } catch (e) { /* ignore */ }
   }
 
+  const social = socialLabel(target.hostname);
+
   let webProductPromise = Promise.resolve(null);
+  let inlineScrapePromise = null; // known scrape fetched in parallel with the page read
   try {
     const hf = require('./lib/hf');
-    if (hf.configured()) {
-      webProductPromise = knownWpId
-        ? Promise.resolve({ id: knownWpId })
-        : hf.createWebProduct(target.href).then(async (wp) => {
-            if (wp && wp.id && peekStore) {
-              try { await peekStore.set(wpKey, wp.id); } catch (e) { /* ignore */ }
-            }
-            return wp;
-          }).catch((e) => {
-            console.log('[product-peek] grounding create failed:', e && e.message);
-            return null;
-          });
+    if (hf.configured() && !social) {
+      if (knownWpId) {
+        webProductPromise = Promise.resolve({ id: knownWpId });
+        inlineScrapePromise = hf.getWebProduct(knownWpId).catch(() => null);
+      } else {
+        webProductPromise = hf.createWebProduct(target.href).then(async (wp) => {
+          if (wp && wp.id && peekStore) {
+            try { await peekStore.set(wpKey, wp.id); } catch (e) { /* ignore */ }
+          }
+          return wp;
+        }).catch((e) => {
+          console.log('[product-peek] grounding create failed:', e && e.message);
+          return null;
+        });
+      }
     }
   } catch (e) { /* lib unavailable: skip grounding */ }
 
@@ -486,6 +521,17 @@ exports.handler = async (event) => {
     clearTimeout(timer);
   }
 
+  // Social post link: never pretend it is a product page. If its own og
+  // tags gave us something, keep that but still flag it; a slug guess on a
+  // social URL would be gibberish, so skip that entirely.
+  if (social) {
+    if (!data.ok) {
+      data = { ok: true, url: raw, social, title: null, image: null, siteName: social, price: null, currency: null };
+    } else {
+      data.social = social;
+    }
+  }
+
   // 3) blocked or silent pages: the URL still names the product
   if (!data.ok) {
     const guess = slugGuess(target);
@@ -508,20 +554,22 @@ exports.handler = async (event) => {
 
     // A remembered scrape may already be done: inline its result so repeat
     // pastes of a blocked page get the real name and image immediately.
-    if (!data.image && knownWpId) {
+    // It has been loading in parallel with the page read, so the wait here
+    // is short.
+    if (!data.image && inlineScrapePromise) {
       try {
-        const hf = require('./lib/hf');
         const done = await Promise.race([
-          hf.getWebProduct(knownWpId),
-          new Promise((r) => setTimeout(() => r(null), 2500)),
+          inlineScrapePromise,
+          new Promise((r) => setTimeout(() => r(null), 1200)),
         ]);
         const media = done && Array.isArray(done.medias) && done.medias[0];
         if (media && /^https:\/\//i.test(media.url || '')) {
-          data.image = media.url;
+          data.image = cdnImage(media.url);
           const t = done.title && String(done.title);
           if (t && !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(t.trim()) && (data.guessed || !data.title)) {
             data.title = t.slice(0, 90);
           }
+          delete data.guessed; // real scraped data now, not a URL guess
         }
       } catch (e) { /* scrape still running or gone; the client polls */ }
     }

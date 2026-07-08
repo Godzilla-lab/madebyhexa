@@ -5,3 +5,12 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# Netlify Image CDN: scraped product images live on Higgsfield's CloudFront
+# as multi-hundred-KB PNGs that take 10s+ to load cold. product-peek rewrites
+# them to /.netlify/images?... so the browser gets a small cached webp.
+[images]
+  remote_images = [
+    "https://d2ol7oe51mr4n9.cloudfront.net/.*",
+    "https://d8j0ntlcm91z4.cloudfront.net/.*",
+  ]
