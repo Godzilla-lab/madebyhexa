@@ -418,6 +418,27 @@
             pk.image = d.image;
             if (d.title && (!pk.title || pk.guessed)) pk.title = d.title;
             peekUpgraded(pk);
+          } else if (d && d.failed) {
+            // the scrape finished with nothing: ask the server for one fresh
+            // attempt, then give up honestly so the UI stops promising a photo
+            if (!pk.scrapeRetried) {
+              pk.scrapeRetried = true;
+              fetch(PEEK_URL + '?rescrape=1&url=' + encodeURIComponent(pk.url))
+                .then(function (r) { return r.json(); })
+                .then(function (f) {
+                  if (f && f.webProductId && f.webProductId !== pk.webProductId) {
+                    pk.webProductId = f.webProductId;
+                    pk.image = f.image || null;
+                    if (pk.image) { peekUpgraded(pk); return; }
+                    pollWebProduct(pk);
+                  } else {
+                    pk.scrapeFailed = true;
+                  }
+                })
+                .catch(function () { pk.scrapeFailed = true; });
+            } else {
+              pk.scrapeFailed = true;
+            }
           } else if (!d || !d.ready) {
             setTimeout(tick, delay);
           }
@@ -434,6 +455,15 @@
     pollWebProduct(pk);
   }
 
+  /* Fit the reveal frame to the photo's own shape (clamped so extreme
+   * panoramas and strips stay a sane card) instead of letterboxing it. */
+  function fitPeekFrame(pre) {
+    var frame = $('#peek-frame');
+    if (!frame || !pre.naturalWidth || !pre.naturalHeight) return;
+    var ratio = Math.min(1.4, Math.max(0.8, pre.naturalWidth / pre.naturalHeight));
+    frame.style.aspectRatio = String(ratio);
+  }
+
   /* A late image arrived: refresh whatever peek UI is on screen right now. */
   function peekUpgraded(pk) {
     if (pk.url !== (state.sel.link || state.composerLink)) return;
@@ -447,11 +477,12 @@
       var pre = new Image();
       pre.onload = function () {
         var imgEl = $('#peek-img');
-        var mono = $('#peek-monogram');
+        var frame = $('#peek-frame');
         if (!imgEl) return;
+        fitPeekFrame(pre);
         imgEl.src = pk.image;
         imgEl.hidden = false;
-        if (mono) mono.hidden = true;
+        if (frame) frame.hidden = false;
         var t = $('#peek-title');
         if (t && pk.title) { t.textContent = pk.title; t.hidden = false; }
       };
@@ -1858,26 +1889,31 @@
     var overlay = $('#config-overlay');
     var stage = $('#peek-stage');
     var card = $('#peek-card');
-    var frame = $('.peek-frame');
+    var frame = $('#peek-frame');
     var imgEl = $('#peek-img');
-    var mono = $('#peek-monogram');
-    var host = $('#peek-host');
     var eyebrow = $('#peek-eyebrow');
     var lbl = $('#peek-label');
     var titleEl = $('#peek-title');
     var priceEl = $('#peek-price');
+    var progEl = $('#peek-progress');
+    var noteEl = $('#peek-note');
 
-    // reset the stage
+    // reset the stage: no photo yet means no frame at all. The card reads as
+    // a typographic slate until a real image earns the space.
     clearRevealTimers();
     card.classList.remove('peek-in', 'peek-found', 'peek-out');
+    frame.hidden = true;
+    frame.style.aspectRatio = '';
     imgEl.hidden = true; imgEl.removeAttribute('src');
-    mono.hidden = true;
     titleEl.hidden = true;
     priceEl.hidden = true;
+    noteEl.hidden = true;
+    progEl.hidden = false;
     eyebrow.textContent = 'Hexa Studio';
-    lbl.textContent = 'Reading your page';
+    var hostname = '';
+    try { hostname = new URL(link).hostname.replace(/^www\./, ''); } catch (e) { /* keep default */ }
+    lbl.textContent = hostname ? 'Reading ' + hostname : 'Reading your page';
     lbl.style.opacity = '';
-    try { host.textContent = new URL(link).hostname.replace(/^www\./, ''); } catch (e) { host.textContent = ''; }
 
     overlay.classList.add('revealing');
     overlay.hidden = false;
@@ -1906,29 +1942,25 @@
     function identify(pk, withImage) {
       if (docked || identified) return;
       identified = true;
-      frame.classList.add('peek-settle');
+      progEl.hidden = true;
 
       // A social post is not a product page: say so plainly and point at the
       // paths that do work. No fake product name, no dead-end.
       if (pk.social && !pk.image && !pk.title) {
-        mono.textContent = pk.social.charAt(0).toUpperCase();
-        mono.hidden = false;
         card.classList.add('peek-found');
         eyebrow.textContent = pk.social + ' link';
         lbl.textContent = '';
         titleEl.textContent = 'That is a post on ' + pk.social + ', not a product page';
         titleEl.hidden = false;
-        priceEl.textContent = "Paste the product's own store page, or start with photos or a description.";
-        priceEl.hidden = false;
+        noteEl.textContent = "Paste the product's own store page, or start with photos or a description.";
+        noteEl.hidden = false;
         revealTimers.push(setTimeout(function () { dock(pk); }, 4600));
         return;
       }
 
       if (withImage) {
+        frame.hidden = false;
         imgEl.hidden = false;
-      } else if (pk.title) {
-        mono.textContent = pk.title.charAt(0).toUpperCase();
-        mono.hidden = false;
       }
       card.classList.add('peek-found');
       // Honest labeling: "found" only when the page actually answered. A
@@ -1940,25 +1972,42 @@
       var priceStr = formatPeekPrice(pk);
       if (priceStr) { priceEl.textContent = priceStr + (pk.siteName ? ' at ' + pk.siteName : ''); priceEl.hidden = false; }
 
-      // Blocked page with the engine's scrape still running: hold the stage
-      // and wait for the real photo instead of rushing past it. The moment
-      // it lands (peekUpgraded paints it), give it a beat, then move on.
-      if (pk.guessed && !pk.image && pk.webProductId) {
-        priceEl.textContent = 'That page is blocking us, so we are pulling the product photo another way…';
-        priceEl.hidden = false;
+      // A photo is still on its way: either the engine's scrape of a blocked
+      // page, or a known image that is just slow to load. Hold the stage and
+      // wait for it instead of rushing past. The moment it paints (the frame
+      // unhides), give it a beat, then move on. If the scrape dies, say so
+      // and stop promising.
+      var photoComing = pk.imageSlow || (pk.guessed && !pk.image && pk.webProductId);
+      if (photoComing && frame.hidden) {
+        progEl.hidden = false;
+        if (pk.guessed && !pk.image) {
+          noteEl.textContent = 'The page will not open for us, so we are pulling the product photo another way.';
+          noteEl.hidden = false;
+        }
         clearRevealTimers();
         var waited = 0;
         var waiter = setInterval(function () {
           waited += 400;
-          if (pk.image) {
+          if (!frame.hidden) {
             clearInterval(waiter);
             eyebrow.textContent = pk.siteName ? 'Product found · ' + pk.siteName : 'Product found';
             if (pk.title) titleEl.textContent = pk.title;
-            priceEl.hidden = true;
+            progEl.hidden = true;
+            noteEl.hidden = true;
             revealTimers.push(setTimeout(function () { dock(pk); }, 2200));
+          } else if (pk.scrapeFailed) {
+            clearInterval(waiter);
+            progEl.hidden = true;
+            noteEl.textContent = 'This page keeps its photos to itself. Add one on the next step, or we work from the name alone.';
+            noteEl.hidden = false;
+            revealTimers.push(setTimeout(function () { dock(pk); }, 3200));
           } else if (waited >= GUESS_HOLD_MS) {
             clearInterval(waiter);
-            priceEl.textContent = 'Still working on the photo. It will appear on the next step when ready.';
+            progEl.hidden = true;
+            noteEl.textContent = pk.webProductId
+              ? 'Still working on the photo. It will appear on the next step when ready.'
+              : 'The photo would not load. You can add one on the next step.';
+            noteEl.hidden = false;
             revealTimers.push(setTimeout(function () { dock(pk); }, 1600));
           }
         }, 400);
@@ -1966,8 +2015,8 @@
         return;
       }
       if (pk.guessed && !pk.image) {
-        priceEl.textContent = 'That page would not let us read it, so check the name on the next step.';
-        priceEl.hidden = false;
+        noteEl.textContent = 'That page would not let us read it, so check the name on the next step.';
+        noteEl.hidden = false;
       }
       revealTimers.push(setTimeout(function () { dock(pk); }, PEEK_HOLD_MS));
     }
@@ -2007,19 +2056,26 @@
         var pre = new Image();
         var settled = false;
         var imgTimer = setTimeout(function () {
-          if (settled) return; settled = true; reveal(false);
+          // the photo exists but is slow (cold CDN transform): identify now
+          // and let the stage hold for it instead of moving on without it
+          if (settled) return; settled = true;
+          pk.imageSlow = true;
+          reveal(false);
         }, PEEK_IMG_MS);
         pre.onload = function () {
           if (settled) {
-            // arrived after the budget: if the stage is still up, paint it anyway
+            // arrived after the budget: if the stage is still up, paint it
+            // anyway; the identify waiter sees the frame appear and settles
             if (!stage.hidden && !overlay.hidden) {
+              fitPeekFrame(pre);
               imgEl.src = pk.image;
               imgEl.hidden = false;
-              mono.hidden = true;
+              frame.hidden = false;
             }
             return;
           }
           settled = true; clearTimeout(imgTimer);
+          fitPeekFrame(pre);
           imgEl.src = pk.image;
           reveal(true);
         };

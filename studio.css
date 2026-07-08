@@ -2367,32 +2367,24 @@ body.home .float-cta-link svg { color: var(--accent); }
 }
 .peek-card.peek-found .peek-glow { opacity: 1; }
 
+/* The frame exists only once a real photo is in hand; it never shows empty.
+ * Unhiding restarts the entrance animation, so a photo that lands late still
+ * arrives with the same settle. */
+.peek-frame[hidden] { display: none; }
 .peek-frame {
   position: relative;
   width: min(280px, 70vw);
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1; /* JS fits this to the photo's own shape on load */
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid var(--border-strong);
-  background: var(--surface-media);
+  background: #fff;
   box-shadow: var(--shadow-3);
+  animation: peek-frame-in 0.55s var(--ease);
 }
-.peek-scan {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -18%;
-  height: 18%;
-  background: linear-gradient(180deg, transparent, rgba(255, 77, 109, 0.35) 55%, rgba(255, 77, 109, 0.75));
-  filter: blur(2px);
-  animation: peek-scan 1.6s var(--ease) infinite;
+@keyframes peek-frame-in {
+  from { opacity: 0; transform: scale(1.05) translateY(6px); }
 }
-@keyframes peek-scan {
-  0% { transform: translateY(0); }
-  55% { transform: translateY(660%); }
-  100% { transform: translateY(660%); opacity: 0; }
-}
-.peek-card.peek-found .peek-scan { animation: none; opacity: 0; transition: opacity 0.3s; }
 .peek-img {
   position: absolute;
   inset: 0;
@@ -2400,39 +2392,7 @@ body.home .float-cta-link svg { color: var(--accent); }
   height: 100%;
   object-fit: contain;
   background: #fff;
-  opacity: 0;
-  transform: scale(1.06);
 }
-.peek-card.peek-found .peek-img {
-  opacity: 1;
-  transform: none;
-  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
-}
-.peek-monogram[hidden] { display: none; }
-.peek-monogram {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-display);
-  font-size: 96px;
-  font-weight: 800;
-  color: var(--accent);
-  opacity: 0;
-}
-.peek-card.peek-found .peek-monogram { opacity: 1; transition: opacity 0.5s var(--ease); }
-.peek-host {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 12px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-  text-transform: lowercase;
-}
-.peek-card.peek-found .peek-host { opacity: 0; transition: opacity 0.3s; }
 
 .peek-eyebrow {
   margin: 22px 0 0;
@@ -2452,14 +2412,14 @@ body.home .float-cta-link svg { color: var(--accent); }
   transition: opacity 0.25s;
 }
 .peek-title {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-family: var(--font-display);
-  font-size: 21px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.005em;
-  line-height: 1.1;
+  font-size: clamp(22px, 3vw, 27px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.16;
   color: var(--text);
+  text-wrap: balance;
   opacity: 0;
   transform: translateY(12px);
 }
@@ -2469,7 +2429,7 @@ body.home .float-cta-link svg { color: var(--accent); }
   transition: opacity 0.4s var(--ease) 0.12s, transform 0.4s var(--ease) 0.12s;
 }
 .peek-price {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   font-family: var(--font-mono);
   font-size: 11.5px;
   letter-spacing: 0.06em;
@@ -2480,6 +2440,39 @@ body.home .float-cta-link svg { color: var(--accent); }
   opacity: 0;
 }
 .peek-card.peek-found .peek-price { opacity: 1; transition: opacity 0.4s var(--ease) 0.25s; }
+
+/* Indeterminate progress: the only motion while the studio reads a page or
+ * waits on the photo rescue. Quiet, thin, deliberate. */
+.peek-progress[hidden] { display: none; }
+.peek-progress {
+  width: 168px;
+  height: 2px;
+  margin-top: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.peek-progress span {
+  display: block;
+  width: 38%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent) 30%, var(--accent) 70%, transparent);
+  animation: peek-progress 1.5s var(--ease) infinite;
+}
+@keyframes peek-progress {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(390%); }
+}
+
+.peek-note[hidden] { display: none; }
+.peek-note {
+  margin: 12px 0 0;
+  max-width: 340px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-mute);
+}
 
 /* product chip in the drawer header */
 .product-chip[hidden] { display: none; }
@@ -2609,7 +2602,7 @@ img.tile-product {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .peek-scan { animation: none; }
+  .peek-progress span, .peek-frame { animation: none; }
   .peek-card, .peek-card.peek-in, .peek-card.peek-out { transition: none; opacity: 1; transform: none; }
   .chooser-grid .style-tile { animation: none; }
 }

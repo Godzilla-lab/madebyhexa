@@ -437,7 +437,9 @@ exports.handler = async (event) => {
       // only surface the scraped title when it is a real name, not the host echo
       let title = wp && wp.title ? String(wp.title) : null;
       if (title && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(title.trim())) title = null;
-      return json(200, { ok: !!image, ready: done, image, title: title ? title.slice(0, 90) : null });
+      // failed: the scrape finished with nothing. Tell the client plainly so
+      // it can ask for a fresh attempt instead of waiting forever.
+      return json(200, { ok: !!image, ready: done, failed: done && !image, image, title: title ? title.slice(0, 90) : null });
     } catch (e) {
       return json(200, { ok: false, ready: false });
     }
@@ -446,10 +448,14 @@ exports.handler = async (event) => {
   const raw = (event.queryStringParameters && event.queryStringParameters.url) || '';
   if (!raw) return json(400, { ok: false });
 
+  // rescrape=1: the client saw the remembered scrape finish empty and is
+  // asking for one fresh attempt. Bypass caches and start a new scrape.
+  const rescrape = !!(event.queryStringParameters && event.queryStringParameters.rescrape);
+
   const nothing = { ok: false, url: raw, title: null, image: null, siteName: null, price: null, currency: null };
 
   const hit = cache.get(raw);
-  if (hit && Date.now() - hit.ts < (hit.ttl || CACHE_TTL_MS)) return json(200, hit.data);
+  if (hit && !rescrape && Date.now() - hit.ts < (hit.ttl || CACHE_TTL_MS)) return json(200, hit.data);
 
   const target = await guardUrl(raw);
   if (!target) return json(200, nothing);
@@ -482,19 +488,32 @@ exports.handler = async (event) => {
   try {
     const hf = require('./lib/hf');
     if (hf.configured() && !social) {
-      if (knownWpId) {
-        webProductPromise = Promise.resolve({ id: knownWpId });
-        inlineScrapePromise = hf.getWebProduct(knownWpId).catch(() => null);
-      } else {
-        webProductPromise = hf.createWebProduct(target.href).then(async (wp) => {
-          if (wp && wp.id && peekStore) {
-            try { await peekStore.set(wpKey, wp.id); } catch (e) { /* ignore */ }
-          }
-          return wp;
-        }).catch((e) => {
-          console.log('[product-peek] grounding create failed:', e && e.message);
-          return null;
+      const startFresh = () => hf.createWebProduct(target.href).then(async (wp) => {
+        if (wp && wp.id && peekStore) {
+          try { await peekStore.set(wpKey, wp.id); } catch (e) { /* ignore */ }
+        }
+        return wp;
+      }).catch((e) => {
+        console.log('[product-peek] grounding create failed:', e && e.message);
+        return null;
+      });
+      if (knownWpId && !rescrape) {
+        const known = hf.getWebProduct(knownWpId).catch(() => null);
+        inlineScrapePromise = known;
+        // A remembered scrape that finished with nothing is not worth keeping:
+        // forget it and start over, otherwise this URL can never get a photo.
+        webProductPromise = known.then((wp) => {
+          const media = wp && Array.isArray(wp.medias) && wp.medias[0];
+          const dead = !media && (!wp || /complet|ready|success|failed|error/i.test(wp.status || ''));
+          if (!dead) return { id: knownWpId };
+          if (peekStore) { try { peekStore.delete(wpKey); } catch (e) { /* ignore */ } }
+          return startFresh();
         });
+      } else {
+        if (rescrape && knownWpId && peekStore) {
+          try { await peekStore.delete(wpKey); } catch (e) { /* ignore */ }
+        }
+        webProductPromise = startFresh();
       }
     }
   } catch (e) { /* lib unavailable: skip grounding */ }
