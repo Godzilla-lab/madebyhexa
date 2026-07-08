@@ -143,3 +143,33 @@
 .composer-quiz-entry .cq-text strong { font-weight: 700; }
 .composer-quiz-entry .cq-arrow { color: var(--accent-soft); transition: transform 160ms var(--ease); }
 .composer-quiz-entry:hover .cq-arrow { transform: translateX(3px); }
+
+/* ── The quiz band: guided start, front and center under the hero ── */
+.quiz-band { position: relative; z-index: 1; padding: 132px 0 22px; }
+.quiz-band-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(28px, 4vw, 64px);
+  align-items: center;
+}
+.quiz-band-copy .c-sub { max-width: 46ch; }
+.quiz-band-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.quiz-band-tiles .quiz-tile { min-height: 96px; padding: 16px 10px; font-size: 13.5px; }
+.quiz-band-tiles .quiz-tile .emoji { font-size: 24px; }
+/* the odd one out ("Something else") stretches to close the second row */
+.quiz-band-tiles .quiz-tile:last-child { grid-column: span 2; }
+
+@media (max-width: 900px) {
+  .quiz-band { padding-top: 96px; }
+  .quiz-band-inner { grid-template-columns: 1fr; gap: 22px; }
+  .quiz-band-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .quiz-band-tiles .quiz-tile:last-child { grid-column: span 3; min-height: 64px; }
+}
+@media (max-width: 520px) {
+  .quiz-band-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quiz-band-tiles .quiz-tile:last-child { grid-column: span 2; }
+}

@@ -236,14 +236,20 @@
   function renderStep() { RENDERERS[stepIdx](); }
   function next() { if (stepIdx < RENDERERS.length - 1) { stepIdx++; renderStep(); } }
 
-  function open() {
+  /* preset lets an inline tile on the page answer question 1 with its tap:
+   * the overlay opens on step 2 with the progress bar already half full. */
+  function open(preset) {
     if (!root) build();
     answers = { category: null, link: null, vibe: null, format: null };
     stepIdx = 0;
+    if (preset && preset.category) {
+      answers.category = preset.category;
+      stepIdx = 1;
+    }
     renderStep();
     root.classList.add('is-open');
     document.body.style.overflow = 'hidden';
-    if (window.hexaTrack) window.hexaTrack('quiz-open', 'homepage', '');
+    if (window.hexaTrack) window.hexaTrack('quiz-open', preset && preset.category ? 'inline-' + preset.category : 'homepage', '');
   }
   function close() {
     if (!root) return;
@@ -255,6 +261,15 @@
   function wireTriggers() {
     document.querySelectorAll('[data-quiz-open]').forEach(function (el) {
       el.addEventListener('click', function (e) { e.preventDefault(); open(); });
+    });
+    // inline first question: category tiles rendered straight into the page
+    document.querySelectorAll('[data-quiz-inline]').forEach(function (mount) {
+      mount.innerHTML = CATEGORIES.map(function (c) {
+        return '<button class="quiz-tile" type="button" data-id="' + c.id + '"><span class="emoji">' + c.emoji + '</span>' + c.label + '</button>';
+      }).join('');
+      mount.querySelectorAll('.quiz-tile').forEach(function (b) {
+        b.addEventListener('click', function () { open({ category: b.getAttribute('data-id') }); });
+      });
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireTriggers);

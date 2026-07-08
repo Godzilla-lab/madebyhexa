@@ -98,19 +98,50 @@
             </ul>
           </div>
 
-          <figure class="c-monitor c-vignette" aria-label="A 15 second segment rendered by Hexa Studio">
-            <video id="hero-film" src="assets/film/hero-loop.mp4" poster="assets/film/hero-poster.jpg" muted playsinline preload="metadata" width="600" height="1066"></video>
-            <span class="c-monitor-rec" aria-hidden="true"><i></i>REC</span>
-            <span class="c-monitor-tc" id="hero-tc" aria-hidden="true">00:00.0 / 00:15</span>
-            <div class="c-monitor-ruler" aria-hidden="true">
-              <i class="lit"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-              <span class="c-monitor-ruler-cap">2:00</span>
-            </div>
-            <figcaption class="c-monitor-cap">Seg 01 of 08 · full films run to 2:00</figcaption>
-          </figure>
+          <div class="c-monitor-bank">
+            <figure class="c-monitor c-vignette" aria-label="A 15 second segment rendered by Hexa Studio">
+              <video id="hero-film" src="assets/film/hero-loop.mp4" poster="assets/film/hero-poster.jpg" muted playsinline preload="metadata" width="600" height="1066"></video>
+              <span class="c-monitor-rec" aria-hidden="true"><i></i>REC</span>
+              <span class="c-monitor-tc" id="hero-tc" aria-hidden="true">00:00.0 / 00:15</span>
+              <div class="c-monitor-ruler" aria-hidden="true">
+                <i class="lit"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                <span class="c-monitor-ruler-cap">2:00</span>
+              </div>
+              <figcaption class="c-monitor-cap">Seg 01 of 08 · full films run to 2:00</figcaption>
+            </figure>
+            <aside class="c-bank" aria-label="More scenes rendered by Hexa">
+              <figure class="c-bank-tile c-vignette">
+                <video src="assets/hf/hooks/interview.mp4" poster="assets/hf/hooks/interview_thumb.webp" muted loop autoplay playsinline preload="metadata" width="600" height="1066"></video>
+                <figcaption>Interview</figcaption>
+              </figure>
+              <figure class="c-bank-tile c-vignette">
+                <video src="assets/hf/settings/in_car.mp4" poster="assets/hf/settings/in_car_thumb.webp" muted loop autoplay playsinline preload="metadata" width="600" height="1066"></video>
+                <figcaption>In the car</figcaption>
+              </figure>
+              <figure class="c-bank-tile c-vignette">
+                <video src="assets/hf/settings/volcano_rim.mp4" poster="assets/hf/settings/volcano_rim_thumb.webp" muted loop autoplay playsinline preload="metadata" width="600" height="1066"></video>
+                <figcaption>Volcano rim</figcaption>
+              </figure>
+              <p class="c-bank-cap">Any scene</p>
+            </aside>
+          </div>
         </div>
       </section>
     </div>
+
+    <!-- ───── Guided start: the quiz, front and center ───── -->
+    <section class="quiz-band" id="quiz-start">
+      <div class="c-wrap">
+        <div class="quiz-band-inner" data-reveal>
+          <div class="quiz-band-copy">
+            <p class="c-kicker">Guided start</p>
+            <h2 class="c-display c-display-m">Not sure yet?<br />Start with one tap.</h2>
+            <p class="c-sub">Tap what you sell. We set the scene, the vibe and the format, then your product comes alive. Three quick questions, nothing to sign up for.</p>
+          </div>
+          <div class="quiz-band-tiles" data-quiz-inline role="group" aria-label="What are you selling?"><!-- quiz.js renders the category tiles --></div>
+        </div>
+      </div>
+    </section>
 
     <!-- ───── 01 · Proof: real or AI ───── -->
     <section class="c-proof" id="proof">
