@@ -17,8 +17,8 @@
   var PEEK_HARD_MS = 14000; // absolute cap on the stage, whatever is loading
   var PEEK_MIN_MS = 900;    // minimum stage time, so the beat never flashes
   var PEEK_IMG_MS = 2800;   // budget for preloading the product image (re-hosted scrapes run large)
-  var PEEK_HOLD_MS = 1400;  // how long the identified product holds the stage
-  var GUESS_HOLD_MS = 16000; // extra stage time while the scrape fetches the photo of a blocked page
+  var PEEK_HOLD_MS = 1100;  // how long the identified product holds the stage
+  var GUESS_HOLD_MS = 9000; // extra stage time while the scrape fetches the photo of a blocked page; after this the toast handles the arrival
 
   /* ── Video modes (rendered as tiles) ── */
   var MODE_CONFIG = {
@@ -416,7 +416,7 @@
         .then(function (d) {
           if (d && d.image) {
             pk.image = d.image;
-            if (d.title && (!pk.title || pk.guessed)) pk.title = d.title;
+            if (d.title && (!pk.title || pk.guessed)) { pk.title = d.title; pk.guessed = false; }
             peekUpgraded(pk);
           } else if (d && d.failed) {
             // the scrape finished with nothing: ask the server for one fresh
@@ -433,11 +433,13 @@
                     pollWebProduct(pk);
                   } else {
                     pk.scrapeFailed = true;
+                    peekScrapeFailed(pk);
                   }
                 })
-                .catch(function () { pk.scrapeFailed = true; });
+                .catch(function () { pk.scrapeFailed = true; peekScrapeFailed(pk); });
             } else {
               pk.scrapeFailed = true;
+              peekScrapeFailed(pk);
             }
           } else if (!d || !d.ready) {
             setTimeout(tick, delay);
@@ -453,6 +455,44 @@
     if (!pk || !pk.webProductId) return;
     pk.image = null;
     pollWebProduct(pk);
+  }
+
+  /* The photo arrived after the reveal stage moved on: celebrate it where
+   * the customer is now, instead of quietly swapping a 34px chip. */
+  var peekToastTimer = null;
+  function peekToast(pk) {
+    if (!pk || !pk.image) return;
+    var old = $('#peek-toast');
+    if (old) old.remove();
+    if (peekToastTimer) { clearTimeout(peekToastTimer); peekToastTimer = null; }
+    var t = el('div', 'peek-toast');
+    t.id = 'peek-toast';
+    var img = el('img');
+    img.src = pk.image;
+    img.alt = '';
+    img.onerror = function () { t.remove(); };
+    t.appendChild(img);
+    var txt = el('div', 'peek-toast-text');
+    txt.appendChild(el('strong', null, 'Product photo found'));
+    txt.appendChild(el('span', null, pk.title || 'Straight from your page'));
+    t.appendChild(txt);
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('show'); });
+    peekToastTimer = setTimeout(function () {
+      t.classList.remove('show');
+      setTimeout(function () { t.remove(); }, 400);
+    }, 5200);
+  }
+
+  /* The scrape gave up after the stage moved on: stop the chooser from
+   * promising a photo that is not coming, and point at the fix. */
+  function peekScrapeFailed(pk) {
+    if (pk.url !== (state.sel.link || state.composerLink)) return;
+    productChip(true);
+    var overlay = $('#config-overlay');
+    if (!overlay || overlay.hidden || !overlay.classList.contains('chooser')) return;
+    var intro = $('.chooser-intro');
+    if (intro) intro.textContent = chooserIntroText(pk);
   }
 
   /* Fit the reveal frame to the photo's own shape (clamped so extreme
@@ -491,9 +531,11 @@
     }
     if (overlay.classList.contains('chooser')) {
       enhanceChooserWithPeek(pk);
+      peekToast(pk);
       return;
     }
     productChip(true);
+    peekToast(pk);
   }
 
   /* The product chip in the drawer header. */
@@ -1761,7 +1803,14 @@
 
   function chooserIntroText(pk) {
     if (pk && pk.title) {
-      return pk.title + ', styled ' + state.presets.length + ' ways. Pick one and we make it with your product in frame.';
+      var base = pk.title + ', styled ' + state.presets.length + ' ways.';
+      if (pk.scrapeFailed && !pk.image) {
+        return base + ' That page kept its photo to itself, so add one of yours on the next step. The film comes out just as sharp.';
+      }
+      if (!pk.image && pk.webProductId) {
+        return base + ' Your product photo is still on its way and pops in here the moment it lands.';
+      }
+      return base + ' Pick one and we make it with your product in frame.';
     }
     return state.composerLink
       ? 'Here is what we can make for your product. Pick one and we build exactly that.'
@@ -1994,21 +2043,21 @@
             if (pk.title) titleEl.textContent = pk.title;
             progEl.hidden = true;
             noteEl.hidden = true;
-            revealTimers.push(setTimeout(function () { dock(pk); }, 2200));
+            revealTimers.push(setTimeout(function () { dock(pk); }, 1500));
           } else if (pk.scrapeFailed) {
             clearInterval(waiter);
             progEl.hidden = true;
-            noteEl.textContent = 'This page keeps its photos to itself. Add one on the next step, or we work from the name alone.';
+            noteEl.textContent = 'This page keeps its photos to itself. Add one of yours on the next step; the film comes out just as sharp.';
             noteEl.hidden = false;
-            revealTimers.push(setTimeout(function () { dock(pk); }, 3200));
+            revealTimers.push(setTimeout(function () { dock(pk); }, 2600));
           } else if (waited >= GUESS_HOLD_MS) {
             clearInterval(waiter);
             progEl.hidden = true;
             noteEl.textContent = pk.webProductId
-              ? 'Still working on the photo. It will appear on the next step when ready.'
+              ? 'Still working on the photo. We pop it in the moment it lands.'
               : 'The photo would not load. You can add one on the next step.';
             noteEl.hidden = false;
-            revealTimers.push(setTimeout(function () { dock(pk); }, 1600));
+            revealTimers.push(setTimeout(function () { dock(pk); }, 1300));
           }
         }, 400);
         revealTimers.push(waiter); // clearTimeout clears intervals too

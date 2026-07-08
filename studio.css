@@ -2474,6 +2474,59 @@ body.home .float-cta-link svg { color: var(--accent); }
   color: var(--text-mute);
 }
 
+/* A photo that lands after the reveal stage is over gets its own moment:
+ * a card that slides up over whatever step the customer is on. */
+.peek-toast {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 340px;
+  padding: 10px 18px 10px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: #14090e;
+  box-shadow: var(--shadow-2), var(--glow-accent);
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  pointer-events: none;
+}
+.peek-toast.show { opacity: 1; transform: none; }
+.peek-toast img {
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 9px;
+  background: #fff;
+  flex: none;
+}
+.peek-toast-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.peek-toast-text strong {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.peek-toast-text span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* product chip in the drawer header */
 .product-chip[hidden] { display: none; }
 .product-chip {
