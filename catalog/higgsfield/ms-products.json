@@ -1,0 +1,31 @@
+[
+  {
+    "id": "93b7eec2-4508-4d2a-86e9-c304569d2c5c",
+    "title": "Bare & Free Embody Set",
+    "status": "completed",
+    "scrape_url_domain": "somaearthwear.com",
+    "fail_reason": "",
+    "medias": [
+      {
+        "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_389azmppSZsPlU3mqDERx6fICrR/a08785c9-e858-4668-b66f-0a86042ebba7.png",
+        "is_primary": true
+      },
+      {
+        "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_389azmppSZsPlU3mqDERx6fICrR/d4fe8dc7-33ba-4fef-85d7-3ac826701c15.png",
+        "is_primary": false
+      },
+      {
+        "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_389azmppSZsPlU3mqDERx6fICrR/5580c301-27cb-4797-8753-adc44a629e9f.png",
+        "is_primary": false
+      },
+      {
+        "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_389azmppSZsPlU3mqDERx6fICrR/65adce0a-07d8-47e6-8118-6e08b07510be.png",
+        "is_primary": false
+      },
+      {
+        "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_389azmppSZsPlU3mqDERx6fICrR/b10411e3-2549-478d-b215-a150981e0407.png",
+        "is_primary": false
+      }
+    ]
+  }
+]

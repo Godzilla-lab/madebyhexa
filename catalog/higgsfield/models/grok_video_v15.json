@@ -1,0 +1,36 @@
+{
+  "display_name": "Grok Video 1.5",
+  "job_type": "grok_video_v15",
+  "params": [
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "720p",
+      "required": false,
+      "enum": [
+        "480p",
+        "720p"
+      ]
+    },
+    {
+      "name": "start_image",
+      "type": "object",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "video"
+}

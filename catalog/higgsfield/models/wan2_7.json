@@ -1,0 +1,70 @@
+{
+  "display_name": "Wan 2.7",
+  "job_type": "wan2_7",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ]
+    },
+    {
+      "name": "audio_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false
+    },
+    {
+      "name": "end_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "720p",
+      "required": false,
+      "enum": [
+        "720p",
+        "1080p"
+      ]
+    },
+    {
+      "name": "start_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "params.end_image == null || !(params.start_image == null)",
+      "message": "end_image requires start_image"
+    },
+    {
+      "cel": "size(params.audio_references) <= 1",
+      "message": "at most 1 audio reference is allowed"
+    }
+  ],
+  "type": "video"
+}

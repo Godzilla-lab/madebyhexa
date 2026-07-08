@@ -1,0 +1,69 @@
+{
+  "display_name": "Wan 2.6 Video",
+  "job_type": "wan2_6",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "16:9",
+        "9:16",
+        "1:1"
+      ]
+    },
+    {
+      "name": "audio_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false,
+      "enum": [
+        "5",
+        "10",
+        "15"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "quality",
+      "type": "string",
+      "default": "720p",
+      "required": false,
+      "enum": [
+        "720p",
+        "1080p"
+      ]
+    },
+    {
+      "name": "video_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.video_references) == 0 || params.duration != 15",
+      "message": "reference-to-video (with video_references) supports only 5 or 10 second durations"
+    }
+  ],
+  "type": "video"
+}

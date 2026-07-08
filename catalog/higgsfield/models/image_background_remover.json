@@ -1,0 +1,19 @@
+{
+  "display_name": "Image Background Remover",
+  "job_type": "image_background_remover",
+  "params": [
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.image_references) == 1",
+      "message": "exactly one image_references entry is required"
+    }
+  ],
+  "type": "image"
+}

@@ -1,0 +1,31 @@
+{
+  "display_name": "Soul Location",
+  "job_type": "soul_location",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "16:9",
+        "9:16",
+        "4:3",
+        "3:4",
+        "3:2",
+        "2:3",
+        "21:9",
+        "9:21"
+      ]
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

@@ -1,0 +1,392 @@
+/* ═════ Hexa Studio · Render / delivery screen ═════ */
+
+.render {
+  position: relative;
+  z-index: 1;
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 60px 24px 80px;
+}
+.render-inner {
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
+}
+.render-title {
+  font-size: clamp(28px, 4.5vw, 44px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin: 10px 0 12px;
+}
+.render-sub {
+  font-size: 15.5px;
+  color: var(--text-mute);
+  margin: 0 auto 32px;
+  max-width: 440px;
+}
+
+/* ── The render stage ── */
+.render-stage {
+  margin: 0 auto 30px;
+  width: 100%;
+  max-width: 340px;
+}
+.render-stage[data-aspect="16:9"] { max-width: 560px; }
+.render-stage[data-aspect="1:1"]  { max-width: 400px; }
+.render-stage[data-aspect="4:3"]  { max-width: 460px; }
+.render-stage[data-aspect="4:5"]  { max-width: 380px; }
+
+.stage-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #140a12, #0a0608);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 40px 100px -40px rgba(255, 77, 109, 0.4);
+}
+.render-stage[data-aspect="16:9"] .stage-frame { aspect-ratio: 16 / 9; }
+.render-stage[data-aspect="1:1"]  .stage-frame { aspect-ratio: 1 / 1; }
+.render-stage[data-aspect="4:3"]  .stage-frame { aspect-ratio: 4 / 3; }
+.render-stage[data-aspect="4:5"]  .stage-frame { aspect-ratio: 4 / 5; }
+
+.stage-shimmer {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 50% at 50% 40%, rgba(255, 77, 109, 0.22), transparent 70%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.03) 0 12px, transparent 12px 26px);
+  animation: shimmer-pan 3.2s linear infinite;
+}
+@keyframes shimmer-pan {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 0, 200px 0; }
+}
+.stage-scan {
+  position: absolute;
+  left: 0; right: 0;
+  height: 32%;
+  top: -32%;
+  background: linear-gradient(180deg, transparent, rgba(255, 122, 142, 0.35), transparent);
+  animation: scan 2.4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+@keyframes scan {
+  0%   { top: -34%; }
+  100% { top: 102%; }
+}
+.stage-pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  font-variant-numeric: tabular-nums;
+}
+.stage-video, .stage-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+}
+
+/* reveal animation when result lands */
+.stage-frame.done .stage-shimmer,
+.stage-frame.done .stage-scan,
+.stage-frame.done .stage-pct { opacity: 0; transition: opacity 0.5s; }
+.stage-frame.done { box-shadow: 0 40px 120px -30px rgba(255, 77, 109, 0.6); }
+.stage-video[hidden], .stage-image[hidden] { display: none; }
+.stage-reveal { animation: reveal 0.6s var(--ease); }
+@keyframes reveal {
+  from { opacity: 0; transform: scale(1.04); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Steps ── */
+.render-steps {
+  list-style: none;
+  margin: 0 auto 26px;
+  padding: 0;
+  max-width: 320px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.render-steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14.5px;
+  color: var(--text-faint);
+  transition: color 0.4s;
+}
+.render-steps .dot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 999px;
+  border: 2px solid var(--border-strong);
+  position: relative;
+  transition: all 0.4s var(--ease);
+}
+.render-steps li.active { color: var(--text); }
+.render-steps li.active .dot {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.16);
+}
+.render-steps li.active .dot::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.render-steps li.done { color: var(--text-mute); }
+.render-steps li.done .dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.render-steps li.done .dot::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+}
+
+/* ── Actions ── */
+.render-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.btn-download, .btn-again {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  border-radius: 12px;
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+.btn-download {
+  color: #fff;
+  background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 100%);
+  box-shadow: 0 12px 34px -12px rgba(255, 77, 109, 0.6);
+}
+.btn-download:hover { transform: translateY(-1px); box-shadow: 0 16px 44px -12px rgba(255, 77, 109, 0.75); }
+.btn-again {
+  color: var(--text);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-strong);
+}
+.btn-again:hover { border-color: var(--accent); }
+
+/* ── Order summary card (fills the stage when an order is received) ── */
+.stage-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+}
+.stage-card-check {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(160deg, var(--accent), var(--accent-deep));
+  border-radius: 999px;
+  box-shadow: 0 14px 40px -12px rgba(255, 77, 109, 0.6);
+  margin-bottom: 6px;
+}
+.stage-card-title {
+  font-size: 19px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: var(--text);
+}
+.stage-card-meta {
+  font-size: 13px;
+  color: var(--text-mute);
+}
+.stage-card-price {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Delivery email confirmation ── */
+.delivery-form {
+  margin: 0 auto 26px;
+  max-width: 420px;
+  text-align: left;
+}
+.delivery-form[hidden] { display: none; }
+.delivery-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin: 0 2px 10px;
+}
+.delivery-row {
+  display: flex;
+  gap: 10px;
+}
+.delivery-row input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: rgba(255,255,255,0.035);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  padding: 13px 16px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.delivery-row input:focus { border-color: rgba(255, 77, 109, 0.55); }
+.delivery-confirm {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 13px 22px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), opacity 0.3s;
+  box-shadow: 0 12px 34px -12px rgba(255, 77, 109, 0.55);
+}
+.delivery-confirm:hover { transform: translateY(-1px); }
+.delivery-confirm:disabled { opacity: 0.55; cursor: default; transform: none; }
+@media (max-width: 480px) {
+  .delivery-row { flex-direction: column; }
+}
+
+.render-actions.no-download .btn-download { display: none; }
+
+.btn-download:active, .btn-again:active {
+  transform: translateY(0) scale(0.985);
+  transition-duration: 0.08s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-shimmer { animation: none; }
+  .stage-scan { animation: none; display: none; }
+  .render-steps li.active .dot::after { animation: none; opacity: 1; }
+  .stage-reveal { animation: none; }
+}
+
+.render-note {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-mute);
+  margin: 22px auto 0;
+  max-width: 420px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  text-align: left;
+}
+
+/* The peeked product, faint on the stage while the order composes/renders */
+.stage-image.stage-ghost {
+  opacity: 0.22;
+  object-fit: contain;
+  padding: 16%;
+  filter: saturate(0.85);
+}
+
+/* Product thumb on the order-received card */
+.stage-card-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: #fff;
+  margin-bottom: 10px;
+}
+
+/* ── Full deliverable set: photoshoot frames / film segments ── */
+.result-set {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px auto 0;
+  max-width: 720px;
+}
+.result-set[hidden] { display: none; }
+.result-set-item {
+  position: relative;
+  width: 64px;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.result-set-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.result-set-item:hover { transform: translateY(-2px); }
+.result-set-item.sel { border-color: var(--accent, #ff4d6d); }
+.result-seg-link {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 6px 12px;
+  text-decoration: none;
+  transition: color 0.25s, border-color 0.25s;
+}
+.result-seg-link:hover { color: #fff; border-color: rgba(255, 77, 109, 0.55); }

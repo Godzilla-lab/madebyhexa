@@ -1,0 +1,29 @@
+{
+  "display_name": "Soul Cast",
+  "job_type": "soul_cast",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": null,
+      "required": true,
+      "enum": [
+        "16:9"
+      ]
+    },
+    {
+      "name": "budget",
+      "type": "integer",
+      "default": 50,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

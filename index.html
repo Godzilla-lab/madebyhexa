@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Hexa AI · AI content that beats traditional shoots</title>
-  <meta name="description" content="Hexa AI creates cinematic UGC, unboxings, and product spots for brands using AI. No studios, no crews, no shoot days." />
+  <title>Hexa Studio · AI video of your product, so real no one can tell</title>
+  <meta name="description" content="Paste your product link and get hyper-real AI video: same actor, same scene, one storyboard, up to 2 minutes as one continuous film. Choose the creator, hook, length and quality. Pay per film." />
   <meta name="theme-color" content="#0a0608" />
 
-  <meta property="og:title" content="Hexa AI · AI content that beats traditional shoots" />
-  <meta property="og:description" content="Cinematic UGC, unboxings, and product spots for brands using AI. Brand-ready in hours, not weeks." />
+  <meta property="og:title" content="Hexa Studio · AI video of your product, so real no one can tell" />
+  <meta property="og:description" content="Paste your product link and get hyper-real AI video, up to 2 minutes as one continuous film. Pay per film." />
   <meta property="og:type" content="website" />
 
   <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
@@ -20,14 +20,18 @@
   <link rel="dns-prefetch" href="https://d8j0ntlcm91z4.cloudfront.net" />
   <link rel="preconnect" href="https://v1.pinimg.com" crossorigin />
   <link rel="dns-prefetch" href="https://v1.pinimg.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="preload" as="image" href="assets/film/hero-poster.jpg" />
 
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="studio.css" />
+  <link rel="stylesheet" href="quiz.css" />
   <script src="pixels.js"></script>
 </head>
-<body>
+<body class="home" data-track="view-content">
   <div class="bg-grid" aria-hidden="true"></div>
   <div class="bg-glow" aria-hidden="true"></div>
+  <div class="film-grain" aria-hidden="true"></div>
 
   <header class="nav">
     <a class="brand" href="#top" aria-label="Hexa AI home">
@@ -35,88 +39,280 @@
       <span class="brand-name">Hexa<span class="brand-dot">·</span>AI</span>
     </a>
     <nav class="nav-links">
+      <a href="#styles">Styles</a>
+      <a href="#modes">Modes</a>
       <a href="#reel">Work</a>
-      <a href="#results">Results</a>
-      <a href="#process">Process</a>
-      <a href="#studio">Studio</a>
-      <a href="#why">Why AI</a>
-      <a href="https://cal.com/hexaiagency" target="_blank" rel="noopener" class="nav-cta">Book a call</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/login.html" id="nav-account">Sign in</a>
+      <a href="#composer" class="nav-cta">Create</a>
     </nav>
   </header>
 
   <main id="top">
-    <section class="hero">
-      <div class="hero-inner">
-        <div class="eyebrow">
-          <span class="bolt">⚡</span>
-          <span>AI Content Studio for Brands</span>
+
+    <!-- ───── Composer hero: the studio IS the page ───── -->
+    <div class="studio studio-flush">
+      <section class="composer-hero" id="composer">
+        <div class="c-hero-grid">
+          <div class="c-hero-copy">
+            <p class="c-kicker">Hexa Studio · Continuous AI film</p>
+            <h1 class="c-display c-display-xl">AI video of your product,<span class="hl-line">so real no one can tell.</span></h1>
+            <p class="c-sub c-lead">Paste your product link and <strong>watch it happen</strong>. Other tools stop at a 15 second clip. Hexa renders <strong>one continuous film</strong>, up to two minutes.</p>
+            <ul class="c-hero-ticks" aria-label="What one continuous film means">
+              <li>Same actor</li>
+              <li>Same scene</li>
+              <li>One storyboard</li>
+              <li>One file</li>
+            </ul>
+
+            <div class="composer" id="composer-box">
+              <div class="composer-bar">
+                <svg class="composer-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <input type="url" id="composer-link" placeholder="Paste a Shopify, Amazon or any product link" autocomplete="off" spellcheck="false" />
+                <span class="composer-product" id="composer-product" hidden>
+                  <img id="composer-product-img" alt="" />
+                  <span class="composer-product-name" id="composer-product-name"></span>
+                </span>
+                <button type="button" class="composer-go" id="composer-go">Create</button>
+              </div>
+              <div class="composer-tools" id="composer-tools" aria-label="Order settings"><!-- studio.js --></div>
+              <p class="composer-hint">We read the images, understand the product, write the storyboard, and render one continuous film.
+                <button type="button" class="composer-nolink" id="composer-nolink">No product link? Start with photos or a description</button>
+              </p>
+              <div class="composer-try" aria-label="Try an example product">
+                <span class="composer-try-label">Try one:</span>
+                <button type="button" class="composer-try-chip" data-try="https://www.allbirds.com/products/mens-wool-runners">Allbirds Wool Runners</button>
+                <button type="button" class="composer-try-chip" data-try="https://www.glossier.com/products/cloud-paint">Glossier Cloud Paint</button>
+              </div>
+            </div>
+
+            <button type="button" class="composer-quiz-entry" data-quiz-open>
+              <span class="cq-spark" aria-hidden="true">✨</span>
+              <span class="cq-text"><strong>Not sure where to start?</strong> Watch yours come alive</span>
+              <svg class="cq-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+
+            <ul class="c-hero-badges" aria-label="Why brands choose Hexa">
+              <li class="c-badge">Renders in minutes</li>
+              <li class="c-badge c-badge-accent">No credits · no reject fees</li>
+            </ul>
+          </div>
+
+          <figure class="c-monitor c-vignette" aria-label="A 15 second segment rendered by Hexa Studio">
+            <video id="hero-film" src="assets/film/hero-loop.mp4" poster="assets/film/hero-poster.jpg" muted playsinline preload="metadata" width="600" height="1066"></video>
+            <span class="c-monitor-rec" aria-hidden="true"><i></i>REC</span>
+            <span class="c-monitor-tc" id="hero-tc" aria-hidden="true">00:00.0 / 00:15</span>
+            <div class="c-monitor-ruler" aria-hidden="true">
+              <i class="lit"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              <span class="c-monitor-ruler-cap">2:00</span>
+            </div>
+            <figcaption class="c-monitor-cap">Seg 01 of 08 · full films run to 2:00</figcaption>
+          </figure>
         </div>
-        <h1 class="hero-title">
-          AI content that <em>beats</em> traditional shoots.
-        </h1>
-        <p class="hero-sub">
-          Cinematic UGC, unboxings, and product spots. No studios, no crews, no shoot days. Brand-ready in hours, not weeks.
-        </p>
-        <div class="hero-cta">
-          <a class="btn btn-primary" href="https://cal.com/hexaiagency" target="_blank" rel="noopener">Book a call</a>
-          <a class="btn btn-ghost" href="#reel">See the reel</a>
+      </section>
+    </div>
+
+    <!-- ───── 01 · Proof: real or AI ───── -->
+    <section class="c-proof" id="proof">
+      <div class="c-wrap">
+        <div class="c-head" data-reveal>
+          <p class="c-kicker">Proof</p>
+          <h2 class="c-display c-display-l">If you can tell,<br />we failed.</h2>
+          <p class="c-sub">Three clips, all rendered by Hexa. Audiences comment on the skin texture before anyone clocks the pipeline. Tap one to check your guess.</p>
         </div>
-        <ul class="stat-chips" aria-label="Why brands choose Hexa AI">
-          <li><strong>100×</strong> cheaper than shoots</li>
-          <li><strong>10×</strong> faster turnaround</li>
-          <li><strong>∞</strong> iterations</li>
-        </ul>
+        <div class="c-proof-row">
+          <button class="c-proof-tile c-vignette" type="button" data-reveal data-reveal-delay="60">
+            <video data-src="assets/hf/settings/gym.mp4" poster="assets/hf/settings/gym_thumb.webp" muted loop playsinline preload="none" width="600" height="1066"></video>
+            <span class="c-proof-ask c-badge">Real or AI?</span>
+            <span class="c-proof-stamp" aria-hidden="true">100% AI · Render 0231</span>
+            <span class="c-proof-note">No gym, no creator, no phone. Rendered.</span>
+          </button>
+          <button class="c-proof-tile c-proof-tile-lead c-vignette" type="button" data-reveal data-reveal-delay="120">
+            <video data-src="assets/hf/settings/street.mp4" poster="assets/hf/settings/street_thumb.webp" muted loop playsinline preload="none" width="600" height="1066"></video>
+            <span class="c-proof-ask c-badge">Real or AI?</span>
+            <span class="c-proof-stamp" aria-hidden="true">100% AI · Render 0413</span>
+            <span class="c-proof-note">This street does not exist.</span>
+          </button>
+          <button class="c-proof-tile c-vignette" type="button" data-reveal data-reveal-delay="180">
+            <video data-src="assets/hf/settings/nature.mp4" poster="assets/hf/settings/nature_thumb.webp" muted loop playsinline preload="none" width="600" height="1066"></video>
+            <span class="c-proof-ask c-badge">Real or AI?</span>
+            <span class="c-proof-stamp" aria-hidden="true">100% AI · Render 0578</span>
+            <span class="c-proof-note">No location scout. No location.</span>
+          </button>
+        </div>
+        <p class="c-proof-policy" data-reveal>Anti slop policy: if it looks AI generated, it does not ship.</p>
       </div>
     </section>
 
-    <section id="reel" class="reel">
-      <div class="section-head">
-        <div class="eyebrow eyebrow-center">
-          <span class="bolt">⚡</span>
-          <span>The Reel</span>
+    <section id="reviews" class="reviews">
+      <div class="reviews-inner">
+        <div class="rail-head rail-head-c" data-reveal>
+          <div class="rail-head-main">
+            <p class="c-kicker">Receipts</p>
+            <h2 class="c-display c-display-m">What brands say</h2>
+          </div>
+          <p class="rail-desc">Verified outcomes from real Hexa clients, on the platforms you run ads on.</p>
         </div>
-        <h2 class="section-title">Generated across formats</h2>
-        <p class="section-sub">A live look at recent AI-generated content: UGC, unboxings, hyper-motion, virtual try-on, tutorials, and more. Click any tile to watch it full size.</p>
+        <div class="proof-bar" aria-label="Hexa AI in numbers">
+          <div class="proof-bar-item"><span class="proof-bar-num">10M+</span><span class="proof-bar-label">Views generated</span></div>
+          <div class="proof-bar-item"><span class="proof-bar-num">min</span><span class="proof-bar-label">Link to delivery</span></div>
+          <div class="proof-bar-item"><span class="proof-bar-num">100%</span><span class="proof-bar-label">AI, looks real</span></div>
+        </div>
+        <div class="review-marquee" aria-label="What clients say">
+          <div class="review-track" id="review-strip" aria-busy="true"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───── 02 · Runtime: the length moat ───── -->
+    <section class="c-runtime" id="runtime">
+      <div class="c-wrap">
+        <div class="c-head" data-reveal>
+          <p class="c-kicker">Runtime</p>
+          <h2 class="c-display c-display-l">Everyone else sells clips.<span class="hl-line">We deliver the film.</span></h2>
+          <p class="c-sub">Other tools generate isolated clips. Hexa holds the same actor, camera, lighting and scene across every 15 second segment, then exports one continuous film, up to two minutes.</p>
+        </div>
+
+        <p class="c-runbars-axis">Native single-shot runtime · default settings</p>
+        <div class="c-runbars" role="img" aria-label="Native single-shot runtime compared: Veo 8 seconds, Sora 15 seconds, Kling 15 seconds. Hexa delivers one continuous film up to 2 minutes.">
+          <div class="c-runbar" data-reveal><span class="c-runbar-name">Veo 3.1</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 6.7%"></i></span><span class="c-runbar-time">0:08</span></div>
+          <div class="c-runbar" data-reveal data-reveal-delay="80"><span class="c-runbar-name">Sora 2</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 12.5%"></i></span><span class="c-runbar-time">0:15</span></div>
+          <div class="c-runbar" data-reveal data-reveal-delay="160"><span class="c-runbar-name">Kling</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 12.5%"></i></span><span class="c-runbar-time">0:15</span></div>
+          <div class="c-runbar c-runbar-hexa" data-reveal data-reveal-delay="260"><span class="c-runbar-name">Hexa</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 100%"></i></span><span class="c-runbar-time">Up to 2:00 · one continuous film</span></div>
+        </div>
+        <p class="c-runbars-note">Native single-shot runtime per tool at default settings, July 2026. Longer runs elsewhere lean on extend tricks that visibly drift. Hexa holds to the last second.</p>
+
+        <div class="c-strip-zone" id="strip-zone">
+          <div class="c-strip" id="film-strip">
+            <figure class="c-cell"><img src="assets/film/seg-01.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 01 · 0:00</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-02.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 02 · 0:15</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-03.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 03 · 0:30</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-04.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 04 · 0:45</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-05.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 05 · 1:00</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-06.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 06 · 1:15</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-07.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 07 · 1:30</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-08.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 08 · 1:45</figcaption></figure>
+          </div>
+          <p class="c-strip-result"><span class="c-strip-arrow" aria-hidden="true">→</span><span class="c-badge c-badge-accent">hexa_order_final.mp4 · 2:00 · one file</span></p>
+        </div>
+
+        <div class="c-runtime-cta" data-reveal>
+          <button class="btn btn-primary btn-lg" type="button" data-open="ugc">Make a longer one</button>
+          <span class="c-runtime-cta-note">Same actor, first frame to last. +$12 per extra 15 seconds.</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="studio studio-flush">
+      <!-- ───── Hexa Styles ───── -->
+      <section class="styles" id="styles">
+        <div class="rail-head rail-head-c" data-reveal>
+          <div class="rail-head-main">
+            <p class="c-kicker">Styles</p>
+            <h2 class="c-display c-display-m">Hexa Styles</h2>
+          </div>
+          <p class="rail-desc">Pick a look. The brief is already written. Just add your product.</p>
+          <span class="c-head-meta" id="styles-count"></span>
+        </div>
+        <div class="style-grid" id="style-grid"><!-- studio.js --></div>
+      </section>
+
+      <!-- ───── Modes ───── -->
+      <section class="modes" id="modes">
+        <div class="rail-head rail-head-c" data-reveal>
+          <div class="rail-head-main">
+            <p class="c-kicker">Modes</p>
+            <h2 class="c-display c-display-m">Ten ways to sell it</h2>
+          </div>
+          <p class="rail-desc">Every mode ships any length, 15 seconds to a 2 minute film.</p>
+          <span class="c-head-meta" id="modes-count"></span>
+        </div>
+        <div class="mode-rail" id="mode-rail"><!-- studio.js --></div>
+      </section>
+    </div>
+
+    <!-- ───── Avatars, hooks, beyond video ───── -->
+    <div class="studio studio-flush">
+      <section class="avatars-band" id="avatars">
+        <div class="rail-head rail-head-c" data-reveal>
+          <div class="rail-head-main">
+            <p class="c-kicker">Cast</p>
+            <h2 class="c-display c-display-m">Avatar library</h2>
+          </div>
+          <p class="rail-desc">Forty consistent creators. Or train your own with Soul.</p>
+          <span class="c-head-meta">40 creators</span>
+        </div>
+        <div class="marquee" id="marquee-a" aria-hidden="false"></div>
+        <div class="marquee marquee-rev" id="marquee-b" aria-hidden="true"></div>
+      </section>
+
+      <section class="hooks-band" id="hooks">
+        <div class="rail-head rail-head-c" data-reveal>
+          <div class="rail-head-main">
+            <p class="c-kicker">Openers</p>
+            <h2 class="c-display c-display-m">Viral hooks</h2>
+          </div>
+          <p class="rail-desc">Scripted openers that stop the scroll.</p>
+          <span class="c-head-meta" id="hooks-count"></span>
+        </div>
+        <div class="hook-rail" id="hook-rail"><!-- studio.js --></div>
+      </section>
+
+      <section class="more-band" id="more">
+        <div class="rail-head rail-head-c" data-reveal>
+          <div class="rail-head-main">
+            <p class="c-kicker">Stills</p>
+            <h2 class="c-display c-display-m">Beyond video</h2>
+          </div>
+        </div>
+        <div class="more-grid">
+          <button class="more-tile" type="button" data-product="photoshoot">
+            <span class="more-name">Product Photoshoot</span>
+            <span class="more-desc">Ten brand-quality images in one pass</span>
+            <span class="more-price"></span>
+          </button>
+          <button class="more-tile" type="button" data-product="adpack">
+            <span class="more-name">DTC Ad Pack</span>
+            <span class="more-desc">Static ads in proven formats</span>
+            <span class="more-price"></span>
+          </button>
+          <button class="more-tile" type="button" data-product="soul">
+            <span class="more-name">Soul Character</span>
+            <span class="more-desc">One session. Reuse in every campaign.</span>
+            <span class="more-price"></span>
+          </button>
+          <button class="more-tile" type="button" data-product="cinematic">
+            <span class="more-name">Cinematic Spot</span>
+            <span class="more-desc">Director-grade camera, grade, light</span>
+            <span class="more-price"></span>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <section id="reel" class="reel">
+      <div class="c-wrap">
+        <div class="rail-head rail-head-c" data-reveal>
+          <div class="rail-head-main">
+            <p class="c-kicker">The reel</p>
+            <h2 class="c-display c-display-m">Generated this week</h2>
+          </div>
+          <p class="rail-desc">Recent renders across formats. Click any tile to watch it full size.</p>
+        </div>
       </div>
       <div id="gallery" class="gallery" aria-busy="true"></div>
       <p id="gallery-empty" class="gallery-empty" hidden>Couldn't load the reel. Refresh to try again.</p>
     </section>
 
-    <section id="x-mode-tease" class="xmode-tease" aria-label="Mature content showcase">
-      <a class="xmode-card" href="nsfw.html">
-        <div class="xmode-copy">
-          <div class="xmode-badge">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
-              <circle cx="12" cy="12" r="3"/>
-              <line x1="3" y1="3" x2="21" y2="21"/>
-            </svg>
-            <span>18+ · X-Mode</span>
-          </div>
-          <h2 class="xmode-title">Mature workflows.<br/><em>Behind the gate.</em></h2>
-          <p class="xmode-sub">Adult and boundary-pushing creative work, gated for visitors aged 18+. Click through to view.</p>
-          <span class="xmode-cta">
-            Enter X-Mode
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="5" y1="12" x2="19" y2="12"/>
-              <polyline points="12 5 19 12 12 19"/>
-            </svg>
-          </span>
-        </div>
-        <div class="xmode-previews" aria-hidden="true">
-          <span class="xmode-preview" style="background-image:url('assets/nsfw/x-01.jpg')"></span>
-          <span class="xmode-preview" style="background-image:url('assets/nsfw/x-03.jpg')"></span>
-          <span class="xmode-preview" style="background-image:url('assets/nsfw/x-04.jpg')"></span>
-        </div>
-      </a>
-    </section>
 
     <section id="results" class="results">
       <div class="results-inner">
-        <div class="section-head">
-          <div class="eyebrow eyebrow-center"><span class="bolt">⚡</span><span>Results</span></div>
-          <h2 class="section-title">Real creator. Real numbers. <em>30 days.</em></h2>
-          <p class="section-sub">What a month of AI content did for one creator account. Anonymized client, verified metrics.</p>
+        <div class="rail-head rail-head-c" data-reveal>
+          <div class="rail-head-main">
+            <p class="c-kicker">Case</p>
+            <h2 class="c-display c-display-m">Real creator. Real numbers. 30 days.</h2>
+          </div>
+          <p class="rail-desc">One month of content from the same pipeline that powers the studio. Anonymized client, verified metrics.</p>
         </div>
 
         <article class="case">
@@ -130,17 +326,17 @@
           <div class="case-body">
             <div class="case-metrics">
               <div class="case-metric case-metric-hl">
-                <span class="metric-num"><span class="count" data-count="881">0</span><span class="metric-unit">K</span></span>
+                <span class="metric-num"><span class="count" data-count="881">881</span><span class="metric-unit">K</span></span>
                 <span class="metric-label">Followers</span>
                 <span class="metric-source">via IG Insights</span>
               </div>
               <div class="case-metric">
-                <span class="metric-num"><span class="count" data-count="10">0</span><span class="metric-unit">M</span></span>
+                <span class="metric-num"><span class="count" data-count="10">10</span><span class="metric-unit">M</span></span>
                 <span class="metric-label">Views</span>
                 <span class="metric-source">in 30 days</span>
               </div>
               <div class="case-metric">
-                <span class="metric-num"><span class="metric-unit metric-unit-pre">$</span><span class="count" data-count="4463" data-format="comma">0</span></span>
+                <span class="metric-num"><span class="metric-unit metric-unit-pre">$</span><span class="count" data-count="4463" data-format="comma">4,463</span></span>
                 <span class="metric-label">Revenue</span>
                 <span class="metric-source">lifetime, $2,258 best month</span>
               </div>
@@ -157,260 +353,275 @@
               </footer>
             </blockquote>
 
-            <a class="btn btn-primary btn-lg" href="#contact">Get results like this</a>
+            <a class="btn btn-primary btn-lg" href="#composer">Make yours now</a>
           </div>
         </article>
 
-        <p class="results-foot">More case studies loading. <a href="#contact">Want to be the next one?</a></p>
+        <p class="results-disclaimer">Results shown are from one client over 30 days and are not typical. Individual results vary and are not guaranteed.</p>
       </div>
     </section>
 
-    <section id="process" class="process">
-      <div class="process-inner">
-        <div class="section-head">
-          <div class="eyebrow eyebrow-center"><span class="bolt">⚡</span><span>The process</span></div>
-          <h2 class="section-title">From one photo set to weeks of content.</h2>
-          <p class="section-sub">Send us a handful of reference shots. We turn them into a full library of brand-ready video, in any format your channels need.</p>
-        </div>
-
-        <ol class="process-steps">
-          <li class="process-step">
-            <div class="process-step-head">
-              <span class="process-num">01</span>
-              <h3>You send the assets</h3>
-            </div>
-            <p>Product photos, brand colors, talent references. Anything you'd hand a director on a shoot day. We work with what you already have.</p>
-            <div class="process-inputs" aria-label="Example input photos">
-              <figure class="process-input" data-n="1"><img src="assets/process/process-1.jpg" alt="Reference photo 1" loading="lazy" decoding="async" /></figure>
-              <figure class="process-input" data-n="2"><img src="assets/process/process-2.jpg" alt="Reference photo 2" loading="lazy" decoding="async" /></figure>
-              <figure class="process-input" data-n="3"><img src="assets/process/process-3.jpg" alt="Reference photo 3" loading="lazy" decoding="async" /></figure>
-              <figure class="process-input" data-n="4"><img src="assets/process/process-4.jpg" alt="Reference photo 4" loading="lazy" decoding="async" /></figure>
-            </div>
-          </li>
-
-          <li class="process-step">
-            <div class="process-step-head">
-              <span class="process-num">02</span>
-              <h3>We generate</h3>
-            </div>
-            <p>Ready-made workflows for every channel: AI photos, product videos, TikTok and Reels dances, lip-sync animations, virtual try-ons, hyper-motion product spots. One brief, every format your funnel needs.</p>
-            <div class="process-formats">
-              <span>AI Photos</span>
-              <span>Product Video</span>
-              <span>UGC</span>
-              <span>Unboxing</span>
-              <span>TikTok Dances</span>
-              <span>Reels Dances</span>
-              <span>Lip Sync</span>
-              <span>Virtual Try On</span>
-              <span>Hyper Motion</span>
-              <span>Tutorial</span>
-              <span>TV Spot</span>
-              <a href="nsfw.html" class="format-mature">X-Mode · 18+</a>
-            </div>
-          </li>
-
-          <li class="process-step">
-            <div class="process-step-head">
-              <span class="process-num">03</span>
-              <h3>You ship</h3>
-            </div>
-            <p>You get a delivery folder of ready-to-post 9:16, 1:1, and 16:9 cuts within 48 hours. Iterate freely. Every variation is a prompt away, never another shoot day.</p>
-            <div class="process-deliverables">
-              <span class="pill pill-pulse">9:16</span>
-              <span class="pill">1:1</span>
-              <span class="pill">16:9</span>
-              <span class="pill">+ Captions</span>
-              <span class="pill">+ Hooks</span>
-            </div>
-          </li>
+    <!-- ───── How it works ───── -->
+    <div class="studio studio-flush">
+      <section class="steps-band">
+        <ol class="steps">
+          <li><span class="step-num">1</span><h3>Add your product</h3><p>Paste a link or upload photos.</p></li>
+          <li><span class="step-num">2</span><h3>Pick a mode</h3><p>UGC, TV spot, unboxing, try-on, more.</p></li>
+          <li><span class="step-num">3</span><h3>Choose the look</h3><p>Avatar, hook, scene. Or let us pick.</p></li>
+          <li><span class="step-num">4</span><h3>Get the file</h3><p>Delivered ready to post and run.</p></li>
         </ol>
+      </section>
+    </div>
+
+    <section id="engine" class="c-spec">
+      <div class="c-wrap">
+        <div class="c-head" data-reveal>
+          <p class="c-kicker">Under the hood</p>
+          <h2 class="c-display c-display-l">Custom pipeline.<br />Not off-the-shelf AI.</h2>
+          <p class="c-sub">Most AI content is hand-prompted consumer tools, shipped as-is. Every Hexa order runs through our own tuned pipeline, engineered so the output passes as a real shoot.</p>
+        </div>
+        <dl class="c-spec-sheet">
+          <div class="c-spec-row" data-reveal><dt>Pipeline</dt><dd>Custom production workflows, built and tuned per format. No prompt roulette.</dd></div>
+          <div class="c-spec-row" data-reveal data-reveal-delay="60"><dt>Models</dt><dd>Fine tuned on your brand, talent likeness, and product. No character drift.</dd></div>
+          <div class="c-spec-row" data-reveal data-reveal-delay="120"><dt>Control</dt><dd>Camera, lighting, expression, pacing. Directed frame by frame, not rolled.</dd></div>
+          <div class="c-spec-row" data-reveal data-reveal-delay="180"><dt>Runtime</dt><dd>15 second segments chained into one continuous film, up to 2 minutes.</dd></div>
+          <div class="c-spec-row" data-reveal data-reveal-delay="240"><dt>Vs shoots</dt><dd>A fraction of one shoot day. Minutes, not weeks. Unlimited iterations.</dd></div>
+        </dl>
       </div>
     </section>
 
-    <section id="studio" class="engine">
-      <div class="engine-inner">
-        <div class="section-head">
-          <div class="eyebrow eyebrow-center"><span class="bolt">⚡</span><span>The Studio</span></div>
-          <h2 class="section-title">Custom pipeline. <em>Not off-the-shelf AI.</em></h2>
-          <p class="section-sub">Most AI agencies hand-prompt Sora, Runway, or Midjourney and ship whatever comes out. We run our own ComfyUI pipelines and fine-tuned models, engineered for brand-grade output that doesn't look "AI-generated".</p>
+    <section id="pricing" class="pricing">
+      <div class="pricing-inner">
+        <div class="c-head c-head-center" data-reveal>
+          <p class="c-kicker">Pricing</p>
+          <h2 class="c-display c-display-l">One price. One file. Done.</h2>
+          <p class="c-sub">Every format has one clear price, shown before you pay. Buy the film you want, get the file, done.</p>
         </div>
 
-        <div class="engine-grid">
-          <div class="engine-card">
-            <div class="engine-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>
-                <line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/>
-              </svg>
-            </div>
-            <h3>Custom ComfyUI workflows</h3>
-            <p>Node-based pipelines we built and tune per campaign. Every shot routed through the same controllable graph. No prompt roulette.</p>
-          </div>
-          <div class="engine-card">
-            <div class="engine-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2 L4 7 V17 L12 22 L20 17 V7 Z"/>
-                <path d="M12 2 L12 22"/>
-                <path d="M4 7 L20 17"/>
-                <path d="M20 7 L4 17"/>
-              </svg>
-            </div>
-            <h3>Fine-tuned models</h3>
-            <p>Trained on your brand assets, talent likeness, and product. Output stays on-message. No character drift, no off-brand surprises.</p>
-          </div>
-          <div class="engine-card">
-            <div class="engine-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="6" width="14" height="12" rx="2"/>
-                <polygon points="17 9 22 6 22 18 17 15"/>
-              </svg>
-            </div>
-            <h3>Frame-level control</h3>
-            <p>Camera moves, lighting, expression, pacing. Directed, not rolled. We treat each frame like a production still, not a lottery ticket.</p>
-          </div>
-          <div class="engine-card">
-            <div class="engine-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="13 2 4 14 12 14 11 22 20 10 12 10 13 2"/>
-              </svg>
-            </div>
-            <h3>Beyond the consumer tools</h3>
-            <p>Sharper, more consistent, more controllable than Sora, Runway, or Midjourney straight out of the box. Production-grade output, not viral one-offs.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+        <ul class="c-price-chips" aria-label="Pricing guarantees">
+          <li class="c-badge">Pay per film</li>
+          <li class="c-badge">No subscription</li>
+          <li class="c-badge">No credits</li>
+          <li class="c-badge">No reject fees</li>
+          <li class="c-badge c-badge-accent">Never charged if we don't deliver</li>
+        </ul>
 
-    <section id="why" class="why">
-      <div class="why-inner">
-        <div class="section-head">
-          <div class="eyebrow eyebrow-center"><span class="bolt">⚡</span><span>Why brands switch</span></div>
-          <h2 class="section-title">Shoots are slow. <em>AI is now.</em></h2>
-          <p class="section-sub">The traditional content pipeline was built for an era of expensive crews and slow campaigns. Modern brands need to test, learn, and ship in days, not quarters.</p>
-        </div>
-
-        <div class="why-stats">
-          <div class="why-stat">
-            <span class="why-stat-num">10<span class="why-stat-unit">×</span></span>
-            <span class="why-stat-label">Lower cost than a single shoot day</span>
-          </div>
-          <div class="why-stat">
-            <span class="why-stat-num">48<span class="why-stat-unit">h</span></span>
-            <span class="why-stat-label">From brief to delivery</span>
-          </div>
-          <div class="why-stat">
-            <span class="why-stat-num">∞</span>
-            <span class="why-stat-label">Variations on demand</span>
-          </div>
-          <div class="why-stat">
-            <span class="why-stat-num">0</span>
-            <span class="why-stat-label">Shoot days, casting calls, reshoots</span>
-          </div>
-        </div>
-
-        <div class="why-compare">
-          <div class="why-col why-col-old">
-            <div class="why-col-head">
-              <span class="why-col-tag">Traditional shoot</span>
-              <h3>The old way</h3>
-            </div>
-            <ul>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></i>
-                <span>Budget</span><strong>$3k to $15k per day</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></i>
-                <span>Turnaround</span><strong>2 to 4 weeks</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></i>
-                <span>Iterations</span><strong>Costs another shoot</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>
-                <span>Casting</span><strong>Agencies, scheduling, retainers</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></i>
-                <span>Locations</span><strong>Travel, permits, weather</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></i>
-                <span>Brand safety</span><strong>Edits = more billable hours</strong>
-              </li>
+        <div class="pack-track">
+          <button class="tier pack-card" type="button" data-open="hyper_motion">
+            <span class="tier-name">Short-form motion</span>
+            <div class="tier-price"><span class="pack-from" data-price-from="mode:hyper_motion"></span><span class="tier-price-cur">$</span><span data-price-base="mode:hyper_motion"></span></div>
+            <p class="tier-price-note">Per finished film</p>
+            <p class="tier-desc">Hyper Motion and Wild Card looks that stop the scroll.</p>
+            <ul class="tier-features">
+              <li>One 15 second film</li>
+              <li>Hyper Motion and Wild Card styles</li>
+              <li>Delivered in about 5 minutes</li>
             </ul>
-            <div class="why-col-foot">
-              <span>Total per campaign</span>
-              <strong>$50k+, 3 to 6 weeks</strong>
-            </div>
-          </div>
-          <div class="why-col why-col-new">
-            <span class="why-col-winner" aria-hidden="true">
-              <span class="why-col-winner-dot"></span>
-              Recommended
-            </span>
-            <div class="why-col-head">
-              <span class="why-col-tag">Hexa AI</span>
-              <h3>The new standard</h3>
-            </div>
-            <ul>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></i>
-                <span>Budget</span><strong>A fraction of a shoot day</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></i>
-                <span>Turnaround</span><strong>48 hours, brief to delivery</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></i>
-                <span>Iterations</span><strong>Unlimited, on demand</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>
-                <span>Casting</span><strong>Any look, any vibe, instantly</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></i>
-                <span>Locations</span><strong>Paris, Tokyo, studio. Same prompt.</strong>
-              </li>
-              <li>
-                <i class="why-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></i>
-                <span>Brand safety</span><strong>Pixel-controlled, every frame</strong>
-              </li>
+            <span class="pack-cta">Create →</span>
+          </button>
+          <button class="tier pack-card" type="button" data-open="photoshoot">
+            <span class="tier-name">Product photoshoot</span>
+            <div class="tier-price"><span class="pack-from" data-price-from="photoshoot"></span><span class="tier-price-cur">$</span><span data-price-base="photoshoot"></span></div>
+            <p class="tier-price-note">Flat rate, ten images</p>
+            <p class="tier-desc">Ten brand-quality images of your product.</p>
+            <ul class="tier-features">
+              <li>Ten finished images</li>
+              <li>One flat rate, no per-image fees</li>
+              <li>Delivered in about 2 minutes</li>
             </ul>
-            <div class="why-col-foot why-col-foot-win">
-              <span>Total per campaign</span>
-              <strong>From day one. 48&nbsp;hours.</strong>
-            </div>
-          </div>
+            <span class="pack-cta">Create →</span>
+          </button>
+          <button class="tier tier-featured pack-card" type="button" data-open="ugc">
+            <span class="tier-badge"><span class="tier-badge-dot"></span>Most popular</span>
+            <span class="tier-name">Creator video</span>
+            <div class="tier-price"><span class="pack-from" data-price-from="mode:ugc"></span><span class="tier-price-cur">$</span><span data-price-base="mode:ugc"></span></div>
+            <p class="tier-price-note">Per finished film</p>
+            <p class="tier-desc">UGC, review, unboxing, tutorial and try-on, made to convert.</p>
+            <ul class="tier-features">
+              <li>UGC, review, unboxing, tutorial and try-on</li>
+              <li>Up to 2:00 as one continuous film</li>
+              <li>+<span data-price-extra-n></span> per extra 15 seconds</li>
+              <li>Delivered in about 5 minutes</li>
+            </ul>
+            <span class="pack-cta">Create →</span>
+          </button>
+          <button class="tier pack-card" type="button" data-open="cinematic">
+            <span class="tier-name">Premium spot</span>
+            <div class="tier-price"><span class="pack-from" data-price-from="cinematic"></span><span class="tier-price-cur">$</span><span data-price-base="cinematic"></span></div>
+            <p class="tier-price-note">Per finished film</p>
+            <p class="tier-desc">TV Spot, Cinematic and Pro Try-On, at the highest fidelity.</p>
+            <ul class="tier-features">
+              <li>One 15 second film</li>
+              <li>TV Spot, Cinematic and Pro Try-On looks</li>
+              <li>Delivered in about 7 minutes</li>
+            </ul>
+            <span class="pack-cta">Create →</span>
+          </button>
         </div>
+
+        <p class="price-band-note">Videos are 15 seconds base. Longer runs render as one continuous film, <strong data-price-extra></strong> per extra 15 seconds.</p>
+
+        <p class="tiers-trust">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Secure checkout by Stripe. Cards and Apple Pay. You are never charged for work we do not deliver.
+        </p>
       </div>
     </section>
 
-    <section id="contact" class="contact">
-      <div class="contact-inner">
-        <h2 class="contact-title">Ready to ship faster?</h2>
-        <p class="contact-sub">Pick a slot, tell us about your product. We'll send a sample reel within 48 hours.</p>
-        <div class="contact-actions">
-          <a class="btn btn-primary btn-lg" href="https://cal.com/hexaiagency" target="_blank" rel="noopener">Book a call now</a>
-          <a class="btn btn-ghost btn-lg" href="mailto:hello@hexaaiagency.com?subject=Hexa%20AI%20Project%20Inquiry">hello@hexaaiagency.com</a>
-        </div>
+    <section id="faq" class="faq">
+      <div class="c-head c-head-center" data-reveal>
+        <p class="c-kicker">FAQ</p>
+        <h2 class="c-display c-display-l">Questions, answered.</h2>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>What does one video cost?</summary>
+          <p class="faq-a">Every format has one clear price, from $12 for short-form motion to $29 for a premium spot. A 15-second video is the base; each extra 15 seconds adds $12. The exact total shows before you pay, always.</p>
+        </details>
+        <details class="faq-item">
+          <summary>How real does it look?</summary>
+          <p class="faq-a">That is the whole point. Every order runs through our own tuned pipeline, so the output is built to pass as a real shoot instead of looking AI-generated.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Do I need to know how to prompt?</summary>
+          <p class="faq-a">No. Pick a format and a look; the brief is already written and tested. You add your product, everything else is handled.</p>
+        </details>
+        <details class="faq-item">
+          <summary>How fast is delivery?</summary>
+          <p class="faq-a">Most orders finish in minutes and you can watch them build live on the order page. Longer films take a little more.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I get longer than 15 seconds?</summary>
+          <p class="faq-a">Yes, up to 2 minutes. Longer runs are delivered as one continuous film: same creator, same scene, one storyboard, so it cuts together like a single take.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Do I own the content?</summary>
+          <p class="faq-a">Yes. You get full usage rights for paid ads and organic content, on every platform.</p>
+        </details>
+        <details class="faq-item">
+          <summary>What if something goes wrong?</summary>
+          <p class="faq-a">You are never charged for work we do not deliver, and our refund policy covers the rest. Reply to any order email and we make it right.</p>
+        </details>
+        <details class="faq-item">
+          <summary>No product link?</summary>
+          <p class="faq-a">No problem. Start with photos or a plain-language description and we build from that.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- ───── Closer ───── -->
+    <section class="c-closer">
+      <div class="c-closer-bg" aria-hidden="true"></div>
+      <div class="c-wrap c-closer-inner">
+        <h2 class="c-display c-display-l">Your product is ready.<span class="hl-line">Your film isn't. Yet.</span></h2>
+        <button class="closer-cta" type="button" id="closer-cta">Start with your link</button>
+        <p class="c-closer-tc" aria-hidden="true">00:00 <span class="c-closer-arrow">→</span> 02:00</p>
       </div>
     </section>
   </main>
 
+  <div class="float-cta" id="float-cta">
+    <a class="float-cta-link" href="#composer">Start your film
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <button class="float-cta-close" type="button" aria-label="Dismiss">&times;</button>
+  </div>
+
   <footer class="footer">
     <span>© <span id="year"></span> Hexa AI</span>
     <span class="footer-sep" aria-hidden="true">·</span>
-    <a href="mailto:hello@hexaaiagency.com">hello@hexaaiagency.com</a>
+    <a href="mailto:hello@madebyhexa.co">hello@madebyhexa.co</a>
     <span class="footer-sep" aria-hidden="true">·</span>
-    <a href="https://www.hexaaiagency.com" target="_blank" rel="noopener">hexaaiagency.com</a>
+    <a href="privacy.html">Privacy</a>
     <span class="footer-sep" aria-hidden="true">·</span>
-    <a href="nsfw.html" class="footer-mature">X-Mode · 18+</a>
+    <a href="terms.html">Terms</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="refund.html">Refunds</a>
   </footer>
+
+  <!-- ───── Configurator drawer ───── -->
+  <div class="config-overlay" id="config-overlay" hidden>
+    <!-- Peek stage: the moment between pasting a link and choosing a style -->
+    <div class="peek-stage" id="peek-stage" hidden aria-live="polite">
+      <div class="peek-card" id="peek-card">
+        <div class="peek-glow" aria-hidden="true"></div>
+        <div class="peek-frame">
+          <div class="peek-scan" aria-hidden="true"></div>
+          <img class="peek-img" id="peek-img" alt="" hidden />
+          <span class="peek-monogram" id="peek-monogram" hidden></span>
+          <span class="peek-host" id="peek-host"></span>
+        </div>
+        <p class="peek-eyebrow" id="peek-eyebrow">Hexa Studio</p>
+        <p class="peek-label" id="peek-label">Reading your page</p>
+        <p class="peek-title" id="peek-title" hidden></p>
+        <p class="peek-price" id="peek-price" hidden></p>
+      </div>
+    </div>
+
+    <section class="config" role="dialog" aria-modal="true" aria-labelledby="config-title">
+      <header class="config-head">
+        <div>
+          <p class="config-kicker" id="config-kicker"></p>
+          <h2 id="config-title"></h2>
+          <div class="product-chip" id="product-chip" hidden>
+            <img id="product-chip-img" alt="" hidden />
+            <span class="product-chip-text">
+              <strong id="product-chip-name"></strong>
+              <em id="product-chip-site"></em>
+            </span>
+          </div>
+        </div>
+        <button class="config-close" type="button" aria-label="Close">&times;</button>
+      </header>
+
+      <div class="config-body" id="config-body"><!-- rendered by studio.js --></div>
+
+      <footer class="config-foot">
+        <div class="config-total">
+          <span class="config-total-label" id="config-total-label">Total</span>
+          <span class="config-total-price" id="config-price">$0</span>
+          <span class="config-total-eta" id="config-eta"></span>
+          <span class="config-summary" id="config-summary" hidden></span>
+          <ul class="config-trust" aria-label="What every order includes">
+            <li>Commercial use</li>
+            <li>No watermark</li>
+            <li>Ready to post</li>
+          </ul>
+        </div>
+        <div class="config-act">
+          <p class="config-hint" id="config-hint" hidden></p>
+          <button class="config-submit" type="button" id="config-submit">Create</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- Examples viewer: style / mode / hook / reel tiles open real footage here -->
+  <div class="viewer-overlay" id="viewer-overlay" hidden>
+    <div class="viewer" role="dialog" aria-modal="true" aria-label="Examples">
+      <button class="viewer-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+      </button>
+      <div class="viewer-stage">
+        <video id="viewer-video" controls playsinline preload="auto"></video>
+        <img id="viewer-image" alt="" hidden />
+        <div class="viewer-spin" id="viewer-spin" hidden aria-hidden="true"><i></i></div>
+        <button class="viewer-nav viewer-prev" type="button" aria-label="Previous example" hidden>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="viewer-nav viewer-next" type="button" aria-label="Next example" hidden>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <aside class="viewer-side">
+        <p class="viewer-kicker" id="viewer-kicker">Examples</p>
+        <h3 class="viewer-title" id="viewer-title"></h3>
+        <p class="viewer-tag" id="viewer-tag"></p>
+        <div class="viewer-strip" id="viewer-strip" aria-label="More examples"></div>
+        <button class="viewer-cta" id="viewer-cta" type="button"></button>
+      </aside>
+    </div>
+  </div>
 
   <!-- Lightbox modal -->
   <dialog id="lightbox" class="lightbox" aria-label="Video player">
@@ -428,6 +639,11 @@
     </div>
   </dialog>
 
+  <script src="/vendor/supabase.js"></script>
+  <script src="auth.js"></script>
+  <script src="nav-auth.js"></script>
+  <script src="studio.js"></script>
+  <script src="quiz.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

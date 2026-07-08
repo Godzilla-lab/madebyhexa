@@ -1,0 +1,57 @@
+{
+  "display_name": "Soul Cinematic",
+  "job_type": "soul_cinematic",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "16:9",
+        "9:16",
+        "4:3",
+        "3:4",
+        "3:2",
+        "2:3",
+        "21:9"
+      ]
+    },
+    {
+      "name": "custom_reference_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "quality",
+      "type": "string",
+      "default": "2k",
+      "required": false,
+      "enum": [
+        "1.5k",
+        "2k"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.image_references) <= 1",
+      "message": "at most one image reference is allowed"
+    }
+  ],
+  "type": "image"
+}

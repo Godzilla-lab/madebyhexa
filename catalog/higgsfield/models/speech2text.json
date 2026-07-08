@@ -1,0 +1,14 @@
+{
+  "display_name": "Speech to Text",
+  "job_type": "speech2text",
+  "params": [
+    {
+      "name": "audio_references",
+      "type": "array",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "data"
+}

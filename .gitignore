@@ -19,3 +19,20 @@ Thumbs.db
 # Build/log noise
 *.log
 npm-debug.log*
+
+# Outreach working data (scraped contacts/comments — never publish)
+leads/
+comments/
+transcripts/
+
+# Internal research docs (keep local; repo visibility unverified)
+COMPETITORS.md
+HIGGSFIELD-YOUTUBE-RESEARCH.md
+MADEBYHEXA-ASSESSMENT.md
+MARKET-AND-FUNDING-ANALYSIS.md
+REVIEW-TEMPLATES.md
+WINNING-ADS.md
+
+# Loose test renders
+Order.mp4
+Order_16s.mp4

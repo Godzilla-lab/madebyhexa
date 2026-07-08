@@ -1,0 +1,26 @@
+{
+  "display_name": "Nano Banana Pro",
+  "job_type": "nano_banana_2_skin_enhancer",
+  "params": [
+    {
+      "name": "folder_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "preset_id",
+      "type": "string",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

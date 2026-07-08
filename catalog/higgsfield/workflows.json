@@ -1,0 +1,92 @@
+[
+  {
+    "display_name": "Cinematic Studio 2.5",
+    "job_type": "cinematic_studio_2_5",
+    "type": "image"
+  },
+  {
+    "display_name": "Cinematic Studio Image",
+    "job_type": "cinematic_studio_image",
+    "type": "image"
+  },
+  {
+    "display_name": "Cinematic Studio Soul Cast",
+    "job_type": "cinematic_studio_soul_cast",
+    "type": "image"
+  },
+  {
+    "display_name": "Cinematic Studio Soul Location",
+    "job_type": "cinematic_studio_soul_location",
+    "type": "image"
+  },
+  {
+    "display_name": "Image Decompose",
+    "job_type": "image_decompose",
+    "type": "image"
+  },
+  {
+    "display_name": "MS Image",
+    "job_type": "ms_image",
+    "type": "image"
+  },
+  {
+    "display_name": "Marketing Studio Image",
+    "job_type": "marketing_studio_image",
+    "type": "image"
+  },
+  {
+    "display_name": "soul_cinema_studio",
+    "job_type": "soul_cinema_studio",
+    "type": "image"
+  },
+  {
+    "display_name": "Cinematic Studio 3.0",
+    "job_type": "cinematic_studio_3_0",
+    "type": "video"
+  },
+  {
+    "display_name": "Cinematic Studio Video",
+    "job_type": "cinematic_studio_video",
+    "type": "video"
+  },
+  {
+    "display_name": "Cinematic Studio Video 3.5",
+    "job_type": "cinematic_studio_video_3_5",
+    "type": "video"
+  },
+  {
+    "display_name": "Cinematic Studio Video V2",
+    "job_type": "cinematic_studio_video_v2",
+    "type": "video"
+  },
+  {
+    "display_name": "Draw To Video",
+    "job_type": "draw_to_video",
+    "type": "video"
+  },
+  {
+    "display_name": "Kling 3.0 Motion Control",
+    "job_type": "kling3_0_motion_control",
+    "type": "video"
+  },
+  {
+    "display_name": "Marketing Studio Video",
+    "job_type": "marketing_studio_video",
+    "type": "video"
+  },
+  {
+    "display_name": "Reframe",
+    "job_type": "reframe",
+    "type": "video"
+  },
+  {
+    "display_name": "dubbing",
+    "job_type": "dubbing",
+    "type": "video"
+  },
+  {
+    "display_name": "voice_change",
+    "job_type": "voice_change",
+    "type": "video"
+  }
+]

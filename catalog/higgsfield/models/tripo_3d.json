@@ -1,0 +1,64 @@
+{
+  "display_name": "Text to 3D",
+  "job_type": "tripo_3d",
+  "params": [
+    {
+      "name": "auto_size",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "face_limit",
+      "type": "integer|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "geometry_quality",
+      "type": "string",
+      "default": "standard",
+      "required": false,
+      "enum": [
+        "standard",
+        "detailed"
+      ]
+    },
+    {
+      "name": "negative_prompt",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "pbr",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "texture",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "texture_quality",
+      "type": "string",
+      "default": "standard",
+      "required": false,
+      "enum": [
+        "standard",
+        "detailed"
+      ]
+    }
+  ],
+  "rules": [],
+  "type": "3d"
+}

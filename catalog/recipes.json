@@ -1,0 +1,114 @@
+{
+  "_readme": "Hexa Studio brain: per-mode optimization recipes. Every order passes through a recipe before touching an engine. The 'brain' field is the instruction block for the rewriting model (Claude) that turns raw customer input into the final prompt; 'prompt_template' is the skeleton it fills; 'style' rules are non-negotiable and appended to every prompt.",
+
+  "shared_style": [
+    "Hyper-real above all: natural skin texture, believable hands, real fabric behavior, true-to-life lighting falloff.",
+    "Avoid AI gloss: no plastic skin, no oversaturated color, no floating products, no warped logos or text.",
+    "Product fidelity is sacred: shape, color, label, and logo must match the reference images exactly.",
+    "Casual imperfection sells: slight handheld movement, natural framing, ambient sound where audio is on.",
+    "Never invent claims, prices, or review quotes about the product. Visual storytelling only."
+  ],
+
+  "brain_global": "You are the creative director for a customer's order. INPUTS: product facts (from link research, photos, or description), the mode, and the customer's selections. JOB: (1) If a link was given, use the researched title, imagery, and page copy to ground every visual detail. (2) If only photos were given, describe exactly what is visible; do not guess unseen sides. (3) If only a description was given, expand it into concrete visual facts (material, finish, size in hand, where it lives) staying conservative on anything unstated. (4) Rewrite everything into ONE production-grade prompt following the mode template. Customer wording is intent, not copy: fix vagueness, drop instructions the engine cannot honor, keep any concrete visual requests. (5) Choose what is unspecified (scene time of day, wardrobe vibe) to flatter the product's likely buyer. Output only the final prompt.",
+
+  "recipes": {
+    "ugc": {
+      "engine": "workflow:marketing_studio_video",
+      "params": { "mode": "ugc", "duration": 15, "resolution": "720p", "generate_audio": true },
+      "uses": ["avatar", "hook", "setting", "web_product", "aspect"],
+      "prompt_template": "{avatar_name} films a casual selfie-style video in {setting_name}. Opening beat: {hook_prompt} Then a natural pivot to {product_summary}: they show it close to camera, turning it so the label stays sharp, talking to the lens like a friend. Real UGC energy: phone-camera look, imperfect framing, genuine reactions.",
+      "brain": "Keep the hook beat EXACTLY as written in the hook library; it is choreography, not inspiration. Blend product handling into the hook aftermath so the pivot feels earned, not spliced."
+    },
+    "product_review": {
+      "engine": "workflow:marketing_studio_video",
+      "params": { "mode": "ugc", "duration": 15, "resolution": "720p", "generate_audio": true },
+      "uses": ["avatar", "hook", "setting", "web_product", "aspect"],
+      "prompt_template": "{avatar_name} gives an honest first-impressions review of {product_summary} in {setting_name}. {hook_prompt} They inspect it closely, point out one tactile detail, and give a verdict with a nod. Tone: measured, credible, zero infomercial energy.",
+      "brain": "Reviews live on credibility: one concrete tactile observation (weight, texture, click, seal) beats three adjectives. No superlatives."
+    },
+    "unboxing": {
+      "engine": "workflow:marketing_studio_video",
+      "params": { "mode": "ugc", "duration": 15, "resolution": "720p", "generate_audio": true },
+      "uses": ["avatar", "setting", "web_product", "aspect"],
+      "prompt_template": "{avatar_name} unboxes {product_summary} in {setting_name}. Hands enter frame with the sealed package, a satisfying open, tissue or wrap pulled back, the product lifted into soft light with a genuine reaction. Close on the label. ASMR-adjacent sound design.",
+      "brain": "The reveal is the whole video: pace it. Package exterior first beat, reveal at the midpoint, product hero in the final seconds."
+    },
+    "tutorial": {
+      "engine": "workflow:marketing_studio_video",
+      "params": { "mode": "ugc", "duration": 15, "resolution": "720p", "generate_audio": true },
+      "uses": ["avatar", "setting", "web_product", "aspect"],
+      "prompt_template": "{avatar_name} shows how to use {product_summary} in {setting_name}, three quick steps, each shown not told: setup, use, result. Hands-focused inserts between face shots. Ends on the result plus the product label in frame.",
+      "brain": "Derive the three steps from what the product actually does (from research). If usage is unclear, default to: prepare, apply or use, admire result."
+    },
+    "ugc_try_on": {
+      "engine": "workflow:marketing_studio_video",
+      "params": { "mode": "ugc", "duration": 15, "resolution": "720p", "generate_audio": true },
+      "uses": ["avatar", "setting", "web_product", "aspect"],
+      "prompt_template": "{avatar_name} tries on {product_summary} in {setting_name}, mirror-check energy: quick spin, fit check from two angles, honest reaction to camera. Fabric moves naturally; fit looks true to size.",
+      "brain": "Only for wearables. Confirm from research what category (apparel, eyewear, jewelry, footwear) and stage the try-on beats accordingly."
+    },
+    "pro_try_on": {
+      "engine": "workflow:marketing_studio_video",
+      "params": { "mode": "ugc", "duration": 15, "resolution": "1080p", "generate_audio": false },
+      "uses": ["avatar", "web_product", "aspect"],
+      "prompt_template": "Editorial fashion film: {avatar_name} wears {product_summary}. Studio seamless or minimal architectural space, controlled lighting, deliberate slow movement, fabric and material rendered with catalog fidelity. Three looks: full length, three-quarter, detail.",
+      "brain": "This is the premium tier: lighting language matters (soft key, controlled spill, clean shadow). No lifestyle clutter."
+    },
+    "tv_spot": {
+      "engine": "workflow:cinematic_studio_video_3_5",
+      "params": { "duration": 15, "resolution": "1080p", "generate_audio": true, "enhance_prompt": false },
+      "uses": ["web_product", "aspect"],
+      "prompt_template": "Broadcast-grade product commercial for {product_summary}. Confident pacing: establishing mood shot, product introduced in motion, macro detail pass over material and label, final hero frame with negative space for a logo. Premium commercial lighting.",
+      "brain": "Pick camera_style, color_grading, and light_scheme from the cinematic enums to match the product's category (e.g. tech: cold_steel plus silent_machine; beauty: bleached_warm plus intimate_observer). State them in params, not prose."
+    },
+    "hyper_motion": {
+      "engine": "seedance_2_0",
+      "params": { "duration": 5, "resolution": "720p", "generate_audio": true, "genre": "epic" },
+      "uses": ["web_product", "aspect"],
+      "prompt_template": "Impossible camera move around {product_summary}: a single continuous shot that orbits, dives, and threads through the scene, physics-defying but photoreal, speed ramps on the beats. The product stays tack sharp and true to reference while the world blurs with motion.",
+      "brain": "Energy piece: one location, one continuous move, maximum kinetic contrast between static product and moving camera."
+    },
+    "wild_card": {
+      "engine": "seedance_2_0",
+      "params": { "duration": 5, "resolution": "720p", "generate_audio": true },
+      "uses": ["web_product", "aspect"],
+      "prompt_template": "An unexpected, scroll-stopping concept for {product_summary}: surreal but coherent staging that makes the product the punchline of a visual idea. Photoreal execution, one twist, no chaos for its own sake.",
+      "brain": "Propose ONE clear twist rooted in the product's function or name. Weird but legible beats random."
+    },
+    "auto": {
+      "engine": "workflow:marketing_studio_video",
+      "params": { "mode": "ugc", "duration": 15, "resolution": "720p", "generate_audio": true },
+      "uses": ["web_product", "aspect"],
+      "prompt_template": "",
+      "brain": "Customer delegated the creative. From research, pick the mode this product would convert best in (default ugc; apparel: ugc_try_on; premium or design-led: tv_spot) and then apply THAT recipe in full, including its engine and params."
+    },
+    "photoshoot": {
+      "engine": "product-photoshoot",
+      "params": { "count": 10 },
+      "uses": ["web_product", "mode", "aspect"],
+      "prompt_template": "{product_summary}, {shoot_mode} treatment. Grounded compositions, correct scale, physically plausible contact shadows, materials rendered true to reference.",
+      "brain": "Vary the ten frames across: hero on clean ground, lifestyle context, macro material detail, in-hand scale shot, elevated angle. One art direction, ten distinct compositions. Valid modes: product_shot, moodboard_pin, hero_banner, social_carousel, ad_creative_pack, virtual_model_tryout, lifestyle_scene, closeup_product_with_person, conceptual_product, restyle. Before generating, run the CLI with --enhance-only to get the backend-enhanced prompts for free, then keep or refine them."
+    },
+    "adpack": {
+      "engine": "marketing-studio:dtc-ads",
+      "params": {},
+      "uses": ["web_product", "formats"],
+      "prompt_template": "{product_summary} rendered for the {format_name} ad format. Clean typographic hierarchy, brand-consistent color pulled from the product, retail-ready polish.",
+      "brain": "One generation per selected format id. Keep claim language generic (quality, feel, design) unless the customer supplied specific claims."
+    },
+    "cinematic": {
+      "engine": "workflow:cinematic_studio_video_3_5",
+      "params": { "duration": 15, "resolution": "1080p", "generate_audio": true },
+      "uses": ["web_product", "camera", "grade", "light", "aspect"],
+      "prompt_template": "Cinematic product film for {product_summary}. The customer chose the look: honor it precisely. Build a simple three-beat arc: arrival, examination, hero.",
+      "brain": "camera_style={camera}, color_grading={grade}, light_scheme={light} go in params verbatim from the order. The prompt handles story only; the look is parameterized."
+    },
+    "soul": {
+      "engine": "soul-id",
+      "params": { "trainer": "soul-2" },
+      "uses": ["soulname", "photos"],
+      "prompt_template": "",
+      "brain": "Quality-gate the references before training: 5 to 20 images, one consistent person or look, sharp, varied angles, no other faces. Reject and request better references rather than train a weak Soul."
+    }
+  }
+}

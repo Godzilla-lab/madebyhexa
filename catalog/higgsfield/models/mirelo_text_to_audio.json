@@ -1,0 +1,20 @@
+{
+  "display_name": "Mirelo Text to Audio",
+  "job_type": "mirelo_text_to_audio",
+  "params": [
+    {
+      "name": "duration",
+      "type": "number",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "audio"
+}

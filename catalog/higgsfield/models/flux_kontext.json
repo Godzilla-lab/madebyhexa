@@ -1,0 +1,38 @@
+{
+  "display_name": "Flux Kontext",
+  "job_type": "flux_kontext",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "4:3",
+        "3:4",
+        "16:9",
+        "9:16"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.image_references) <= 4",
+      "message": "at most 4 image_references are allowed"
+    }
+  ],
+  "type": "image"
+}

@@ -1,0 +1,145 @@
+/* ═════ "Watch your product come alive" quiz · homepage guided entry ═════ */
+
+.quiz-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(122, 13, 34, 0.5), transparent 55%),
+    var(--bg-0, #07050a);
+  animation: quiz-fade 260ms var(--ease) both;
+}
+.quiz-overlay.is-open { display: flex; }
+@keyframes quiz-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.quiz-progress { height: 3px; background: rgba(255, 255, 255, 0.08); flex: 0 0 auto; }
+.quiz-progress-fill {
+  height: 100%;
+  width: 25%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+  border-radius: 0 3px 3px 0;
+  transition: width 420ms var(--ease);
+}
+
+.quiz-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  flex: 0 0 auto;
+}
+.quiz-top .brand { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--text); text-decoration: none; }
+.quiz-top .brand img { width: 26px; height: 26px; border-radius: 7px; }
+.brand-dot { color: var(--accent); }
+.quiz-close {
+  background: none; border: none; color: var(--text-mute); font-size: 26px; line-height: 1;
+  cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: color 160ms var(--ease), background 160ms var(--ease);
+}
+.quiz-close:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+
+.quiz-body { flex: 1 1 auto; display: grid; place-items: center; padding: 12px 22px 40px; overflow-y: auto; }
+.quiz-step { width: 100%; max-width: 720px; text-align: center; animation: quiz-slide 380ms var(--ease) both; }
+@keyframes quiz-slide { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.quiz-count { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-soft); margin: 0 0 10px; }
+.quiz-q { font-family: var(--font-display); font-size: clamp(26px, 4.4vw, 42px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; margin: 0 0 8px; }
+.quiz-sub { color: var(--text-mute); font-size: 15px; margin: 0 auto 28px; max-width: 460px; }
+
+/* ── tile grids (category + format) ── */
+.quiz-tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.quiz-tiles.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.quiz-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 22px 14px; min-height: 116px;
+  border-radius: var(--tile-radius);
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+  color: var(--text); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease), background 160ms var(--ease);
+}
+.quiz-tile:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: var(--glow-accent); background: linear-gradient(180deg, rgba(255, 77, 109, 0.1), rgba(255, 255, 255, 0.02)); }
+.quiz-tile .emoji { font-size: 30px; line-height: 1; }
+
+/* ── vibe tiles with looping motion previews ── */
+.quiz-vibes { display: grid; gap: 14px; grid-template-columns: repeat(2, 1fr); }
+.quiz-vibe {
+  position: relative; overflow: hidden; border-radius: var(--tile-radius);
+  border: 1px solid var(--border-strong); cursor: pointer; aspect-ratio: 16 / 10;
+  background: var(--surface-media);
+  transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+.quiz-vibe:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: var(--glow-accent); }
+.quiz-vibe video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.quiz-vibe .shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(7, 5, 10, 0.85) 100%); }
+.quiz-vibe .name { position: absolute; left: 14px; bottom: 12px; font-family: var(--font-display); font-weight: 700; font-size: 17px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6); }
+
+/* ── paste-link step ── */
+.quiz-linkrow { display: flex; gap: 10px; max-width: 540px; margin: 0 auto; }
+.quiz-linkrow input {
+  flex: 1; padding: 15px 18px; border-radius: 14px; border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.4); color: var(--text); font-family: inherit; font-size: 16px;
+  transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.quiz-linkrow input::placeholder { color: rgba(255, 255, 255, 0.3); }
+.quiz-linkrow input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.18); }
+.quiz-linkrow button, .quiz-continue {
+  border: none; border-radius: 14px; padding: 15px 24px; cursor: pointer;
+  background: linear-gradient(92deg, var(--accent), var(--accent-deep)); color: #fff;
+  font-family: inherit; font-size: 15px; font-weight: 700; white-space: nowrap;
+  transition: transform 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.quiz-linkrow button:hover, .quiz-continue:hover { transform: translateY(-1px); box-shadow: var(--glow-accent-strong); }
+.quiz-linkrow button:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
+.quiz-sample { margin: 14px 0 0; font-size: 13px; color: var(--text-faint); }
+.quiz-sample button { background: none; border: none; color: var(--accent-soft); font-family: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; }
+
+/* ── product preview card (the "it grabbed my product" moment) ── */
+.quiz-peek {
+  display: none; margin: 22px auto 0; max-width: 420px; align-items: center; gap: 16px;
+  padding: 14px; border-radius: 16px; text-align: left;
+  border: 1px solid var(--border-strong); background: rgba(255, 255, 255, 0.03);
+  animation: quiz-slide 400ms var(--ease) both;
+}
+.quiz-peek.show { display: flex; }
+.quiz-peek img { width: 68px; height: 68px; border-radius: 12px; object-fit: cover; background: var(--surface-media); flex: 0 0 auto; }
+.quiz-peek .pk-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-soft); }
+.quiz-peek .pk-title { font-weight: 600; font-size: 15px; margin: 3px 0 0; }
+.quiz-peek .pk-host { font-size: 12.5px; color: var(--text-faint); margin: 2px 0 0; }
+.quiz-continue { margin-top: 22px; }
+
+/* ── generation state ── */
+.quiz-gen { text-align: center; }
+.quiz-gen-ring {
+  width: 62px; height: 62px; margin: 0 auto 22px; border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.12); border-top-color: var(--accent);
+  animation: quiz-spin 0.9s linear infinite;
+}
+@keyframes quiz-spin { to { transform: rotate(360deg); } }
+.quiz-gen .quiz-q { margin-bottom: 6px; }
+
+@media (max-width: 560px) {
+  .quiz-tiles.cols-3 { grid-template-columns: repeat(2, 1fr); }
+  .quiz-linkrow { flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quiz-overlay, .quiz-step, .quiz-peek { animation: none; }
+  .quiz-gen-ring { animation-duration: 2.4s; }
+}
+
+/* ── Composer hero entry button ── */
+.composer-quiz-entry {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-top: 18px; padding: 11px 18px;
+  border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  color: var(--text); font-family: inherit; font-size: 14px;
+  transition: transform 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.composer-quiz-entry:hover { transform: translateY(-1px); border-color: var(--accent); box-shadow: var(--glow-accent); }
+.composer-quiz-entry .cq-spark { font-size: 15px; }
+.composer-quiz-entry .cq-text strong { font-weight: 700; }
+.composer-quiz-entry .cq-arrow { color: var(--accent-soft); transition: transform 160ms var(--ease); }
+.composer-quiz-entry:hover .cq-arrow { transform: translateX(3px); }

@@ -1,0 +1,104 @@
+{
+  "display_name": "Clipify",
+  "job_type": "clipify",
+  "params": [
+    {
+      "name": "clip_aspect",
+      "type": "string",
+      "default": "9:16",
+      "required": false,
+      "enum": [
+        "9:16",
+        "1:1",
+        "16:9"
+      ]
+    },
+    {
+      "name": "clips_num",
+      "type": "integer",
+      "default": 10,
+      "required": false
+    },
+    {
+      "name": "max_height",
+      "type": "integer",
+      "default": 1080,
+      "required": false
+    },
+    {
+      "name": "segment_seconds",
+      "type": "integer",
+      "default": 10,
+      "required": false
+    },
+    {
+      "name": "subtitle_case",
+      "type": "string",
+      "default": "as-is",
+      "required": false,
+      "enum": [
+        "upper",
+        "lower",
+        "as-is"
+      ]
+    },
+    {
+      "name": "subtitle_font",
+      "type": "string",
+      "default": "notosans",
+      "required": false,
+      "enum": [
+        "notosans",
+        "notoserif",
+        "notosansdisplay",
+        "ibmplexsans",
+        "mplusrounded1c",
+        "bebasneue",
+        "archivoblack",
+        "unbounded",
+        "inter",
+        "montserrat",
+        "bangers",
+        "permanentmarker",
+        "playfairdisplay",
+        "caveat"
+      ]
+    },
+    {
+      "name": "subtitle_highlight_hex",
+      "type": "string",
+      "default": "#FFE84D",
+      "required": false
+    },
+    {
+      "name": "subtitle_position",
+      "type": "string",
+      "default": "bottom",
+      "required": false,
+      "enum": [
+        "bottom",
+        "center",
+        "top"
+      ]
+    },
+    {
+      "name": "track_face_crop",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "urls",
+      "type": "array",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.urls) == 1",
+      "message": "provide exactly one YouTube URL per Clipify job"
+    }
+  ],
+  "type": "video"
+}

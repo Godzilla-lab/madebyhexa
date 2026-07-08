@@ -1,0 +1,43 @@
+{
+  "display_name": "Seedream V5 Lite",
+  "job_type": "seedream_v5_lite",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "4:3",
+        "3:4",
+        "16:9",
+        "9:16"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "quality",
+      "type": "string",
+      "default": "basic",
+      "required": false,
+      "enum": [
+        "basic",
+        "high"
+      ]
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

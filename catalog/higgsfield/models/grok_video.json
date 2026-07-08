@@ -1,0 +1,37 @@
+{
+  "display_name": "Grok Video",
+  "job_type": "grok_video",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "16:9",
+        "9:16",
+        "1:1"
+      ]
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "start_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [],
+  "type": "video"
+}

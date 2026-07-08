@@ -1,0 +1,38 @@
+{
+  "display_name": "Nano Banana Pro",
+  "job_type": "nano_banana_2_shots",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "auto",
+      "required": false,
+      "enum": [
+        "auto",
+        "1:1",
+        "3:2",
+        "2:3",
+        "4:3",
+        "3:4",
+        "4:5",
+        "5:4",
+        "9:16",
+        "16:9",
+        "21:9"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.image_references) == 1",
+      "message": "'image_references' must contain exactly one image"
+    }
+  ],
+  "type": "image"
+}

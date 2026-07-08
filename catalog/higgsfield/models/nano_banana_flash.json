@@ -1,0 +1,49 @@
+{
+  "display_name": "Nano Banana 2",
+  "job_type": "nano_banana_flash",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "3:2",
+        "2:3",
+        "4:3",
+        "3:4",
+        "4:5",
+        "5:4",
+        "9:16",
+        "16:9",
+        "21:9"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "1k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k",
+        "4k"
+      ]
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

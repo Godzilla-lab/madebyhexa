@@ -1,0 +1,94 @@
+{
+  "cost_params": [
+    {
+      "name": "duration",
+      "type": "number|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "720p",
+      "required": false,
+      "enum": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    }
+  ],
+  "display_name": "Draw To Video",
+  "job_type": "draw_to_video",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "auto",
+      "required": false,
+      "enum": [
+        "auto",
+        "21:9",
+        "16:9",
+        "4:3",
+        "1:1",
+        "3:4",
+        "9:16"
+      ]
+    },
+    {
+      "name": "duration",
+      "type": "number|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "enhancer",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "generate_audio",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "ref_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "720p",
+      "required": false,
+      "enum": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    {
+      "name": "video",
+      "type": "object",
+      "default": null,
+      "required": true
+    }
+  ],
+  "type": "video"
+}

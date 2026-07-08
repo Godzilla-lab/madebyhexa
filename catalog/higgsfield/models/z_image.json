@@ -1,0 +1,27 @@
+{
+  "display_name": "Z Image",
+  "job_type": "z_image",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "4:3",
+        "3:4",
+        "16:9",
+        "9:16"
+      ]
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

@@ -1,0 +1,54 @@
+{
+  "display_name": "Bytedance Video Upscale",
+  "job_type": "bytedance_video_upscale",
+  "params": [
+    {
+      "name": "fps",
+      "type": "integer",
+      "default": 24,
+      "required": false
+    },
+    {
+      "name": "model_version",
+      "type": "string",
+      "default": "standard",
+      "required": false,
+      "enum": [
+        "standard",
+        "pro"
+      ]
+    },
+    {
+      "name": "preset",
+      "type": "string",
+      "default": "common",
+      "required": false,
+      "enum": [
+        "common",
+        "aigc",
+        "short_series",
+        "ugc",
+        "old_film"
+      ]
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "2k",
+      "required": false,
+      "enum": [
+        "1080p",
+        "2k",
+        "4k"
+      ]
+    },
+    {
+      "name": "video_references",
+      "type": "array",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "video"
+}

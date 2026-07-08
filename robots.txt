@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /nsfw.html
+Disallow: /assets/nsfw/
+Disallow: /intake.html
+Disallow: /order-confirmed.html
+Disallow: /thanks.html

@@ -1,0 +1,59 @@
+{
+  "display_name": "Google Veo 3.1 Lite",
+  "job_type": "veo3_1_lite",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "16:9",
+        "9:16",
+        "auto"
+      ]
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 8,
+      "required": false,
+      "enum": [
+        "4",
+        "6",
+        "8"
+      ]
+    },
+    {
+      "name": "end_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "generate_audio",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "start_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "params.start_image == null || params.end_image == null || params.duration == 8",
+      "message": "duration must be 8 when both start_image and end_image are set"
+    }
+  ],
+  "type": "video"
+}

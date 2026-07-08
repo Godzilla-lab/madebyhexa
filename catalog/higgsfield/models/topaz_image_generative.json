@@ -1,0 +1,92 @@
+{
+  "display_name": "Topaz",
+  "job_type": "topaz_image_generative",
+  "params": [
+    {
+      "name": "autoprompt",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "creativity",
+      "type": "integer",
+      "default": 1,
+      "required": false
+    },
+    {
+      "name": "denoise",
+      "type": "number",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "face_enhancement",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "face_enhancement_creativity",
+      "type": "number",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "face_enhancement_strength",
+      "type": "number",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "output_height",
+      "type": "integer",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "output_width",
+      "type": "integer",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": "",
+      "required": false
+    },
+    {
+      "name": "sharpen",
+      "type": "number",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "texture",
+      "type": "integer",
+      "default": 1,
+      "required": false
+    },
+    {
+      "name": "variant",
+      "type": "string",
+      "default": "Redefine",
+      "required": false,
+      "enum": [
+        "Standard MAX",
+        "Redefine",
+        "Recovery",
+        "Recovery V2"
+      ]
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

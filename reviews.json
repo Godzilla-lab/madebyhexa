@@ -1,0 +1,88 @@
+[
+  {
+    "name": "Confidential creator",
+    "role": "Creator client",
+    "quote": "I handed Hexa AI my content and stopped thinking about it. Real reach without the shoots or the studio. By month two it basically ran itself.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Sara Finance",
+    "role": "Finance & business creator",
+    "avatar": "assets/reviews/sara-finance.avif",
+    "quote": "I'd work with Hexa AI if you're somebody who gets ads made all the time.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Arie Scherson",
+    "role": "Ecommerce mentor",
+    "avatar": "assets/reviews/arie-scherson.avif",
+    "quote": "If you don't know how to make a good video creative, that's where Hexa AI will really help you out.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Alex Fedatoff",
+    "role": "Ecom coach",
+    "avatar": "assets/reviews/alex-fedatoff.avif",
+    "quote": "They deliver in minutes. If you don't have a video editor in house, this is the option I'd explore.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Beast of Ecom",
+    "role": "Dropshipping creator",
+    "avatar": "assets/reviews/beast-of-ecom.avif",
+    "quote": "The reason to use these guys is it saves you the time of creating bad ads, and most importantly it's affordable.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Jihun Park",
+    "role": "Ecommerce entrepreneur",
+    "avatar": "assets/reviews/jihun-park.avif",
+    "quote": "They have ads for literally every platform. I personally use UGC the most on my stores.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Kate Amanda",
+    "role": "Ecom creator",
+    "avatar": "assets/reviews/kate-amanda.avif",
+    "quote": "The more video you test, the better. Hexa AI is super quick with delivery, and my video had an awesome hook.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Ethan Dobbins",
+    "role": "Paid ads creator",
+    "avatar": "assets/reviews/ethan-dobbins.avif",
+    "quote": "They render a high-converting creative for you in minutes, it's insane. My favorite are the split-testing packages.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Hayden Bowles",
+    "role": "Ecommerce coach",
+    "quote": "I recommend Hexa to every single person in my paid program. Watching the film render in minutes is critical for testing speed.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "AC Hampton",
+    "role": "Paid ads strategist",
+    "avatar": "assets/reviews/ac-hampton.avif",
+    "quote": "One of my favorite places to order all of my high-converting creatives from is Hexa AI.",
+    "stars": 5,
+    "verified": true
+  },
+  {
+    "name": "Tanner Planes",
+    "role": "Dropshipping creator",
+    "avatar": "assets/reviews/tanner-planes.avif",
+    "quote": "One of the best places to get your dropshipping ads made.",
+    "stars": 5,
+    "verified": true
+  }
+]

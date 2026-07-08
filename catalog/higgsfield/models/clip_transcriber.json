@@ -1,0 +1,25 @@
+{
+  "display_name": "Clip Transcriber",
+  "job_type": "clip_transcriber",
+  "params": [
+    {
+      "name": "audio_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "clips_num",
+      "type": "integer",
+      "default": 10,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.audio_references) == 1",
+      "message": "exactly one audio_references entry is required"
+    }
+  ],
+  "type": "data"
+}

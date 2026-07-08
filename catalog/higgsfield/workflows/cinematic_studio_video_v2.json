@@ -1,0 +1,180 @@
+{
+  "cost_params": [
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "default": "std",
+      "required": false,
+      "enum": [
+        "pro",
+        "std"
+      ]
+    },
+    {
+      "name": "sound",
+      "type": "string",
+      "default": "on",
+      "required": false,
+      "enum": [
+        "on",
+        "off"
+      ]
+    }
+  ],
+  "display_name": "Cinematic Studio Video V2",
+  "job_type": "cinematic_studio_video_v2",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "1:1",
+        "4:3",
+        "3:4",
+        "16:9",
+        "9:16"
+      ]
+    },
+    {
+      "name": "batch_size",
+      "type": "integer",
+      "default": 1,
+      "required": false
+    },
+    {
+      "name": "cfg_scale",
+      "type": "number",
+      "default": 0.5,
+      "required": false
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false
+    },
+    {
+      "name": "end_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "folder_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "genre",
+      "type": "string",
+      "default": "auto",
+      "required": false,
+      "enum": [
+        "auto",
+        "action",
+        "horror",
+        "comedy",
+        "western",
+        "suspense",
+        "intimate",
+        "spectacle"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "kling_element_ids",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "default": "std",
+      "required": false,
+      "enum": [
+        "pro",
+        "std"
+      ]
+    },
+    {
+      "name": "multi_prompt",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "multi_shot_mode",
+      "type": "string",
+      "default": "custom",
+      "required": false,
+      "enum": [
+        "auto",
+        "custom"
+      ]
+    },
+    {
+      "name": "multi_shots",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "preset_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "sound",
+      "type": "string",
+      "default": "on",
+      "required": false,
+      "enum": [
+        "on",
+        "off"
+      ]
+    },
+    {
+      "name": "speedramp",
+      "type": "string",
+      "default": "auto",
+      "required": false,
+      "enum": [
+        "auto",
+        "custom",
+        "linear",
+        "slowmo",
+        "speedup",
+        "impact"
+      ]
+    },
+    {
+      "name": "start_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    }
+  ],
+  "type": "video"
+}

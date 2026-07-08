@@ -1,0 +1,58 @@
+{
+  "display_name": "Nano Banana Pro",
+  "job_type": "nano_banana_2",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "3:2",
+        "2:3",
+        "4:3",
+        "3:4",
+        "4:5",
+        "5:4",
+        "9:16",
+        "16:9",
+        "21:9"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "2k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k",
+        "4k"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "cel": "params.prompt != \"\" || size(params.image_references) > 0",
+      "message": "a non-empty prompt or at least one image reference is required"
+    },
+    {
+      "cel": "size(params.image_references) <= 14",
+      "message": "at most 14 image references are allowed"
+    }
+  ],
+  "type": "image"
+}

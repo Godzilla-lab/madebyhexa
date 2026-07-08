@@ -1,0 +1,296 @@
+[
+  {
+    "id": "18e9f327-b667-40f1-84d1-f234c67a4929",
+    "name": "Headline",
+    "type": "headline",
+    "priority": 3,
+    "media": null
+  },
+  {
+    "id": "c4c9ee3e-c161-4cc6-b401-77f122cd3c3c",
+    "name": "Special Offer",
+    "type": "headline",
+    "priority": 4,
+    "media": null
+  },
+  {
+    "id": "e961f13c-c96d-4504-bb70-77abeeaa9027",
+    "name": "Customer Quote",
+    "type": "headline",
+    "priority": 5,
+    "media": null
+  },
+  {
+    "id": "4b71d6d0-4a79-4241-8f3a-60bb766d1945",
+    "name": "Key Features",
+    "type": "headline",
+    "priority": 6,
+    "media": null
+  },
+  {
+    "id": "fd9b886c-8b4d-4e9a-aa4d-11b4a67456a5",
+    "name": "Benefits",
+    "type": "headline",
+    "priority": 7,
+    "media": null
+  },
+  {
+    "id": "30ab1615-9b6f-4d73-bf84-9436b0861cb4",
+    "name": "Social Proof",
+    "type": "headline",
+    "priority": 8,
+    "media": null
+  },
+  {
+    "id": "3f222376-f468-4ba7-a7b8-f76102c9af5f",
+    "name": "Why We're Different",
+    "type": "headline",
+    "priority": 9,
+    "media": null
+  },
+  {
+    "id": "ad65db31-3e4f-4aa9-99a4-0e00b994580e",
+    "name": "Then vs Now",
+    "type": "headline",
+    "priority": 10,
+    "media": null
+  },
+  {
+    "id": "80e37aad-f80d-468d-ab6f-b32562aaccc1",
+    "name": "Unexpected Twist",
+    "type": "headline",
+    "priority": 11,
+    "media": null
+  },
+  {
+    "id": "302922f4-8415-45af-affe-406b3fd0ebb3",
+    "name": "Media Mentions",
+    "type": "headline",
+    "priority": 12,
+    "media": null
+  },
+  {
+    "id": "c3884bf7-5d3b-460b-8815-81f82e5bc0fb",
+    "name": "Star Review",
+    "type": "headline",
+    "priority": 13,
+    "media": null
+  },
+  {
+    "id": "c7932132-dbe5-4806-a7cc-ee9bc5094367",
+    "name": "Product in Action",
+    "type": "headline",
+    "priority": 14,
+    "media": null
+  },
+  {
+    "id": "1a4cf715-4e32-4a26-ba66-bdfe1573cbaf",
+    "name": "Stat Surround",
+    "type": "headline",
+    "priority": 15,
+    "media": null
+  },
+  {
+    "id": "7a5f4059-e019-4862-ae82-c639fda59655",
+    "name": "Bundle Deal",
+    "type": "headline",
+    "priority": 16,
+    "media": null
+  },
+  {
+    "id": "9ba08f5b-5646-4735-8832-bd12c79de8c8",
+    "name": "Social Comment",
+    "type": "headline",
+    "priority": 17,
+    "media": null
+  },
+  {
+    "id": "c5012751-8b86-4e28-8b31-f86f36c62085",
+    "name": "Mystery Hook",
+    "type": "headline",
+    "priority": 18,
+    "media": null
+  },
+  {
+    "id": "eb75ceef-f0fc-416c-aea4-85ceed38b97c",
+    "name": "Trusted Review",
+    "type": "headline",
+    "priority": 19,
+    "media": null
+  },
+  {
+    "id": "3c2fee96-41f6-4fb0-bdbd-6a66e5b464b2",
+    "name": "Stat Surround",
+    "type": "headline",
+    "priority": 20,
+    "media": null
+  },
+  {
+    "id": "6cfbeb24-0fa1-4739-99dd-ba1fc14afd15",
+    "name": "Highlighted Hook",
+    "type": "headline",
+    "priority": 21,
+    "media": null
+  },
+  {
+    "id": "9f83c485-959d-4ea1-a2ff-7a4e7370dd62",
+    "name": "Magazine Style",
+    "type": "headline",
+    "priority": 22,
+    "media": null
+  },
+  {
+    "id": "a9f3b512-35e2-42c2-8981-3c57f0853ddd",
+    "name": "Reaction Quote",
+    "type": "headline",
+    "priority": 23,
+    "media": null
+  },
+  {
+    "id": "8050ddd7-60e6-45d6-9a33-50f6530f2a79",
+    "name": "Behind the Product",
+    "type": "headline",
+    "priority": 24,
+    "media": null
+  },
+  {
+    "id": "16edbd6e-453b-4dc6-9c02-740406a47083",
+    "name": "Personal Note",
+    "type": "headline",
+    "priority": 25,
+    "media": null
+  },
+  {
+    "id": "95026fac-f6d8-473c-bceb-4ff70325a16e",
+    "name": "Highlighted Comment",
+    "type": "headline",
+    "priority": 26,
+    "media": null
+  },
+  {
+    "id": "92710076-a082-489d-9976-74a30fbf0cbf",
+    "name": "Color Block",
+    "type": "headline",
+    "priority": 27,
+    "media": null
+  },
+  {
+    "id": "f100144f-e015-49f5-ac88-7641e29731d9",
+    "name": "Lifestyle with Numbers",
+    "type": "headline",
+    "priority": 28,
+    "media": null
+  },
+  {
+    "id": "cb2da9cc-f477-4fd3-b9d6-aa9cbfa14dcd",
+    "name": "Benefits Checklist",
+    "type": "headline",
+    "priority": 29,
+    "media": null
+  },
+  {
+    "id": "821b881b-b9c2-40ab-8364-0ee90c23eb90",
+    "name": "Callout Notes",
+    "type": "headline",
+    "priority": 30,
+    "media": null
+  },
+  {
+    "id": "7c3a2785-08e8-406f-b47a-35307276f1ab",
+    "name": "Trending Post",
+    "type": "headline",
+    "priority": 31,
+    "media": null
+  },
+  {
+    "id": "bccb652b-2352-4d91-b640-99cb19d61895",
+    "name": "Bold Statement",
+    "type": "headline",
+    "priority": 32,
+    "media": null
+  },
+  {
+    "id": "4ac40ba6-79a7-4004-a9e4-95012f8737d5",
+    "name": "Comparison Table",
+    "type": "headline",
+    "priority": 33,
+    "media": null
+  },
+  {
+    "id": "6d1aef3b-c814-474c-bb62-29bb40643aee",
+    "name": "Customer Story",
+    "type": "headline",
+    "priority": 34,
+    "media": null
+  },
+  {
+    "id": "ac333ce6-f86e-4ce1-9ffe-e75f48b3df53",
+    "name": "Press Screenshot",
+    "type": "headline",
+    "priority": 35,
+    "media": null
+  },
+  {
+    "id": "3462be30-d918-4602-992c-81298d0f31ab",
+    "name": "App Screenshot",
+    "type": "headline",
+    "priority": 36,
+    "media": null
+  },
+  {
+    "id": "b5fbe451-ef9b-494d-8460-df16dc31f9a9",
+    "name": "Product Spotlight",
+    "type": "headline",
+    "priority": 37,
+    "media": null
+  },
+  {
+    "id": "0e20e37e-6a34-4a36-bbd9-4d3cc79e8d50",
+    "name": "Whiteboard Explainer",
+    "type": "headline",
+    "priority": 38,
+    "media": null
+  },
+  {
+    "id": "cfb067f6-735a-46d8-a2f0-22e5a47b122e",
+    "name": "Hero Statement",
+    "type": "headline",
+    "priority": 39,
+    "media": null
+  },
+  {
+    "id": "50fa82ca-8a7e-4c8d-99dd-e1c3692a5787",
+    "name": "UGC Side-by-Side",
+    "type": "headline",
+    "priority": 40,
+    "media": null
+  },
+  {
+    "id": "01de1013-d33a-4c67-b658-799eac3aa11f",
+    "name": "Scroll Break",
+    "type": "headline",
+    "priority": 41,
+    "media": null
+  },
+  {
+    "id": "7200218e-d78e-492c-ae9b-a3a08af2b923",
+    "name": "Organic Post",
+    "type": "headline",
+    "priority": 42,
+    "media": null
+  },
+  {
+    "id": "0c20621b-b90a-42ca-a7dc-5217a94b3beb",
+    "name": "librarian",
+    "type": "headline",
+    "priority": 44,
+    "media": null
+  },
+  {
+    "id": "200cb3a0-6220-4d0c-b353-51443dae7e90",
+    "name": "picker",
+    "type": "headline",
+    "priority": 45,
+    "media": null
+  }
+]

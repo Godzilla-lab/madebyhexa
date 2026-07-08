@@ -1,0 +1,62 @@
+{
+  "cost_params": [
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "1k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k",
+        "4k"
+      ]
+    }
+  ],
+  "display_name": "Marketing Studio Image",
+  "job_type": "marketing_studio_image",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "auto",
+        "1:1",
+        "3:2",
+        "2:3",
+        "4:3",
+        "3:4",
+        "4:5",
+        "5:4",
+        "9:16",
+        "16:9",
+        "21:9"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "1k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k",
+        "4k"
+      ]
+    }
+  ],
+  "type": "image"
+}

@@ -1,0 +1,71 @@
+{
+  "cost_params": [
+    {
+      "name": "batch_size",
+      "type": "integer",
+      "default": 1,
+      "required": false
+    }
+  ],
+  "display_name": "soul_cinema_studio",
+  "job_type": "soul_cinema_studio",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "1:1",
+        "16:9",
+        "9:16",
+        "4:3",
+        "3:4",
+        "3:2",
+        "2:3",
+        "21:9"
+      ]
+    },
+    {
+      "name": "custom_reference_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "enhance_prompt",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "quality",
+      "type": "string",
+      "default": "2k",
+      "required": false,
+      "enum": [
+        "1.5k",
+        "2k"
+      ]
+    },
+    {
+      "name": "style_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    }
+  ],
+  "type": "image"
+}

@@ -1,0 +1,56 @@
+{
+  "display_name": "Kling O1 Image",
+  "job_type": "kling_omni_image",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "auto",
+        "16:9",
+        "9:16",
+        "4:3",
+        "3:4",
+        "3:2",
+        "2:3",
+        "21:9"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "1k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.image_references) <= 10",
+      "message": "at most 10 image_references are allowed"
+    },
+    {
+      "cel": "params.aspect_ratio != \"auto\" || size(params.image_references) > 0",
+      "message": "aspect_ratio 'auto' requires at least one image_reference"
+    }
+  ],
+  "type": "image"
+}

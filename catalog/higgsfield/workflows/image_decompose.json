@@ -1,0 +1,30 @@
+{
+  "cost_params": [],
+  "display_name": "Image Decompose",
+  "job_type": "image_decompose",
+  "params": [
+    {
+      "name": "folder_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "default": "granular",
+      "required": false,
+      "enum": [
+        "granular",
+        "standard"
+      ]
+    }
+  ],
+  "type": "image"
+}

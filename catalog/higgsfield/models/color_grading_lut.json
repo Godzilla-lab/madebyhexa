@@ -1,0 +1,19 @@
+{
+  "display_name": "Color Grading LUT",
+  "job_type": "color_grading_lut",
+  "params": [
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.image_references) == 2",
+      "message": "exactly two image_references are required (source and reference image)"
+    }
+  ],
+  "type": "data"
+}

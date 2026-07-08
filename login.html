@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Sign in · Hexa Studio</title>
+  <meta name="theme-color" content="#0a0608" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
+  <link rel="apple-touch-icon" href="assets/brand/hexa-logo.avif" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .auth-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+    .auth-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 28px;
+      gap: 20px;
+    }
+    .auth-panel .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+    .auth-panel .brand img { width: 30px; height: 30px; border-radius: 8px; }
+    .brand-dot { color: var(--accent); }
+
+    .auth-card {
+      width: 100%;
+      max-width: 400px;
+      padding: 32px 30px 28px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+      border: 1px solid var(--border-strong);
+      box-shadow: var(--shadow-3), var(--glow-accent);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .auth-kicker {
+      margin: 0 0 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-soft);
+    }
+    .auth-title {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+      font-size: clamp(26px, 3.4vw, 32px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+    .auth-sub { margin: 0 0 22px; color: var(--text-mute); font-size: 14.5px; }
+
+    .auth-google {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--border-strong);
+      background: rgba(255, 255, 255, 0.96);
+      color: #1a1a1f;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 160ms var(--ease), box-shadow 160ms var(--ease), background 160ms var(--ease);
+    }
+    .auth-google:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -12px rgba(0, 0, 0, 0.6); background: #fff; }
+    .auth-google svg { width: 18px; height: 18px; }
+
+    .auth-or {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px 0;
+      color: var(--text-faint);
+      font-size: 12px;
+    }
+    .auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+    .auth-field { display: block; margin-bottom: 14px; }
+    .auth-field > span {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-mute);
+      letter-spacing: 0.01em;
+    }
+    .auth-field input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--border-strong);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 15px;
+      transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+    }
+    .auth-field input::placeholder { color: rgba(255, 255, 255, 0.28); }
+    .auth-field input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.18);
+    }
+
+    .auth-error {
+      margin: 2px 0 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(226, 58, 74, 0.12);
+      border: 1px solid rgba(226, 58, 74, 0.3);
+      color: #ffb3bb;
+      font-size: 13px;
+    }
+    .auth-note {
+      margin: 2px 0 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(255, 77, 109, 0.1);
+      border: 1px solid rgba(255, 77, 109, 0.28);
+      color: var(--accent-soft);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .auth-submit {
+      width: 100%;
+      margin-top: 4px;
+      padding: 13px 18px;
+      border: none;
+      border-radius: var(--radius-control);
+      background: linear-gradient(92deg, var(--accent), var(--accent-deep));
+      color: #fff;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 160ms var(--ease), box-shadow 160ms var(--ease), filter 160ms var(--ease);
+    }
+    .auth-submit:hover { transform: translateY(-1px); box-shadow: var(--glow-accent-strong); }
+    .auth-submit:disabled { opacity: 0.6; cursor: default; transform: none; box-shadow: none; }
+
+    .auth-alt {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .auth-link {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text-mute);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: color 160ms var(--ease);
+    }
+    .auth-link:hover { color: var(--text); }
+    .auth-link.strong { color: var(--accent-soft); font-weight: 600; }
+
+    .auth-toggle {
+      margin: 20px 0 0;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-mute);
+    }
+    .auth-legal { margin: 0; font-size: 12px; color: var(--text-faint); text-align: center; max-width: 400px; }
+    .auth-legal a { color: var(--text-mute); }
+
+    .auth-visual { position: relative; overflow: hidden; }
+    .auth-visual-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .auth-visual-shade {
+      position: absolute; inset: 0;
+      background: linear-gradient(120deg, rgba(7, 5, 10, 0.72) 0%, rgba(7, 5, 10, 0.25) 45%, rgba(122, 13, 34, 0.28) 100%);
+    }
+    .auth-visual-copy { position: absolute; left: 40px; bottom: 44px; right: 40px; max-width: 460px; }
+    .auth-visual-kicker {
+      margin: 0 0 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .auth-visual-line {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(22px, 2.4vw, 30px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    @media (max-width: 900px) {
+      .auth-shell { grid-template-columns: 1fr; }
+      .auth-visual { display: none; }
+      .auth-panel { min-height: 100vh; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .auth-google, .auth-submit { transition: none; }
+    }
+  </style>
+</head>
+<body class="auth-body">
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <main class="auth-shell">
+    <section class="auth-panel">
+      <a class="brand" href="/" aria-label="Hexa AI home">
+        <img src="assets/brand/hexa-logo.avif" alt="" width="30" height="30" />
+        <span>Hexa<span class="brand-dot">·</span>AI</span>
+      </a>
+
+      <div class="auth-card">
+        <p class="auth-kicker" id="auth-kicker">Welcome back</p>
+        <h1 class="auth-title" id="auth-title">Sign in to Hexa</h1>
+        <p class="auth-sub" id="auth-sub">Your films and photoshoots, all in one place.</p>
+
+        <button class="auth-google" id="auth-google" type="button">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+
+        <div class="auth-or"><span>or</span></div>
+
+        <form id="auth-form" novalidate>
+          <label class="auth-field" id="field-name" hidden>
+            <span>Name</span>
+            <input type="text" id="auth-name" autocomplete="name" placeholder="Your name" />
+          </label>
+          <label class="auth-field">
+            <span>Email</span>
+            <input type="email" id="auth-email" autocomplete="email" placeholder="you@brand.com" required />
+          </label>
+          <label class="auth-field" id="field-password">
+            <span>Password</span>
+            <input type="password" id="auth-password" autocomplete="current-password" placeholder="At least 6 characters" required minlength="6" />
+          </label>
+
+          <p class="auth-error" id="auth-error" hidden></p>
+          <p class="auth-note" id="auth-note" hidden></p>
+
+          <button class="auth-submit" id="auth-submit" type="submit">Sign in</button>
+        </form>
+
+        <div class="auth-alt">
+          <button type="button" class="auth-link" id="auth-magic">Email me a magic link</button>
+          <button type="button" class="auth-link" id="auth-forgot">Forgot password?</button>
+        </div>
+
+        <p class="auth-toggle">
+          <span id="toggle-text">New to Hexa?</span>
+          <button type="button" class="auth-link strong" id="auth-toggle">Create an account</button>
+        </p>
+      </div>
+
+      <p class="auth-legal">By continuing you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</p>
+    </section>
+
+    <aside class="auth-visual" aria-hidden="true">
+      <video class="auth-visual-video" src="assets/hf/hooks/product_dodge.mp4" muted loop playsinline autoplay preload="metadata"></video>
+      <div class="auth-visual-shade"></div>
+      <div class="auth-visual-copy">
+        <p class="auth-visual-kicker">Hexa Studio</p>
+        <p class="auth-visual-line">One product link becomes a film so real no one can tell.</p>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/vendor/supabase.js"></script>
+  <script src="auth.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

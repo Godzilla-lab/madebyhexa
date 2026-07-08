@@ -1,0 +1,74 @@
+{
+  "display_name": "Recraft V4.1",
+  "job_type": "recraft_v4_1",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "3:4",
+        "4:3",
+        "4:5",
+        "5:4",
+        "3:2",
+        "2:3",
+        "16:9",
+        "9:16"
+      ]
+    },
+    {
+      "name": "background_color",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "colors",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "model_type",
+      "type": "string",
+      "default": "standard",
+      "required": false,
+      "enum": [
+        "standard",
+        "vector",
+        "utility",
+        "utility_vector"
+      ]
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "1k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "cel": "!has(params.colors) || params.colors.all(color, color.matches(\"^#[0-9A-Fa-f]{6}$\"))",
+      "message": "Each color in colors must be a #RRGGBB hex string (six hex digits, no alpha)."
+    },
+    {
+      "cel": "!has(params.background_color) || params.background_color == null || params.background_color.matches(\"^#[0-9A-Fa-f]{6}$\")",
+      "message": "background_color must be a #RRGGBB hex string (six hex digits, no alpha) or null."
+    }
+  ],
+  "type": "image"
+}

@@ -1,0 +1,114 @@
+{
+  "display_name": "AutoSprite Animation",
+  "job_type": "autosprite",
+  "params": [
+    {
+      "name": "frame_count",
+      "type": "integer",
+      "default": 25,
+      "required": false
+    },
+    {
+      "name": "frame_size",
+      "type": "integer",
+      "default": 256,
+      "required": false
+    },
+    {
+      "name": "image_url",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "is_humanoid",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "kind",
+      "type": "string",
+      "default": "idle",
+      "required": false,
+      "enum": [
+        "idle",
+        "walk",
+        "run",
+        "attack",
+        "jump",
+        "custom",
+        "iso_idle_up",
+        "iso_idle_northeast",
+        "iso_idle_right",
+        "iso_idle_southeast",
+        "iso_idle_down",
+        "iso_walk_up",
+        "iso_walk_northeast",
+        "iso_walk_right",
+        "iso_walk_southeast",
+        "iso_walk_down",
+        "iso_run_up",
+        "iso_run_northeast",
+        "iso_run_right",
+        "iso_run_southeast",
+        "iso_run_down",
+        "iso_jump_up",
+        "iso_jump_northeast",
+        "iso_jump_right",
+        "iso_jump_southeast",
+        "iso_jump_down"
+      ]
+    },
+    {
+      "name": "name",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "remove_bg",
+      "type": "string",
+      "default": "default",
+      "required": false,
+      "enum": [
+        "default",
+        "ultra"
+      ]
+    },
+    {
+      "name": "video_tier",
+      "type": "string",
+      "default": "turbo",
+      "required": false,
+      "enum": [
+        "turbo",
+        "pro",
+        "max"
+      ]
+    },
+    {
+      "name": "with_sound",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "params.kind == \"custom\" || (params.prompt == null && params.name == null)",
+      "message": "'prompt' and 'name' are only supported when kind is 'custom'"
+    },
+    {
+      "cel": "params.kind != \"custom\" || (params.prompt != null && params.name != null)",
+      "message": "'prompt' and 'name' are both required when kind is 'custom'"
+    }
+  ],
+  "type": "image"
+}

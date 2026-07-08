@@ -1,0 +1,663 @@
+{
+ "avatars": [
+  {
+   "id": "672be390-36ab-4d79-bb95-ff562a57c79c",
+   "name": "Jayden",
+   "gender": "male",
+   "local": "assets/hf/avatars/jayden_672be390.webp"
+  },
+  {
+   "id": "35cd52c0-e92b-44b1-b56d-b4ea5e609c00",
+   "name": "Stefan",
+   "gender": "male",
+   "local": "assets/hf/avatars/stefan_35cd52c0.webp"
+  },
+  {
+   "id": "44ee57aa-d1f4-4a0a-a55f-cdf9dacee265",
+   "name": "Mei",
+   "gender": "female",
+   "local": "assets/hf/avatars/mei_44ee57aa.webp"
+  },
+  {
+   "id": "24d6d9cc-42df-43c7-bdfc-be06f317b924",
+   "name": "Yuna",
+   "gender": "female",
+   "local": "assets/hf/avatars/yuna_24d6d9cc.webp"
+  },
+  {
+   "id": "aa9260cc-a888-47b2-8bfd-0a9c90558384",
+   "name": "Adriana",
+   "gender": "female",
+   "local": "assets/hf/avatars/adriana_aa9260cc.webp"
+  },
+  {
+   "id": "daf4bf2e-c19e-4879-805b-bcfa6eda61f2",
+   "name": "Clara",
+   "gender": "female",
+   "local": "assets/hf/avatars/clara_daf4bf2e.webp"
+  },
+  {
+   "id": "bbf8e803-f10b-4e39-801c-eb12850237ab",
+   "name": "Maria",
+   "gender": "female",
+   "local": "assets/hf/avatars/maria_bbf8e803.webp"
+  },
+  {
+   "id": "bba3087a-ad14-42c2-b51b-7c22b632abf4",
+   "name": "Sofia",
+   "gender": "female",
+   "local": "assets/hf/avatars/sofia_bba3087a.webp"
+  },
+  {
+   "id": "cd6fb78c-e1a2-42f1-8b1e-902c15511877",
+   "name": "Valentina",
+   "gender": "female",
+   "local": "assets/hf/avatars/valentina_cd6fb78c.webp"
+  },
+  {
+   "id": "ffc8862b-0b8a-485c-88e1-f89196d3dc10",
+   "name": "Jia",
+   "gender": "female",
+   "local": "assets/hf/avatars/jia_ffc8862b.webp"
+  },
+  {
+   "id": "cec35719-5848-4455-a9dc-e6df72e03b80",
+   "name": "Lily",
+   "gender": "female",
+   "local": "assets/hf/avatars/lily_cec35719.webp"
+  },
+  {
+   "id": "6c21ac3e-1f76-4a35-91a6-60f334a0fafa",
+   "name": "Tae",
+   "gender": "male",
+   "local": "assets/hf/avatars/tae_6c21ac3e.webp"
+  },
+  {
+   "id": "83711427-335b-4b9c-b89a-b6fa78579b49",
+   "name": "Felix",
+   "gender": "male",
+   "local": "assets/hf/avatars/felix_83711427.webp"
+  },
+  {
+   "id": "94950cff-b90a-4416-8384-ce554ff387e1",
+   "name": "Malik",
+   "gender": "male",
+   "local": "assets/hf/avatars/malik_94950cff.webp"
+  },
+  {
+   "id": "734451fd-d418-40bd-9dee-5b467658b0d4",
+   "name": "Liam",
+   "gender": "male",
+   "local": "assets/hf/avatars/liam_734451fd.webp"
+  },
+  {
+   "id": "48b5553f-4bad-4b87-9a39-4f0088664ed7",
+   "name": "Joon",
+   "gender": "male",
+   "local": "assets/hf/avatars/joon_48b5553f.webp"
+  },
+  {
+   "id": "e572fd1d-eed1-4dff-b9ef-d48c2e652477",
+   "name": "Erik",
+   "gender": "male",
+   "local": "assets/hf/avatars/erik_e572fd1d.webp"
+  },
+  {
+   "id": "e6231767-11b5-472d-8304-82ea466d8df8",
+   "name": "Nia",
+   "gender": "female",
+   "local": "assets/hf/avatars/nia_e6231767.webp"
+  },
+  {
+   "id": "ed87431a-e819-4547-a846-940fe20b52f3",
+   "name": "Hana",
+   "gender": "female",
+   "local": "assets/hf/avatars/hana_ed87431a.webp"
+  },
+  {
+   "id": "e1c17f9c-817d-44cd-949c-f36999bad2c0",
+   "name": "Ryu",
+   "gender": "male",
+   "local": "assets/hf/avatars/ryu_e1c17f9c.webp"
+  },
+  {
+   "id": "aa252283-8591-4d14-91a8-41ce54187992",
+   "name": "Priya",
+   "gender": "female",
+   "local": "assets/hf/avatars/priya_aa252283.webp"
+  },
+  {
+   "id": "ba6c9b18-f79c-4dab-9649-88a181d0a038",
+   "name": "Elena",
+   "gender": "female",
+   "local": "assets/hf/avatars/elena_ba6c9b18.webp"
+  },
+  {
+   "id": "30e2cadd-987c-4a7a-81c3-094d4fb3a65e",
+   "name": "Kai",
+   "gender": "male",
+   "local": "assets/hf/avatars/kai_30e2cadd.webp"
+  },
+  {
+   "id": "fbed59e1-4b8d-4625-9140-ef2044e0be72",
+   "name": "Sora",
+   "gender": "female",
+   "local": "assets/hf/avatars/sora_fbed59e1.webp"
+  },
+  {
+   "id": "bcd9e6ee-c000-48e6-9f4b-a20fc2a674f7",
+   "name": "Minji",
+   "gender": "female",
+   "local": "assets/hf/avatars/minji_bcd9e6ee.webp"
+  },
+  {
+   "id": "1da384ed-3856-45e4-bf4c-a496c7aa95ff",
+   "name": "Margot",
+   "gender": "female",
+   "local": "assets/hf/avatars/margot_1da384ed.webp"
+  },
+  {
+   "id": "b799c8f5-fb6e-4905-b33b-cdefac153ec3",
+   "name": "Niko",
+   "gender": "male",
+   "local": "assets/hf/avatars/niko_b799c8f5.webp"
+  },
+  {
+   "id": "b6971dd4-55fa-4e64-b318-392b16504284",
+   "name": "Jin",
+   "gender": "male",
+   "local": "assets/hf/avatars/jin_b6971dd4.webp"
+  },
+  {
+   "id": "883cab24-0d4d-4536-8760-483324d765ae",
+   "name": "Yuki",
+   "gender": "female",
+   "local": "assets/hf/avatars/yuki_883cab24.webp"
+  },
+  {
+   "id": "e36b7786-b50d-4e51-991e-ae25f023814c",
+   "name": "Marco",
+   "gender": "male",
+   "local": "assets/hf/avatars/marco_e36b7786.webp"
+  },
+  {
+   "id": "91d8c706-ba3b-4890-94e5-a5d473a53409",
+   "name": "Ren",
+   "gender": "male",
+   "local": "assets/hf/avatars/ren_91d8c706.webp"
+  },
+  {
+   "id": "269cf968-5d04-457d-8461-9d96f4cee000",
+   "name": "Lucas",
+   "gender": "male",
+   "local": "assets/hf/avatars/lucas_269cf968.webp"
+  },
+  {
+   "id": "00b08443-83de-4218-b973-f80580b1dfdb",
+   "name": "Zara",
+   "gender": "female",
+   "local": "assets/hf/avatars/zara_00b08443.webp"
+  },
+  {
+   "id": "94059b15-1c28-4564-9990-8b78fc768f04",
+   "name": "Naomi",
+   "gender": "female",
+   "local": "assets/hf/avatars/naomi_94059b15.webp"
+  },
+  {
+   "id": "aa3ce6d5-8aae-425d-b957-4ded21168466",
+   "name": "Megan",
+   "gender": "female",
+   "local": "assets/hf/avatars/megan_aa3ce6d5.webp"
+  },
+  {
+   "id": "ea6c745a-1a96-4ba3-bd85-f787d43e70e5",
+   "name": "Omar",
+   "gender": "male",
+   "local": "assets/hf/avatars/omar_ea6c745a.webp"
+  },
+  {
+   "id": "45a4bd6d-3ab9-4b05-b3dd-a887dc594a44",
+   "name": "Miso",
+   "gender": "female",
+   "local": "assets/hf/avatars/miso_45a4bd6d.webp"
+  },
+  {
+   "id": "f0fd9868-b172-406c-b418-02768f3ef8b6",
+   "name": "Scarlett",
+   "gender": "female",
+   "local": "assets/hf/avatars/scarlett_f0fd9868.webp"
+  },
+  {
+   "id": "8d6d9263-140b-4637-b4c9-b8eda5af1e54",
+   "name": "Amara",
+   "gender": "female",
+   "local": "assets/hf/avatars/amara_8d6d9263.webp"
+  },
+  {
+   "id": "a70ad951-1432-422a-995e-f0e113220cc3",
+   "name": "Audrey",
+   "gender": "female",
+   "local": "assets/hf/avatars/audrey_a70ad951.webp"
+  }
+ ],
+ "hooks": [
+  {
+   "id": "3d45fb46-254f-4c83-9685-8e3d28945a67",
+   "name": "Product Hit",
+   "prompt": "Object flies into frame, hits subject. Brief reaction \u2192 pivot to product.",
+   "thumb": "assets/hf/hooks/product_hit_thumb.webp",
+   "video": "assets/hf/hooks/product_hit.mp4"
+  },
+  {
+   "id": "75b6d501-be0e-4416-a7ed-52f04f180574",
+   "name": "Spicy",
+   "prompt": "The shot starts with an extreme close-up of a collarbone, slowly tilts up to reveal a flawless makeup look, then pulls back into selfie framing before a silent pause leads into the product pitch.",
+   "thumb": "assets/hf/hooks/spicy_thumb.webp",
+   "video": "assets/hf/hooks/spicy.mp4"
+  },
+  {
+   "id": "26cac2dd-99cb-4818-a678-509b0dab2c32",
+   "name": "Interview",
+   "prompt": "Interviewer asks a second stranger a question based entirely on the first stranger's random answer; confusion builds until the second person naturally notices the product (Erewhon-style aspirational item) and pivots into a casual review.",
+   "thumb": "assets/hf/hooks/interview_thumb.webp",
+   "video": "assets/hf/hooks/interview.mp4"
+  },
+  {
+   "id": "d50eb41c-fcfa-4f4d-93aa-473cdc6bc3b2",
+   "name": "Random Object Mic",
+   "prompt": "During a casual vlog, a random absurd object falls into the person's hand from above, and they immediately use it as a microphone to continue a completely serious product review.",
+   "thumb": "assets/hf/hooks/random_object_mic_thumb.webp",
+   "video": "assets/hf/hooks/random_object_mic.mp4"
+  },
+  {
+   "id": "8101cd3e-3cc9-4607-a171-3582daa2f6ee",
+   "name": "Product Crash",
+   "prompt": "The product itself falls from above and destroyed, creating chaos; harsh sharpness leads to a perfectly clean and restored scene where a person calmly begins reviewing the product.",
+   "thumb": "assets/hf/hooks/product_crash_thumb.webp",
+   "video": "assets/hf/hooks/product_crash.mp4"
+  },
+  {
+   "id": "31976cc7-e597-4be2-9753-4a80153b0cc7",
+   "name": "Blizzard",
+   "prompt": "A cozy indoor scene is suddenly hit by a violent, impossible blizzard; chaos fills the room but the product remains intact and functioning, and once the storm stops, the product is still working.",
+   "thumb": "assets/hf/hooks/blizzard_thumb.webp",
+   "video": "assets/hf/hooks/blizzard.mp4"
+  },
+  {
+   "id": "2db84ed8-7082-4981-9c9c-9d61b3c28668",
+   "name": "Camera Bump",
+   "prompt": "The camera operator accidentally bumps into a person, hitting their forehead; they react briefly, recover, and naturally reveal the dress (or product on it) while transitioning into a casual explanation.",
+   "thumb": "assets/hf/hooks/camera_bump_thumb.webp",
+   "video": "assets/hf/hooks/camera_bump.mp4"
+  },
+  {
+   "id": "5443eff1-d940-4ad3-9413-957bb048a6b0",
+   "name": "Product Dodge",
+   "prompt": "Suddenly, a product flies into a person's face; he quickly bends down to avoid a collision, and in the next frame he stands up straight and already holds the product in his hands and begins to review as if nothing had happened.",
+   "thumb": "assets/hf/hooks/product_dodge_thumb.webp",
+   "video": "assets/hf/hooks/product_dodge.mp4"
+  },
+  {
+   "id": "ec9fdf99-314d-480d-a656-10d9861341e7",
+   "name": "Epic Fail",
+   "prompt": "A person performs an unsuccessful backflip, lands unsuccessfully, falls, and immediately, without pause, takes out the product and begins an unflappable review.",
+   "thumb": "assets/hf/hooks/epic_fail_thumb.webp",
+   "video": "assets/hf/hooks/epic_fail.mp4"
+  }
+ ],
+ "settings": [
+  {
+   "id": "b8368076-35eb-4045-b33b-74b2646d9863",
+   "name": "Bedroom",
+   "prompt": "On bed or propped against pillows, soft window light. Unmade bed, cozy textures. Relaxed morning or evening wind-down vibe \u2014 honest, low-effort feel.",
+   "thumb": "assets/hf/settings/bedroom_thumb.webp",
+   "video": "assets/hf/settings/bedroom.mp4"
+  },
+  {
+   "id": "b03705e5-bbed-4d83-8d29-3bc2101cd14f",
+   "name": "Airplane Wing",
+   "prompt": "Person sits on airplane wing mid-flight at altitude. Casual product review \u2014 powerful wind, clouds, engine roar.",
+   "thumb": "assets/hf/settings/airplane_wing_thumb.webp",
+   "video": "assets/hf/settings/airplane_wing.mp4"
+  },
+  {
+   "id": "10f47b85-abd7-4899-b6b6-91ff2969d3bf",
+   "name": "Nature",
+   "prompt": "Outdoors \u2014 trail, park, beach, or garden depending on product. Natural light, greenery or open sky. Active or peaceful mood \u2014 setting adapts to product.",
+   "thumb": "assets/hf/settings/nature_thumb.webp",
+   "video": "assets/hf/settings/nature.mp4"
+  },
+  {
+   "id": "3cf2164e-ffac-4867-9c43-1d673a5cb28a",
+   "name": "Roofing",
+   "prompt": "Person on the edge of a skyscraper rooftop, city skyline stretched out behind, wind moving through hair, sun catching the buildings. Casual product review with the entire city below, character completely unbothered by the height \u2014 selfie camera, golden hour or dusk, urban scale visible in every direction.",
+   "thumb": "assets/hf/settings/roofing_thumb.webp",
+   "video": "assets/hf/settings/roofing.mp4"
+  },
+  {
+   "id": "6bfbe372-e50a-4900-adee-d4cbd0db8a2f",
+   "name": "Gym",
+   "prompt": "Gym floor, locker room, or post-workout bench. Bright overhead lighting, equipment in background. Sweaty or freshly finished energy \u2014 product tied to performance or recovery.",
+   "thumb": "assets/hf/settings/gym_thumb.webp",
+   "video": "assets/hf/settings/gym.mp4"
+  },
+  {
+   "id": "e99c2ee8-3c4a-4697-9a58-908e73c9ad38",
+   "name": "Volcano Rim",
+   "prompt": "Person sits on active volcano rim, lava below. Casual product review \u2014 lava bubbles, smoke drifts through, zero reaction.",
+   "thumb": "assets/hf/settings/volcano_rim_thumb.webp",
+   "video": "assets/hf/settings/volcano_rim.mp4"
+  },
+  {
+   "id": "189fa1ac-1fdc-44f4-bdea-8804a76f0659",
+   "name": "Bathroom",
+   "prompt": "Mirror selfie or front camera in bathroom. Ring light or vanity lighting, tiles visible. Intimate getting-ready energy \u2014 product shown mid-routine, close-up friendly.",
+   "thumb": "assets/hf/settings/bathroom_thumb.webp",
+   "video": "assets/hf/settings/bathroom.mp4"
+  },
+  {
+   "id": "f495493f-0251-4bd7-afc0-90bc6a862e04",
+   "name": "Tiny Reviewer",
+   "prompt": "Person shrunk to 15cm next to a product their full height. Normal selfie review at impossible scale \u2014 leans on it.",
+   "thumb": "assets/hf/settings/tiny_reviewer_thumb.webp",
+   "video": "assets/hf/settings/tiny_reviewer.mp4"
+  },
+  {
+   "id": "a0eb0be9-f0ff-4aee-9dee-69d9fd20110a",
+   "name": "Kitchen",
+   "prompt": "Standing at counter or leaning on island, natural daylight. Clean surface, mug or fruit in background. Casual mid-day energy \u2014 product fits daily routine.",
+   "thumb": "assets/hf/settings/kitchen_thumb.webp",
+   "video": "assets/hf/settings/kitchen.mp4"
+  },
+  {
+   "id": "d6992aea-4521-4606-9e4f-8c766e12622c",
+   "name": "Car Roof",
+   "prompt": "Person on roof of moving car, desert highway, golden hour. Product review while swaying with the road. Semi truck passes \u2014 no flinch.",
+   "thumb": "assets/hf/settings/car_roof_thumb.webp",
+   "video": "assets/hf/settings/car_roof.mp4"
+  },
+  {
+   "id": "fdfa032c-801f-4602-8dfd-1162b0f8c9c9",
+   "name": "In Car",
+   "prompt": "Selfie from passenger or driver seat, parked or cruising. Window light on face. Casual tone \u2014 talking to camera between errands.",
+   "thumb": "assets/hf/settings/in_car_thumb.webp",
+   "video": "assets/hf/settings/in_car.mp4"
+  },
+  {
+   "id": "8c95f9ba-5849-44b1-82d0-9f6b33240758",
+   "name": "Street",
+   "prompt": "Walking on sidewalk or standing on urban street, handheld selfie. City backdrop \u2014 storefronts, traffic, pedestrians. Energetic pace, talking while moving. Spontaneous discovery feel.",
+   "thumb": "assets/hf/settings/street_thumb.webp",
+   "video": "assets/hf/settings/street.mp4"
+  },
+  {
+   "id": "d39dda10-643c-44e2-bfc8-2451dddde7d9",
+   "name": "Office",
+   "prompt": "Desk setup, laptop open, coffee nearby. Clean modern space, soft overhead or monitor glow. Hushed mid-workday tone \u2014 quick product mention squeezed between tasks.",
+   "thumb": "assets/hf/settings/office_thumb.webp",
+   "video": "assets/hf/settings/office.mp4"
+  },
+  {
+   "id": "71f61bb0-dfd9-459b-a220-0dd468b977d5",
+   "name": "Train Surf",
+   "prompt": "Person hangs outside a moving train, filming selfie.  Reviews product \u2014 wind pressing on them is the live demo.",
+   "thumb": "assets/hf/settings/train_surf_thumb.webp",
+   "video": "assets/hf/settings/train_surf.mp4"
+  }
+ ],
+ "ad_formats": [
+  {
+   "id": "18e9f327-b667-40f1-84d1-f234c67a4929",
+   "name": "Headline",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "c4c9ee3e-c161-4cc6-b401-77f122cd3c3c",
+   "name": "Special Offer",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "e961f13c-c96d-4504-bb70-77abeeaa9027",
+   "name": "Customer Quote",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "4b71d6d0-4a79-4241-8f3a-60bb766d1945",
+   "name": "Key Features",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "fd9b886c-8b4d-4e9a-aa4d-11b4a67456a5",
+   "name": "Benefits",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "30ab1615-9b6f-4d73-bf84-9436b0861cb4",
+   "name": "Social Proof",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "3f222376-f468-4ba7-a7b8-f76102c9af5f",
+   "name": "Why We're Different",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "ad65db31-3e4f-4aa9-99a4-0e00b994580e",
+   "name": "Then vs Now",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "80e37aad-f80d-468d-ab6f-b32562aaccc1",
+   "name": "Unexpected Twist",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "302922f4-8415-45af-affe-406b3fd0ebb3",
+   "name": "Media Mentions",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "c3884bf7-5d3b-460b-8815-81f82e5bc0fb",
+   "name": "Star Review",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "c7932132-dbe5-4806-a7cc-ee9bc5094367",
+   "name": "Product in Action",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "1a4cf715-4e32-4a26-ba66-bdfe1573cbaf",
+   "name": "Stat Surround",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "7a5f4059-e019-4862-ae82-c639fda59655",
+   "name": "Bundle Deal",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "9ba08f5b-5646-4735-8832-bd12c79de8c8",
+   "name": "Social Comment",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "c5012751-8b86-4e28-8b31-f86f36c62085",
+   "name": "Mystery Hook",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "eb75ceef-f0fc-416c-aea4-85ceed38b97c",
+   "name": "Trusted Review",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "3c2fee96-41f6-4fb0-bdbd-6a66e5b464b2",
+   "name": "Stat Surround",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "6cfbeb24-0fa1-4739-99dd-ba1fc14afd15",
+   "name": "Highlighted Hook",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "9f83c485-959d-4ea1-a2ff-7a4e7370dd62",
+   "name": "Magazine Style",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "a9f3b512-35e2-42c2-8981-3c57f0853ddd",
+   "name": "Reaction Quote",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "8050ddd7-60e6-45d6-9a33-50f6530f2a79",
+   "name": "Behind the Product",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "16edbd6e-453b-4dc6-9c02-740406a47083",
+   "name": "Personal Note",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "95026fac-f6d8-473c-bceb-4ff70325a16e",
+   "name": "Highlighted Comment",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "92710076-a082-489d-9976-74a30fbf0cbf",
+   "name": "Color Block",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "f100144f-e015-49f5-ac88-7641e29731d9",
+   "name": "Lifestyle with Numbers",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "cb2da9cc-f477-4fd3-b9d6-aa9cbfa14dcd",
+   "name": "Benefits Checklist",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "821b881b-b9c2-40ab-8364-0ee90c23eb90",
+   "name": "Callout Notes",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "7c3a2785-08e8-406f-b47a-35307276f1ab",
+   "name": "Trending Post",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "bccb652b-2352-4d91-b640-99cb19d61895",
+   "name": "Bold Statement",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "4ac40ba6-79a7-4004-a9e4-95012f8737d5",
+   "name": "Comparison Table",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "6d1aef3b-c814-474c-bb62-29bb40643aee",
+   "name": "Customer Story",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "ac333ce6-f86e-4ce1-9ffe-e75f48b3df53",
+   "name": "Press Screenshot",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "3462be30-d918-4602-992c-81298d0f31ab",
+   "name": "App Screenshot",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "b5fbe451-ef9b-494d-8460-df16dc31f9a9",
+   "name": "Product Spotlight",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "0e20e37e-6a34-4a36-bbd9-4d3cc79e8d50",
+   "name": "Whiteboard Explainer",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "cfb067f6-735a-46d8-a2f0-22e5a47b122e",
+   "name": "Hero Statement",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "50fa82ca-8a7e-4c8d-99dd-e1c3692a5787",
+   "name": "UGC Side-by-Side",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "01de1013-d33a-4c67-b658-799eac3aa11f",
+   "name": "Scroll Break",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "7200218e-d78e-492c-ae9b-a3a08af2b923",
+   "name": "Organic Post",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "0c20621b-b90a-42ca-a7dc-5217a94b3beb",
+   "name": "librarian",
+   "type": "headline",
+   "local": null
+  },
+  {
+   "id": "200cb3a0-6220-4d0c-b353-51443dae7e90",
+   "name": "picker",
+   "type": "headline",
+   "local": null
+  }
+ ]
+}

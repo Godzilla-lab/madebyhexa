@@ -1,0 +1,75 @@
+{
+  "display_name": "Topaz",
+  "job_type": "topaz_image",
+  "params": [
+    {
+      "name": "denoise",
+      "type": "number",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "face_enhancement",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "face_enhancement_creativity",
+      "type": "number",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "face_enhancement_strength",
+      "type": "number",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "folder_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "output_height",
+      "type": "integer",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "output_width",
+      "type": "integer",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "sharpen",
+      "type": "number",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "variant",
+      "type": "string",
+      "default": "Standard V2",
+      "required": false,
+      "enum": [
+        "Standard V2",
+        "Low Resolution V2",
+        "CGI",
+        "High Fidelity V2",
+        "Text Refine"
+      ]
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

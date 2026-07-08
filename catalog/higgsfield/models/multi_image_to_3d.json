@@ -1,0 +1,144 @@
+{
+  "display_name": "Multi-Image to 3D",
+  "job_type": "multi_image_to_3d",
+  "params": [
+    {
+      "name": "animation_action_id",
+      "type": "integer|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "enable_animation",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "enable_pbr",
+      "type": "boolean|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "enable_rigging",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "enable_safety_checker",
+      "type": "boolean|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "folder_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "pose_mode",
+      "type": "string|null",
+      "default": null,
+      "required": false,
+      "enum": [
+        "a-pose",
+        "t-pose"
+      ]
+    },
+    {
+      "name": "rigging_height_meters",
+      "type": "number|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "seed",
+      "type": "integer|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "should_remesh",
+      "type": "boolean|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "should_texture",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "symmetry_mode",
+      "type": "string|null",
+      "default": null,
+      "required": false,
+      "enum": [
+        "off",
+        "auto",
+        "on"
+      ]
+    },
+    {
+      "name": "target_polycount",
+      "type": "integer|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "texture_image_url",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "texture_prompt",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "topology",
+      "type": "string|null",
+      "default": null,
+      "required": false,
+      "enum": [
+        "quad",
+        "triangle"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "cel": "!params.enable_animation || params.enable_rigging",
+      "message": "enable_animation requires enable_rigging=true"
+    },
+    {
+      "cel": "!params.enable_animation || type(params.animation_action_id) == int",
+      "message": "animation_action_id is required when enable_animation=true"
+    },
+    {
+      "cel": "params.texture_prompt == null || params.should_texture",
+      "message": "texture_prompt requires should_texture=true"
+    },
+    {
+      "cel": "params.texture_image_url == null || params.should_texture",
+      "message": "texture_image_url requires should_texture=true"
+    },
+    {
+      "cel": "params.enable_pbr != true || params.should_texture",
+      "message": "enable_pbr requires should_texture=true"
+    }
+  ],
+  "type": "3d"
+}

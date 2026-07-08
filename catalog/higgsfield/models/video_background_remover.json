@@ -1,0 +1,19 @@
+{
+  "display_name": "Video Background Remover",
+  "job_type": "video_background_remover",
+  "params": [
+    {
+      "name": "video_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.video_references) == 1",
+      "message": "exactly one video is required in video_references"
+    }
+  ],
+  "type": "video"
+}

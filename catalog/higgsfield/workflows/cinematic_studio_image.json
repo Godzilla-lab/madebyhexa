@@ -1,0 +1,89 @@
+{
+  "cost_params": [
+    {
+      "name": "batch_size",
+      "type": "integer",
+      "default": 1,
+      "required": false
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "2k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k",
+        "4k"
+      ]
+    }
+  ],
+  "display_name": "Cinematic Studio Image",
+  "job_type": "cinematic_studio_image",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "1:1",
+        "4:3",
+        "3:4",
+        "16:9",
+        "9:16",
+        "3:2",
+        "2:3",
+        "21:9"
+      ]
+    },
+    {
+      "name": "camera_aperture_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "camera_focal_length_id",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "camera_lens_id",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "camera_model_id",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "2k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k",
+        "4k"
+      ]
+    }
+  ],
+  "type": "image"
+}

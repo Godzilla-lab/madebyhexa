@@ -1,0 +1,57 @@
+{
+  "cost_params": [
+    {
+      "name": "duration",
+      "type": "number",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "default": "std",
+      "required": false,
+      "enum": [
+        "std",
+        "pro"
+      ]
+    }
+  ],
+  "display_name": "Kling 3.0 Motion Control",
+  "job_type": "kling3_0_motion_control",
+  "params": [
+    {
+      "name": "background_source",
+      "type": "string",
+      "default": "input_image",
+      "required": false,
+      "enum": [
+        "input_image",
+        "input_video"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "default": "std",
+      "required": false,
+      "enum": [
+        "std",
+        "pro"
+      ]
+    },
+    {
+      "name": "video_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    }
+  ],
+  "type": "video"
+}

@@ -1,0 +1,103 @@
+{
+  "display_name": "Seed Audio 1.0",
+  "job_type": "seed_audio",
+  "params": [
+    {
+      "name": "audio_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "format",
+      "type": "string",
+      "default": "wav",
+      "required": false,
+      "enum": [
+        "wav",
+        "mp3",
+        "pcm",
+        "ogg_opus"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "loudness_rate",
+      "type": "integer",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "pitch_rate",
+      "type": "integer",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "sample_rate",
+      "type": "integer",
+      "default": 24000,
+      "required": false,
+      "enum": [
+        "8000",
+        "16000",
+        "24000",
+        "32000",
+        "44100",
+        "48000"
+      ]
+    },
+    {
+      "name": "speech_rate",
+      "type": "integer",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "voice_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "voice_type",
+      "type": "string|null",
+      "default": null,
+      "required": false,
+      "enum": [
+        "preset",
+        "element"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "cel": "!(size(params.image_references) > 0 && size(params.audio_references) > 0)",
+      "message": "image_references and audio_references are mutually exclusive"
+    },
+    {
+      "cel": "(params.voice_type == null) == (params.voice_id == null)",
+      "message": "voice_type and voice_id must be provided together"
+    },
+    {
+      "cel": "params.voice_id == null || size(params.image_references) == 0",
+      "message": "a voice cannot be combined with an image reference"
+    },
+    {
+      "cel": "params.voice_id == null || size(params.audio_references) <= 2",
+      "message": "a voice allows at most 2 additional audio references"
+    }
+  ],
+  "type": "audio"
+}

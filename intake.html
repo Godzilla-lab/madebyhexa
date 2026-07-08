@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Hexa AI · Send us your product</title>
+  <meta name="description" content="Payment received. Send us your product details so we can start producing your video." />
+  <meta name="theme-color" content="#0a0608" />
+
+  <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
+  <link rel="apple-touch-icon" href="assets/brand/hexa-logo.avif" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <script src="pixels.js"></script>
+</head>
+<body data-mode="main" data-track="purchase">
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="nav nav-minimal">
+    <a class="brand" href="#top" aria-label="Hexa AI home">
+      <img class="brand-logo" src="assets/brand/hexa-logo.avif" alt="Hexa AI" width="32" height="32" decoding="async" />
+      <span class="brand-name">Hexa<span class="brand-dot">·</span>AI</span>
+    </a>
+  </header>
+
+  <main id="top">
+    <section id="claim" class="lead">
+      <div class="lead-inner">
+        <div class="lead-copy">
+          <span class="intake-tag">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Payment received
+          </span>
+          <h2 class="lead-title">Last step: <em>send us your product.</em></h2>
+          <p class="lead-sub">Your order is <strong id="order-tier">confirmed</strong>. Drop your product details below and we will start producing right away. Delivered to your email in minutes, not days.</p>
+          <ul class="lead-points">
+            <li>Cut for 9:16, 1:1 and 16:9</li>
+            <li>Captions and hooks included</li>
+            <li>One free revision round on every order</li>
+          </ul>
+        </div>
+
+        <form name="order-intake" method="POST" enctype="multipart/form-data" data-netlify="true" netlify-honeypot="bot-field" action="/order-confirmed.html" class="lead-form">
+          <input type="hidden" name="form-name" value="order-intake" />
+          <input type="hidden" name="tier" id="lf-tier" value="" />
+          <input type="hidden" name="session_id" id="lf-session" value="" />
+          <p class="lead-hp" hidden aria-hidden="true">
+            <label>Leave this empty: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+          </p>
+
+          <div class="field">
+            <label for="lf-name">Your name</label>
+            <input id="lf-name" name="name" type="text" required autocomplete="name" placeholder="Alex Rivera" />
+          </div>
+          <div class="field">
+            <label for="lf-email">Email for delivery</label>
+            <input id="lf-email" name="email" type="email" required autocomplete="email" placeholder="alex@yourbrand.com" />
+          </div>
+          <div class="field">
+            <label for="lf-brand">Brand / company</label>
+            <input id="lf-brand" name="brand" type="text" required placeholder="Your Brand Co." />
+          </div>
+          <div class="field">
+            <label for="lf-link">Link to your product or asset folder <span class="field-opt">(link or upload, at least one)</span></label>
+            <input id="lf-link" name="product_link" type="url" placeholder="https://yourbrand.com/product" />
+          </div>
+          <div class="field">
+            <label for="lf-asset">Or upload product photos / a brand PDF <span class="field-opt">(optional)</span></label>
+            <input id="lf-asset" name="asset" type="file" accept="image/*,.pdf" />
+            <p class="field-hint">Image or PDF, up to 8 MB. Got a lot of files? Paste a Drive or Dropbox link above instead.</p>
+          </div>
+          <div class="field">
+            <label for="lf-notes">Vibe, references, or must-haves <span class="field-opt">(optional)</span></label>
+            <textarea id="lf-notes" name="notes" placeholder="Any look, angle, reference clip, or detail you want us to nail. Leave blank and we will use our best judgment."></textarea>
+          </div>
+
+          <button class="btn btn-primary btn-lg lead-submit" type="submit">Submit my product details</button>
+          <p class="lead-form-fine">We start the moment this lands. Your video is usually ready in minutes.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> Hexa AI</span>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="mailto:hello@madebyhexa.co">hello@madebyhexa.co</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="privacy.html">Privacy</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="terms.html">Terms</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="refund.html">Refunds</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

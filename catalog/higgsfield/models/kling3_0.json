@@ -1,0 +1,64 @@
+{
+  "display_name": "Kling v3.0",
+  "job_type": "kling3_0",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "16:9",
+        "9:16",
+        "1:1"
+      ]
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false
+    },
+    {
+      "name": "end_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "default": "std",
+      "required": false,
+      "enum": [
+        "std",
+        "pro",
+        "4k"
+      ]
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "sound",
+      "type": "string",
+      "default": "on",
+      "required": false,
+      "enum": [
+        "on",
+        "off"
+      ]
+    },
+    {
+      "name": "start_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    }
+  ],
+  "rules": [],
+  "type": "video"
+}

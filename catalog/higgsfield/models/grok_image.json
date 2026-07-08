@@ -1,0 +1,58 @@
+{
+  "display_name": "Grok Image",
+  "job_type": "grok_image",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "1:1",
+      "required": false,
+      "enum": [
+        "1:1",
+        "auto",
+        "1:2",
+        "2:1",
+        "3:2",
+        "2:3",
+        "4:3",
+        "3:4",
+        "16:9",
+        "9:16"
+      ]
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "default": "std",
+      "required": false,
+      "enum": [
+        "std",
+        "quality"
+      ]
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "1k",
+      "required": false,
+      "enum": [
+        "1k",
+        "2k"
+      ]
+    }
+  ],
+  "rules": [],
+  "type": "image"
+}

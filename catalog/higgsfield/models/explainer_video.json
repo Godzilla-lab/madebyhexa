@@ -1,0 +1,32 @@
+{
+  "display_name": "Explainer Video",
+  "job_type": "explainer_video",
+  "params": [
+    {
+      "name": "height",
+      "type": "integer",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "items",
+      "type": "array",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "subtitles",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "width",
+      "type": "integer",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "video"
+}

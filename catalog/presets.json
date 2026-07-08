@@ -1,0 +1,178 @@
+{
+ "_readme": "Hexa's own curated style presets. Each maps to a mode/product, prefills selections, and carries an art-direction seed that the brain merges with the recipe (and the backend --enhance-only prompt). These are Hexa IP, not Higgsfield preset IDs.",
+ "presets": [
+  {
+   "id": "golden-hour-ugc",
+   "name": "Golden Hour UGC",
+   "tag": "Warm, handheld, sunset glow",
+   "product": "mode:ugc",
+   "sel": {
+    "setting": {
+     "id": "10f47b85-abd7-4899-b6b6-91ff2969d3bf",
+     "name": "Nature"
+    },
+    "aspect": "9:16"
+   },
+   "seed": "Late-afternoon golden hour, warm rim light, soft lens flare, relaxed handheld energy, creator smiling into the sun.",
+   "preview": "assets/hf/site/slides_talking-head.png"
+  },
+  {
+   "id": "gym-rat",
+   "name": "Gym Rat",
+   "tag": "High-energy fitness UGC",
+   "product": "mode:ugc",
+   "sel": {
+    "setting": {
+     "id": "6bfbe372-e50a-4900-adee-d4cbd0db8a2f",
+     "name": "Gym"
+    },
+    "hook": {
+     "id": "3d45fb46-254f-4c83-9685-8e3d28945a67",
+     "name": "Product Hit"
+    },
+    "aspect": "9:16"
+   },
+   "seed": "Gym floor, chalk and sweat, hard directional light, post-set adrenaline, product gripped mid-rep.",
+   "preview": "assets/hf/settings/gym_thumb.webp"
+  },
+  {
+   "id": "street-style",
+   "name": "Street Style",
+   "tag": "Urban, candid, on the move",
+   "product": "mode:ugc",
+   "sel": {
+    "setting": {
+     "id": "8c95f9ba-5849-44b1-82d0-9f6b33240758",
+     "name": "Street"
+    },
+    "aspect": "9:16"
+   },
+   "seed": "City sidewalk, overcast diffused light, candid walk-and-talk, ambient street sound, effortless cool.",
+   "preview": "assets/hf/settings/street_thumb.webp"
+  },
+  {
+   "id": "unbox-asmr",
+   "name": "Unbox ASMR",
+   "tag": "Slow reveal, satisfying sound",
+   "product": "mode:unboxing",
+   "sel": {
+    "setting": {
+     "id": "b8368076-35eb-4045-b33b-74b2646d9863",
+     "name": "Bedroom"
+    },
+    "aspect": "9:16"
+   },
+   "seed": "Soft desk lamp, tight macro on hands, deliberate slow reveal, crisp tactile ASMR sound design, tissue and wrap.",
+   "preview": "assets/hf/site/slides_unboxing.png"
+  },
+  {
+   "id": "kitchen-demo",
+   "name": "Kitchen Counter Demo",
+   "tag": "Clear, bright how-to",
+   "product": "mode:tutorial",
+   "sel": {
+    "setting": {
+     "id": "a0eb0be9-f0ff-4aee-9dee-69d9fd20110a",
+     "name": "Kitchen"
+    },
+    "aspect": "9:16"
+   },
+   "seed": "Bright kitchen counter, clean daylight from a window, three tidy steps, hands-focused inserts, satisfying result.",
+   "preview": "assets/hf/site/slides_tutorial.png"
+  },
+  {
+   "id": "editorial-tryon",
+   "name": "Editorial Try-On",
+   "tag": "Studio fashion film",
+   "product": "mode:pro_try_on",
+   "sel": {
+    "aspect": "9:16"
+   },
+   "seed": "Studio seamless backdrop, controlled soft key with clean shadow, deliberate slow movement, catalog-grade fabric fidelity.",
+   "preview": "assets/hf/site/slides_pro-virtual-try-on.png"
+  },
+  {
+   "id": "bullet-time-hero",
+   "name": "Bullet Time Hero",
+   "tag": "Impossible 360 orbit",
+   "product": "mode:hyper_motion",
+   "sel": {
+    "aspect": "16:9"
+   },
+   "seed": "Single continuous impossible camera move, slow 360 orbit into a dive, product tack-sharp while the world speed-blurs.",
+   "preview": "assets/hf/site/slides_wild-card.png"
+  },
+  {
+   "id": "midnight-drop",
+   "name": "Midnight Product Drop",
+   "tag": "Cold, cinematic, premium",
+   "product": "mode:tv_spot",
+   "sel": {
+    "camera": "silent_machine",
+    "grade": "cold_steel",
+    "light": "contre_jour",
+    "aspect": "16:9"
+   },
+   "seed": "Dark premium set, cold steel palette, backlit contre-jour rim, confident slow push-in, macro over material and label.",
+   "preview": "assets/hf/site/slides_tv-spot.png"
+  },
+  {
+   "id": "neon-nights",
+   "name": "Neon Nights",
+   "tag": "Hyper-neon, kinetic",
+   "product": "cinematic",
+   "sel": {
+    "camera": "impossible_camera",
+    "grade": "hyper_neon",
+    "light": "practicals",
+    "aspect": "9:16"
+   },
+   "seed": "Neon-drenched night city, practical light sources, reflective wet surfaces, kinetic impossible camera, product as the glowing hero.",
+   "preview": "assets/hf/site/slides_wild-card.png"
+  },
+  {
+   "id": "sun-bleached",
+   "name": "Sun-Bleached Beauty",
+   "tag": "Warm editorial glow",
+   "product": "cinematic",
+   "sel": {
+    "camera": "intimate_observer",
+    "grade": "bleached_warm",
+    "light": "window",
+    "aspect": "4:3"
+   },
+   "seed": "Soft bleached-warm grade, window light, intimate observational framing, dewy skin and gentle highlights, beauty-editorial calm.",
+   "preview": "assets/hf/site/slides_product-review.png"
+  },
+  {
+   "id": "studio-white",
+   "name": "Studio White",
+   "tag": "Clean catalog imagery",
+   "product": "photoshoot",
+   "sel": {
+    "mode": {
+     "id": "product_shot",
+     "name": "Product Shot"
+    },
+    "aspect": "1:1"
+   },
+   "seed": "Seamless white sweep, even softbox light, crisp contact shadow, true-to-reference color, ten clean catalog compositions.",
+   "preview": "assets/hf/site/slides_cleanshot.png"
+  },
+  {
+   "id": "lifestyle-flatlay",
+   "name": "Lifestyle Flatlay",
+   "tag": "Styled scene imagery",
+   "product": "photoshoot",
+   "sel": {
+    "mode": {
+     "id": "lifestyle_scene",
+     "name": "Lifestyle Scene"
+    },
+    "aspect": "4:5"
+   },
+   "seed": "Styled lifestyle surface with tasteful props, warm natural light, believable scale and shadow, ten distinct in-context frames.",
+   "preview": "assets/hf/settings/kitchen_thumb.webp"
+  }
+ ]
+}

@@ -1,0 +1,80 @@
+{
+  "display_name": "Minimax Hailuo",
+  "job_type": "minimax_hailuo",
+  "params": [
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 6,
+      "required": false,
+      "enum": [
+        "6",
+        "10"
+      ]
+    },
+    {
+      "name": "end_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "768",
+      "required": false,
+      "enum": [
+        "512",
+        "768",
+        "1080"
+      ]
+    },
+    {
+      "name": "start_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "variant",
+      "type": "string",
+      "default": "minimax-2.3",
+      "required": false,
+      "enum": [
+        "minimax",
+        "minimax-fast",
+        "minimax-2.3",
+        "minimax-2.3-fast"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "cel": "params.resolution != \"512\" || params.end_image == null",
+      "message": "resolution '512' is incompatible with end_image"
+    },
+    {
+      "cel": "(params.variant != \"minimax-2.3\" && params.variant != \"minimax-2.3-fast\") || params.resolution != \"512\"",
+      "message": "resolution '512' is not supported for 'minimax-2.3' or 'minimax-2.3-fast'"
+    },
+    {
+      "cel": "params.duration != 10 || params.resolution != \"1080\"",
+      "message": "resolution '1080' is not available for 10 second duration"
+    },
+    {
+      "cel": "params.variant == \"minimax-2.3\" || !(params.start_image == null) || !(params.end_image == null)",
+      "message": "start_image or end_image is required unless variant is 'minimax-2.3'"
+    },
+    {
+      "cel": "(params.variant != \"minimax-2.3\" && params.variant != \"minimax-2.3-fast\") || params.end_image == null",
+      "message": "end_image is not supported for 'minimax-2.3' or 'minimax-2.3-fast'"
+    }
+  ],
+  "type": "video"
+}

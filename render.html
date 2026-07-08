@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Hexa Studio · Your order</title>
+  <meta name="description" content="Your Hexa order, rendering live. The finished file appears here the moment it is ready." />
+  <meta name="theme-color" content="#0a0608" />
+  <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="studio.css" />
+  <link rel="stylesheet" href="render.css" />
+  <script src="pixels.js"></script>
+</head>
+<body data-track="view-content">
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="nav">
+    <a class="brand" href="/">
+      <img src="assets/brand/hexa-logo.avif" alt="" width="28" height="28" />
+      <span>Hexa AI</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/">Studio</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/login.html" id="nav-account">Sign in</a>
+    </nav>
+  </header>
+
+  <main class="render">
+    <div class="render-inner">
+
+      <p class="studio-kicker" id="render-kicker">Rendering</p>
+      <h1 class="render-title" id="render-title">Building your content</h1>
+      <p class="render-sub" id="render-sub">Watch it come together. It appears right here the moment it's ready.</p>
+
+      <!-- Stage: the frame where the result renders in -->
+      <div class="render-stage" id="render-stage" data-aspect="9:16">
+        <div class="stage-frame" id="stage-frame">
+          <div class="stage-shimmer" aria-hidden="true"></div>
+          <div class="stage-scan" aria-hidden="true"></div>
+          <div class="stage-pct" id="stage-pct">0%</div>
+          <video class="stage-video" id="stage-video" playsinline controls hidden></video>
+          <img class="stage-image" id="stage-image" alt="Your generated content" hidden />
+        </div>
+      </div>
+
+      <!-- Live progress steps -->
+      <ol class="render-steps" id="render-steps">
+        <li data-step="research"><span class="dot"></span><span class="lbl">Reading your product</span></li>
+        <li data-step="brief"><span class="dot"></span><span class="lbl">Writing the creative brief</span></li>
+        <li data-step="generate"><span class="dot"></span><span class="lbl">Rendering your video</span></li>
+        <li data-step="finish"><span class="dot"></span><span class="lbl">Final quality pass</span></li>
+      </ol>
+
+      <!-- Delivery email confirmation -->
+      <form class="delivery-form" id="delivery-form" hidden>
+        <label class="delivery-label" for="delivery-email">Where should we deliver it?</label>
+        <div class="delivery-row">
+          <input type="email" id="delivery-email" name="email" placeholder="you@brand.com" autocomplete="email" required />
+          <button type="submit" class="delivery-confirm" id="delivery-confirm">Confirm delivery</button>
+        </div>
+      </form>
+
+      <!-- Full deliverable set: photoshoot frames or film segments -->
+      <div class="result-set" id="result-set" hidden></div>
+
+      <!-- Done state actions -->
+      <div class="render-actions" id="render-actions" hidden>
+        <a class="btn-download" id="btn-download" download>Download</a>
+        <a class="btn-again" href="/">Make another</a>
+      </div>
+
+      <p class="render-note" id="render-note" hidden></p>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="y">2026</span> Hexa AI</span>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="privacy.html">Privacy</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="terms.html">Terms</a>
+  </footer>
+
+  <script src="/vendor/supabase.js"></script>
+  <script src="auth.js"></script>
+  <script src="nav-auth.js"></script>
+  <script src="render.js"></script>
+</body>
+</html>

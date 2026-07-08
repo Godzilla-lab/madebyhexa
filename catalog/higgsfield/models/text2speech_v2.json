@@ -1,0 +1,48 @@
+{
+  "display_name": "Text to Speech V2",
+  "job_type": "text2speech_v2",
+  "params": [
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "variant",
+      "type": "string",
+      "default": null,
+      "required": true,
+      "enum": [
+        "elevenlabs",
+        "minimax",
+        "seed_speech",
+        "vibe_voice",
+        "cozy_voice"
+      ]
+    },
+    {
+      "name": "voice_id",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "voice_type",
+      "type": "string",
+      "default": null,
+      "required": true,
+      "enum": [
+        "preset",
+        "element"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "cel": "size(params.prompt) <= {\"elevenlabs\": 5000, \"minimax\": 10000, \"seed_speech\": 15000, \"vibe_voice\": 5000, \"cozy_voice\": 5000}[params.variant]",
+      "message": "prompt exceeds the character limit for the selected engine (elevenlabs/vibe_voice/cozy_voice: 5000, minimax: 10000, seed_speech: 15000)"
+    }
+  ],
+  "type": "audio"
+}

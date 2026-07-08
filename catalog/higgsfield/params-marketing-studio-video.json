@@ -1,0 +1,174 @@
+{
+  "cost_params": [
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 15,
+      "required": false
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "720p",
+      "required": false,
+      "enum": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    {
+      "name": "specific_mode",
+      "type": "string",
+      "default": "default",
+      "required": false,
+      "enum": [
+        "default",
+        "web_product",
+        "from_storyboard"
+      ]
+    }
+  ],
+  "display_name": "Marketing Studio Video",
+  "job_type": "marketing_studio_video",
+  "params": [
+    {
+      "name": "ad_reference_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "auto",
+        "21:9",
+        "16:9",
+        "4:3",
+        "1:1",
+        "3:4",
+        "9:16"
+      ]
+    },
+    {
+      "name": "avatar_ids",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "avatars",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 15,
+      "required": false
+    },
+    {
+      "name": "end_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "generate_audio",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "hook_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "image_references",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "default": "ugc",
+      "required": false
+    },
+    {
+      "name": "product_ids",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "720p",
+      "required": false,
+      "enum": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    {
+      "name": "setting_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "specific_mode",
+      "type": "string",
+      "default": "default",
+      "required": false,
+      "enum": [
+        "default",
+        "web_product",
+        "from_storyboard"
+      ]
+    },
+    {
+      "name": "start_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "storyboard_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "web_product_ids",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "web_product_type",
+      "type": "string|null",
+      "default": null,
+      "required": false,
+      "enum": [
+        "desktop",
+        "mobile"
+      ]
+    }
+  ],
+  "type": "video"
+}

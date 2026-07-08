@@ -1,0 +1,26 @@
+{
+  "display_name": "Video Deflicker",
+  "job_type": "video_deflicker",
+  "params": [
+    {
+      "name": "duration",
+      "type": "number|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "folder_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "input_video",
+      "type": "object",
+      "default": null,
+      "required": true
+    }
+  ],
+  "rules": [],
+  "type": "video"
+}

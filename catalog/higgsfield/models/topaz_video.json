@@ -1,0 +1,93 @@
+{
+  "display_name": "Topaz",
+  "job_type": "topaz_video",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "auto",
+      "required": false,
+      "enum": [
+        "auto",
+        "21:9",
+        "16:9",
+        "4:3",
+        "1:1",
+        "3:4",
+        "9:16"
+      ]
+    },
+    {
+      "name": "duration",
+      "type": "number|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "enhancement",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "folder_id",
+      "type": "string|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "frame_interpolation",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "frame_rate",
+      "type": "number",
+      "default": 30,
+      "required": false
+    },
+    {
+      "name": "frames_count",
+      "type": "integer|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "input_height",
+      "type": "integer|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "input_video",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "input_video_size",
+      "type": "integer",
+      "default": 0,
+      "required": false
+    },
+    {
+      "name": "input_width",
+      "type": "integer|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "default": "1080p",
+      "required": false,
+      "enum": [
+        "1080p",
+        "2160p"
+      ]
+    }
+  ],
+  "rules": [],
+  "type": "video"
+}

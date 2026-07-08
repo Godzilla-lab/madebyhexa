@@ -1,0 +1,121 @@
+{
+ "hooks": [
+  {
+   "id": "3d45fb46-254f-4c83-9685-8e3d28945a67",
+   "name": "Product Hit",
+   "prompt": "Object flies into frame, hits subject. Brief reaction \u2192 pivot to product."
+  },
+  {
+   "id": "75b6d501-be0e-4416-a7ed-52f04f180574",
+   "name": "Spicy",
+   "prompt": "The shot starts with an extreme close-up of a collarbone, slowly tilts up to reveal a flawless makeup look, then pulls back into selfie framing before a silent pause leads into the product pitch."
+  },
+  {
+   "id": "26cac2dd-99cb-4818-a678-509b0dab2c32",
+   "name": "Interview",
+   "prompt": "Interviewer asks a second stranger a question based entirely on the first stranger's random answer; confusion builds until the second person naturally notices the product (Erewhon-style aspirational item) and pivots into a casual review."
+  },
+  {
+   "id": "d50eb41c-fcfa-4f4d-93aa-473cdc6bc3b2",
+   "name": "Random Object Mic",
+   "prompt": "During a casual vlog, a random absurd object falls into the person's hand from above, and they immediately use it as a microphone to continue a completely serious product review."
+  },
+  {
+   "id": "8101cd3e-3cc9-4607-a171-3582daa2f6ee",
+   "name": "Product Crash",
+   "prompt": "The product itself falls from above and destroyed, creating chaos; harsh sharpness leads to a perfectly clean and restored scene where a person calmly begins reviewing the product."
+  },
+  {
+   "id": "31976cc7-e597-4be2-9753-4a80153b0cc7",
+   "name": "Blizzard",
+   "prompt": "A cozy indoor scene is suddenly hit by a violent, impossible blizzard; chaos fills the room but the product remains intact and functioning, and once the storm stops, the product is still working."
+  },
+  {
+   "id": "2db84ed8-7082-4981-9c9c-9d61b3c28668",
+   "name": "Camera Bump",
+   "prompt": "The camera operator accidentally bumps into a person, hitting their forehead; they react briefly, recover, and naturally reveal the dress (or product on it) while transitioning into a casual explanation."
+  },
+  {
+   "id": "5443eff1-d940-4ad3-9413-957bb048a6b0",
+   "name": "Product Dodge",
+   "prompt": "Suddenly, a product flies into a person's face; he quickly bends down to avoid a collision, and in the next frame he stands up straight and already holds the product in his hands and begins to review as if nothing had happened."
+  },
+  {
+   "id": "ec9fdf99-314d-480d-a656-10d9861341e7",
+   "name": "Epic Fail",
+   "prompt": "A person performs an unsuccessful backflip, lands unsuccessfully, falls, and immediately, without pause, takes out the product and begins an unflappable review."
+  }
+ ],
+ "settings": [
+  {
+   "id": "b8368076-35eb-4045-b33b-74b2646d9863",
+   "name": "Bedroom",
+   "prompt": "On bed or propped against pillows, soft window light. Unmade bed, cozy textures. Relaxed morning or evening wind-down vibe \u2014 honest, low-effort feel."
+  },
+  {
+   "id": "b03705e5-bbed-4d83-8d29-3bc2101cd14f",
+   "name": "Airplane Wing",
+   "prompt": "Person sits on airplane wing mid-flight at altitude. Casual product review \u2014 powerful wind, clouds, engine roar."
+  },
+  {
+   "id": "10f47b85-abd7-4899-b6b6-91ff2969d3bf",
+   "name": "Nature",
+   "prompt": "Outdoors \u2014 trail, park, beach, or garden depending on product. Natural light, greenery or open sky. Active or peaceful mood \u2014 setting adapts to product."
+  },
+  {
+   "id": "3cf2164e-ffac-4867-9c43-1d673a5cb28a",
+   "name": "Roofing",
+   "prompt": "Person on the edge of a skyscraper rooftop, city skyline stretched out behind, wind moving through hair, sun catching the buildings. Casual product review with the entire city below, character completely unbothered by the height \u2014 selfie camera, golden hour or dusk, urban scale visible in every direction."
+  },
+  {
+   "id": "6bfbe372-e50a-4900-adee-d4cbd0db8a2f",
+   "name": "Gym",
+   "prompt": "Gym floor, locker room, or post-workout bench. Bright overhead lighting, equipment in background. Sweaty or freshly finished energy \u2014 product tied to performance or recovery."
+  },
+  {
+   "id": "e99c2ee8-3c4a-4697-9a58-908e73c9ad38",
+   "name": "Volcano Rim",
+   "prompt": "Person sits on active volcano rim, lava below. Casual product review \u2014 lava bubbles, smoke drifts through, zero reaction."
+  },
+  {
+   "id": "189fa1ac-1fdc-44f4-bdea-8804a76f0659",
+   "name": "Bathroom",
+   "prompt": "Mirror selfie or front camera in bathroom. Ring light or vanity lighting, tiles visible. Intimate getting-ready energy \u2014 product shown mid-routine, close-up friendly."
+  },
+  {
+   "id": "f495493f-0251-4bd7-afc0-90bc6a862e04",
+   "name": "Tiny Reviewer",
+   "prompt": "Person shrunk to 15cm next to a product their full height. Normal selfie review at impossible scale \u2014 leans on it."
+  },
+  {
+   "id": "a0eb0be9-f0ff-4aee-9dee-69d9fd20110a",
+   "name": "Kitchen",
+   "prompt": "Standing at counter or leaning on island, natural daylight. Clean surface, mug or fruit in background. Casual mid-day energy \u2014 product fits daily routine."
+  },
+  {
+   "id": "d6992aea-4521-4606-9e4f-8c766e12622c",
+   "name": "Car Roof",
+   "prompt": "Person on roof of moving car, desert highway, golden hour. Product review while swaying with the road. Semi truck passes \u2014 no flinch."
+  },
+  {
+   "id": "fdfa032c-801f-4602-8dfd-1162b0f8c9c9",
+   "name": "In Car",
+   "prompt": "Selfie from passenger or driver seat, parked or cruising. Window light on face. Casual tone \u2014 talking to camera between errands."
+  },
+  {
+   "id": "8c95f9ba-5849-44b1-82d0-9f6b33240758",
+   "name": "Street",
+   "prompt": "Walking on sidewalk or standing on urban street, handheld selfie. City backdrop \u2014 storefronts, traffic, pedestrians. Energetic pace, talking while moving. Spontaneous discovery feel."
+  },
+  {
+   "id": "d39dda10-643c-44e2-bfc8-2451dddde7d9",
+   "name": "Office",
+   "prompt": "Desk setup, laptop open, coffee nearby. Clean modern space, soft overhead or monitor glow. Hushed mid-workday tone \u2014 quick product mention squeezed between tasks."
+  },
+  {
+   "id": "71f61bb0-dfd9-459b-a220-0dd468b977d5",
+   "name": "Train Surf",
+   "prompt": "Person hangs outside a moving train, filming selfie.  Reviews product \u2014 wind pressing on them is the live demo."
+  }
+ ]
+}

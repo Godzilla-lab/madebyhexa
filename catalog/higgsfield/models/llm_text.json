@@ -1,0 +1,43 @@
+{
+  "display_name": "LLM Generation",
+  "job_type": "llm_text",
+  "params": [
+    {
+      "name": "input_images",
+      "type": "array",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "model",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "reasoning_effort",
+      "type": "string|null",
+      "default": null,
+      "required": false,
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "system_prompt",
+      "type": "string",
+      "default": "",
+      "required": false
+    },
+    {
+      "name": "user_prompt",
+      "type": "string",
+      "default": "",
+      "required": false
+    }
+  ],
+  "rules": [],
+  "type": "video"
+}

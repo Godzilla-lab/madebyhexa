@@ -1,0 +1,90 @@
+{
+  "cost_params": [
+    {
+      "name": "batch_size",
+      "type": "integer",
+      "default": 1,
+      "required": false
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false,
+      "enum": [
+        "5",
+        "10"
+      ]
+    },
+    {
+      "name": "is_flf",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "sound",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    }
+  ],
+  "display_name": "Cinematic Studio Video",
+  "job_type": "cinematic_studio_video",
+  "params": [
+    {
+      "name": "aspect_ratio",
+      "type": "string",
+      "default": "16:9",
+      "required": false,
+      "enum": [
+        "1:1",
+        "4:3",
+        "3:4",
+        "16:9",
+        "9:16"
+      ]
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "default": 5,
+      "required": false,
+      "enum": [
+        "5",
+        "10"
+      ]
+    },
+    {
+      "name": "end_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "default": null,
+      "required": true
+    },
+    {
+      "name": "slow_motion",
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "sound",
+      "type": "boolean",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "start_image",
+      "type": "object|null",
+      "default": null,
+      "required": false
+    }
+  ],
+  "type": "video"
+}

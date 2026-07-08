@@ -1,0 +1,282 @@
+[
+  {
+    "id": "672be390-36ab-4d79-bb95-ff562a57c79c",
+    "name": "Jayden",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/ee72d8eb-a5e0-4092-a830-34bba04e47ea.webp"
+  },
+  {
+    "id": "35cd52c0-e92b-44b1-b56d-b4ea5e609c00",
+    "name": "Stefan",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/638f1fc1-7010-47ae-b016-e83fc55d91a5.webp"
+  },
+  {
+    "id": "44ee57aa-d1f4-4a0a-a55f-cdf9dacee265",
+    "name": "Mei",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/81618a7c-9c70-4885-8b02-6b0d12837205.webp"
+  },
+  {
+    "id": "24d6d9cc-42df-43c7-bdfc-be06f317b924",
+    "name": "Yuna",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/4c6df1c6-a407-46b4-85e9-889f28f2a601.webp"
+  },
+  {
+    "id": "aa9260cc-a888-47b2-8bfd-0a9c90558384",
+    "name": "Adriana",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/ad239596-46ae-476c-8967-bbbc1af3c622.webp"
+  },
+  {
+    "id": "daf4bf2e-c19e-4879-805b-bcfa6eda61f2",
+    "name": "Clara",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/657f6c77-f196-456e-8d38-c822faafe993.webp"
+  },
+  {
+    "id": "bbf8e803-f10b-4e39-801c-eb12850237ab",
+    "name": "Maria",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/cfca7330-6317-4217-9f02-0b76a2d49f6b.webp"
+  },
+  {
+    "id": "bba3087a-ad14-42c2-b51b-7c22b632abf4",
+    "name": "Sofia",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/cd4c64ff-555d-4387-bedb-73ee12629a2b.webp"
+  },
+  {
+    "id": "cd6fb78c-e1a2-42f1-8b1e-902c15511877",
+    "name": "Valentina",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/67d87b01-e3c3-4e39-8a94-ed9b23f3c232.webp"
+  },
+  {
+    "id": "ffc8862b-0b8a-485c-88e1-f89196d3dc10",
+    "name": "Jia",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/8d5948e6-db10-46b2-b48f-9728fba0b6c4.webp"
+  },
+  {
+    "id": "cec35719-5848-4455-a9dc-e6df72e03b80",
+    "name": "Lily",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/c7f92e84-48fb-43ea-b718-5fbec457e52f.webp"
+  },
+  {
+    "id": "6c21ac3e-1f76-4a35-91a6-60f334a0fafa",
+    "name": "Tae",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/8c3c75ac-8f88-44fe-a63d-0f33f64ab1a2.webp"
+  },
+  {
+    "id": "83711427-335b-4b9c-b89a-b6fa78579b49",
+    "name": "Felix",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/6bf45242-f133-434d-818c-17c33d267648.webp"
+  },
+  {
+    "id": "94950cff-b90a-4416-8384-ce554ff387e1",
+    "name": "Malik",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/cfae3129-e2ca-4de6-9319-bb27bb5e759b.webp"
+  },
+  {
+    "id": "734451fd-d418-40bd-9dee-5b467658b0d4",
+    "name": "Liam",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/dc9d77ea-c6a9-4cbc-9d0c-a2c5297825fd.webp"
+  },
+  {
+    "id": "48b5553f-4bad-4b87-9a39-4f0088664ed7",
+    "name": "Joon",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/06d85ea1-d1f0-4925-af08-9428c9359deb.webp"
+  },
+  {
+    "id": "e572fd1d-eed1-4dff-b9ef-d48c2e652477",
+    "name": "Erik",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/0e8cbf42-5353-4cab-856e-d91fced7caf8.webp"
+  },
+  {
+    "id": "e6231767-11b5-472d-8304-82ea466d8df8",
+    "name": "Nia",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/664f56d3-3790-4004-8eb1-a6b5fc1f218c.webp"
+  },
+  {
+    "id": "ed87431a-e819-4547-a846-940fe20b52f3",
+    "name": "Hana",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/8aec05e4-f69c-4529-a611-ba48684f3b7c.webp"
+  },
+  {
+    "id": "e1c17f9c-817d-44cd-949c-f36999bad2c0",
+    "name": "Ryu",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/04796462-c5ff-4dfc-8937-96894e9d27ae.webp"
+  },
+  {
+    "id": "aa252283-8591-4d14-91a8-41ce54187992",
+    "name": "Priya",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/3048af68-9871-4439-b746-b9ed1f42eacf.webp"
+  },
+  {
+    "id": "ba6c9b18-f79c-4dab-9649-88a181d0a038",
+    "name": "Elena",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/7ae013e5-7db7-4c4d-8c4f-2fcf9fed3f81.webp"
+  },
+  {
+    "id": "30e2cadd-987c-4a7a-81c3-094d4fb3a65e",
+    "name": "Kai",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/3d3d86d4-08f8-4ca3-818e-72032b7af487.webp"
+  },
+  {
+    "id": "fbed59e1-4b8d-4625-9140-ef2044e0be72",
+    "name": "Sora",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/cadc3025-4aff-4fb4-b0b9-4356be792509.webp"
+  },
+  {
+    "id": "bcd9e6ee-c000-48e6-9f4b-a20fc2a674f7",
+    "name": "Minji",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/eadd09d6-7b7f-4bed-9196-b2142d1e1527.webp"
+  },
+  {
+    "id": "1da384ed-3856-45e4-bf4c-a496c7aa95ff",
+    "name": "Margot",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/31dbdd31-65ad-495f-af81-a252fafe3e62.webp"
+  },
+  {
+    "id": "b799c8f5-fb6e-4905-b33b-cdefac153ec3",
+    "name": "Niko",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/4eace4ba-f4e1-4901-bef2-0f8538f63b95.webp"
+  },
+  {
+    "id": "b6971dd4-55fa-4e64-b318-392b16504284",
+    "name": "Jin",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/b22101a2-fdd9-410f-a889-aaf6359b200e.webp"
+  },
+  {
+    "id": "883cab24-0d4d-4536-8760-483324d765ae",
+    "name": "Yuki",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/84491d35-6ff7-4789-ae14-7793d5820d5f.webp"
+  },
+  {
+    "id": "e36b7786-b50d-4e51-991e-ae25f023814c",
+    "name": "Marco",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/c1abfa45-385e-40cc-9ee0-6085beae821d.webp"
+  },
+  {
+    "id": "91d8c706-ba3b-4890-94e5-a5d473a53409",
+    "name": "Ren",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/6491b58a-7ba2-4247-9374-0aad080f1469.webp"
+  },
+  {
+    "id": "269cf968-5d04-457d-8461-9d96f4cee000",
+    "name": "Lucas",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/2777db55-0783-49b2-a53d-9e570df7b662.webp"
+  },
+  {
+    "id": "00b08443-83de-4218-b973-f80580b1dfdb",
+    "name": "Zara",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/8c8e0717-70c1-46a5-b67f-4581637ff1fc.webp"
+  },
+  {
+    "id": "94059b15-1c28-4564-9990-8b78fc768f04",
+    "name": "Naomi",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/b6b701ed-8103-4447-bf76-a164c4c16494.webp"
+  },
+  {
+    "id": "aa3ce6d5-8aae-425d-b957-4ded21168466",
+    "name": "Megan",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/e75c3194-0e83-449d-8a82-4968f31d4b18.webp"
+  },
+  {
+    "id": "ea6c745a-1a96-4ba3-bd85-f787d43e70e5",
+    "name": "Omar",
+    "type": "preset",
+    "gender": "male",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/eb168e75-538b-4d17-8bb9-2ed942dbf0d6.webp"
+  },
+  {
+    "id": "45a4bd6d-3ab9-4b05-b3dd-a887dc594a44",
+    "name": "Miso",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/b554025a-4880-452e-badd-6b2abb54a61d.webp"
+  },
+  {
+    "id": "f0fd9868-b172-406c-b418-02768f3ef8b6",
+    "name": "Scarlett",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/464ec4fc-b6e1-4a14-8d74-c35b279b1e10.webp"
+  },
+  {
+    "id": "8d6d9263-140b-4637-b4c9-b8eda5af1e54",
+    "name": "Amara",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/5e83e0e8-9e10-4cf0-84f5-60ec11e150a0.webp"
+  },
+  {
+    "id": "a70ad951-1432-422a-995e-f0e113220cc3",
+    "name": "Audrey",
+    "type": "preset",
+    "gender": "female",
+    "preview_url": "https://cdn.higgsfield.ai/marketing_studio_avatar/427e049b-bf1b-4214-a1c6-5af79d89f5c8.webp"
+  }
+]

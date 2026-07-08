@@ -1,0 +1,38 @@
+# The studio IS the homepage now; old studio URLs land on / (query strings
+# like ?open=ugc are forwarded automatically, so deep links keep working).
+/studio.html       /             301
+/studio            /             301
+
+# Old standalone free-sample page is now folded into the single offer landing page.
+/free-sample.html  /offer#claim  301
+/free-sample       /offer#claim  301
+
+# Canonical clean URL: serve the offer page at /offer, 301 the .html form to it.
+# Force (!) is required because offer.html is a real file; without it Netlify
+# serves the file and skips the redirect.
+/offer.html        /offer        301!
+
+# Eco ad variant: same bones as /offer, eco message match. Separate URL keeps
+# /offer alive for broad traffic and isolates the eco campaign's tracking.
+/offer-eco.html    /offer-eco    301!
+
+# Investor deck: serve deck.html at the clean, shareable /deck URL.
+/deck              /deck.html    200
+
+# Internal files: never serve these publicly (real files, so force is required).
+/README.md            /  301!
+/REVIEW-TEMPLATES.md  /  301!
+/COMPETITORS.md       /  301!
+/WINNING-ADS.md       /  301!
+/HIGGSFIELD-YOUTUBE-RESEARCH.md  /  301!
+/MADEBYHEXA-ASSESSMENT.md        /  301!
+/leads/*              /  301!
+/comments/*           /  301!
+/transcripts/*        /  301!
+
+# The studio reads these two; everything else in catalog/ stays private
+# (pricing margins, prompt recipes, raw engine exports). First match wins,
+# so the exemptions must sit above the block.
+/catalog/studio-data.json  /catalog/studio-data.json  200!
+/catalog/presets.json      /catalog/presets.json      200!
+/catalog/*            /  301!
