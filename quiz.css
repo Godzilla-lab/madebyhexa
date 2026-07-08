@@ -130,17 +130,17 @@
 
 /* ── Composer hero entry button ── */
 .composer-quiz-entry {
-  display: inline-flex; align-items: center; gap: 10px;
-  margin-top: 18px; padding: 11px 18px;
+  display: inline-flex; align-items: center; gap: 9px;
+  margin-top: 16px; padding: 9px 15px;
   border-radius: 999px; cursor: pointer;
-  border: 1px solid var(--border-strong);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
-  color: var(--text); font-family: inherit; font-size: 14px;
-  transition: transform 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-mute); font-family: inherit; font-size: 13.5px;
+  transition: color 160ms var(--ease), border-color 160ms var(--ease);
 }
-.composer-quiz-entry:hover { transform: translateY(-1px); border-color: var(--accent); box-shadow: var(--glow-accent); }
-.composer-quiz-entry .cq-spark { font-size: 15px; }
-.composer-quiz-entry .cq-text strong { font-weight: 700; }
+.composer-quiz-entry:hover { color: var(--text); border-color: var(--border-strong); }
+.composer-quiz-entry .cq-spark { font-size: 14px; }
+.composer-quiz-entry .cq-text strong { font-weight: 700; color: var(--text); }
 .composer-quiz-entry .cq-arrow { color: var(--accent-soft); transition: transform 160ms var(--ease); }
 .composer-quiz-entry:hover .cq-arrow { transform: translateX(3px); }
 
