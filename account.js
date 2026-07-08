@@ -106,7 +106,13 @@
       if (p1 !== p2) { note('set-security-note', 'The two passwords do not match.', 'err'); return; }
       note('set-security-note', 'Changing…');
       window.HexaAuth.updatePassword(p1).then(function (r) {
-        if (r && r.error) { note('set-security-note', r.error.message || 'Could not change password.', 'err'); return; }
+        if (r && r.error) {
+          var m = /Password should contain/i.test(r.error.message || '')
+            ? 'Make it stronger: at least one lowercase letter, one capital letter and one number.'
+            : (r.error.message || 'Could not change password.');
+          note('set-security-note', m, 'err');
+          return;
+        }
         $('set-pass').value = ''; $('set-pass2').value = '';
         note('set-security-note', 'Password changed.', 'ok');
       }).catch(function () { note('set-security-note', 'Could not change password. Try again.', 'err'); });

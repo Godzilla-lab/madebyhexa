@@ -79,6 +79,7 @@
     els.toggleRow.hidden = !(s === 'signin' || s === 'signup');
 
     els.password.setAttribute('autocomplete', s === 'signup' ? 'new-password' : 'current-password');
+    els.password.setAttribute('placeholder', s === 'signup' ? '6+ chars with a capital and a number' : 'Your password');
     els.toggleText.textContent = s === 'signup' ? 'Already have an account?' : 'New to Hexa?';
     els.toggle.textContent = s === 'signup' ? 'Sign in' : 'Create an account';
 
@@ -99,6 +100,7 @@
     if (/Invalid login credentials/i.test(m)) return 'That email and password do not match.';
     if (/already registered/i.test(m)) return 'That email already has an account. Try signing in.';
     if (/provider is not enabled/i.test(m)) return 'Google sign-in is not enabled yet. Use email for now.';
+    if (/Password should contain/i.test(m)) return 'Make the password a bit stronger: at least one lowercase letter, one capital letter and one number.';
     if (/expired|invalid/i.test(m) && (state === 'signup-code' || state === 'forgot-code')) {
       return 'That code is not right or has expired. Check the digits or tap "Send a new code".';
     }
