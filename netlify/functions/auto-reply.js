@@ -197,6 +197,7 @@ function buildOrderEmail({ name, brand, tier }) {
 }
 
 exports.handler = async (event) => {
+  require('./lib/blobs-context').connect(event);
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method not allowed' };
   }

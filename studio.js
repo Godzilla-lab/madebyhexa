@@ -402,9 +402,14 @@
   function pollWebProduct(pk) {
     if (!pk || !pk.ok || pk.image || !pk.webProductId || wpPolls[pk.webProductId]) return;
     wpPolls[pk.webProductId] = true;
+    // Simple stores scrape in seconds, but heavy SPA pages (Indiegogo,
+    // Kickstarter) take the engine minutes. Poll with a growing interval
+    // for ~3 minutes total; the upgrade applies whenever it lands.
     var tries = 0;
+    var MAX_TRIES = 45;
     (function tick() {
-      if (tries++ >= 12) return;
+      if (tries++ >= MAX_TRIES) return;
+      var delay = Math.min(2500 + tries * 400, 8000);
       fetch(PEEK_URL + '?webProduct=' + encodeURIComponent(pk.webProductId))
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -413,10 +418,10 @@
             if (d.title && (!pk.title || pk.guessed)) pk.title = d.title;
             peekUpgraded(pk);
           } else if (!d || !d.ready) {
-            setTimeout(tick, 2500);
+            setTimeout(tick, delay);
           }
         })
-        .catch(function () { setTimeout(tick, 4000); });
+        .catch(function () { setTimeout(tick, delay + 2000); });
     })();
   }
 

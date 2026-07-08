@@ -25,12 +25,12 @@ const CACHE_MAX = 200;
 
 const cache = new Map(); // url -> { ts, data }
 
-function json(statusCode, data) {
+function json(statusCode, data, cacheControl) {
   return {
     statusCode,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=300',
+      'Cache-Control': cacheControl || 'public, max-age=300',
     },
     body: JSON.stringify(data),
   };
@@ -388,6 +388,7 @@ function slugGuess(target) {
 /* ── Handler ──────────────────────────────────────────────────── */
 
 exports.handler = async (event) => {
+  require('./lib/blobs-context').connect(event);
   if (event.httpMethod !== 'GET') return json(405, { ok: false });
 
   // Higgsfield product-scrape poll: the fallback image for sites that block our
@@ -419,7 +420,7 @@ exports.handler = async (event) => {
   const nothing = { ok: false, url: raw, title: null, image: null, siteName: null, price: null, currency: null };
 
   const hit = cache.get(raw);
-  if (hit && Date.now() - hit.ts < CACHE_TTL_MS) return json(200, hit.data);
+  if (hit && Date.now() - hit.ts < (hit.ttl || CACHE_TTL_MS)) return json(200, hit.data);
 
   const target = await guardUrl(raw);
   if (!target) return json(200, nothing);
@@ -430,14 +431,36 @@ exports.handler = async (event) => {
   // The engine's own scrape starts immediately, in parallel with our read:
   // by the time the customer pays, the web product id grounds the render in
   // the real product. Creating one is ~1s and free; failures never block.
+  // One scrape per URL, remembered in Blobs: heavy pages (Indiegogo) take the
+  // engine minutes, far longer than a page visit. The first paste starts the
+  // scrape; any later paste of the same URL finds it finished and gets the
+  // real image + title inline, no client polling needed.
+  let peekStore = null;
+  try {
+    const { getStore } = require('@netlify/blobs');
+    peekStore = getStore('peeks');
+  } catch (e) { /* no blobs: grounding still works, just without reuse */ }
+  const wpKey = 'wp:' + target.href;
+  let knownWpId = null;
+  if (peekStore) {
+    try { knownWpId = await peekStore.get(wpKey); } catch (e) { /* ignore */ }
+  }
+
   let webProductPromise = Promise.resolve(null);
   try {
     const hf = require('./lib/hf');
     if (hf.configured()) {
-      webProductPromise = hf.createWebProduct(target.href).catch((e) => {
-        console.log('[product-peek] grounding create failed:', e && e.message);
-        return null;
-      });
+      webProductPromise = knownWpId
+        ? Promise.resolve({ id: knownWpId })
+        : hf.createWebProduct(target.href).then(async (wp) => {
+            if (wp && wp.id && peekStore) {
+              try { await peekStore.set(wpKey, wp.id); } catch (e) { /* ignore */ }
+            }
+            return wp;
+          }).catch((e) => {
+            console.log('[product-peek] grounding create failed:', e && e.message);
+            return null;
+          });
     }
   } catch (e) { /* lib unavailable: skip grounding */ }
 
@@ -482,12 +505,35 @@ exports.handler = async (event) => {
       new Promise((r) => setTimeout(() => r(null), budget)),
     ]);
     if (wp && wp.id) data.webProductId = wp.id;
+
+    // A remembered scrape may already be done: inline its result so repeat
+    // pastes of a blocked page get the real name and image immediately.
+    if (!data.image && knownWpId) {
+      try {
+        const hf = require('./lib/hf');
+        const done = await Promise.race([
+          hf.getWebProduct(knownWpId),
+          new Promise((r) => setTimeout(() => r(null), 2500)),
+        ]);
+        const media = done && Array.isArray(done.medias) && done.medias[0];
+        if (media && /^https:\/\//i.test(media.url || '')) {
+          data.image = media.url;
+          const t = done.title && String(done.title);
+          if (t && !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(t.trim()) && (data.guessed || !data.title)) {
+            data.title = t.slice(0, 90);
+          }
+        }
+      } catch (e) { /* scrape still running or gone; the client polls */ }
+    }
   }
 
-  cache.set(raw, { ts: Date.now(), data });
+  // Imageless results go stale fast on purpose: the scrape may finish any
+  // minute, and the next paste of this URL should pick its result up.
+  const complete = !!data.image;
+  cache.set(raw, { ts: Date.now(), ttl: complete ? CACHE_TTL_MS : 15000, data });
   if (cache.size > CACHE_MAX) {
     const oldest = cache.keys().next().value;
     cache.delete(oldest);
   }
-  return json(200, data);
+  return json(200, data, complete ? undefined : 'public, max-age=15');
 };

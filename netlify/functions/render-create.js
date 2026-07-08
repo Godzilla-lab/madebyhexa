@@ -195,7 +195,7 @@ function arcFor(segments) {
  * (the harvested library) and writes one purpose-built prompt per 15s
  * segment, in that same house style. Falls back to the beat-sheet template
  * when no ANTHROPIC_API_KEY is configured or the call fails. */
-async function agentStoryboard(order, segments) {
+async function agentStoryboard(order, segments, facts) {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   const s = order.selections || {};
   const Anthropic = require('@anthropic-ai/sdk');
@@ -203,7 +203,9 @@ async function agentStoryboard(order, segments) {
 
   const brief = [
     'Product: ' + (s.link || s.desc || 'unknown'),
-    s.productName ? 'Product name: ' + s.productName : null,
+    facts && facts.title ? 'Product name: ' + facts.title : (s.productName ? 'Product name: ' + s.productName : null),
+    facts && facts.description ? 'What the product is, from its own page: ' + String(facts.description).slice(0, 700) : null,
+    facts && facts.type ? 'Product type: ' + facts.type : null,
     s.avatar && s.avatar.name ? 'Creator: ' + s.avatar.name : null,
     s.hook && s.hook.name ? 'Opening hook: "' + s.hook.name + '" whose script is: ' + ((promptLib.findHook(s.hook.id) || {}).prompt || '') : null,
     s.setting && s.setting.name ? 'Scene: ' + s.setting.name : null,
@@ -250,13 +252,15 @@ async function agentStoryboard(order, segments) {
   return null;
 }
 
-function writeStoryboard(order, segments) {
+function writeStoryboard(order, segments, facts) {
   const s = order.selections || {};
-  const product = s.link ? ('the product at ' + s.link) : (s.desc || 'the product');
+  const product = (facts && facts.title) || s.productName ||
+    (s.link ? ('the product at ' + s.link) : (s.desc || 'the product'));
   const hook = s.hook && s.hook.name ? s.hook.name : null;
   const setting = s.setting && s.setting.name ? s.setting.name : null;
   const base =
     'A hyper-realistic creator video selling ' + product + '.' +
+    (facts && facts.description ? ' The product: ' + String(facts.description).slice(0, 400) + '.' : '') +
     (setting ? ' Scene: ' + setting + '.' : '') +
     ' Natural handheld feel, honest tone, no captions burned in.' +
     (s.directions ? ' Customer direction, follow it faithfully: ' + String(s.directions).slice(0, 1200) : '');
@@ -292,6 +296,25 @@ function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
  * Peek usually created it minutes ago (selections.webProductId), so the
  * common case is one instant GET. A fresh create only helps if the scrape
  * finishes inside the budget; otherwise the render proceeds ungrounded. */
+/* The scraped product facts (real name, description, type) for the prompt
+ * writers, or null. One GET; the scrape usually finished during the peek. */
+async function webProductFacts(id) {
+  if (!id) return null;
+  try {
+    const wp = await hf.getWebProduct(id);
+    if (!wp || wp.status !== 'completed') return null;
+    let title = wp.title && String(wp.title);
+    if (title && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(title.trim())) title = null; // host echo
+    return {
+      title: title ? title.slice(0, 90) : null,
+      description: wp.description ? String(wp.description).slice(0, 900) : null,
+      type: wp.type || null,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 async function ensureWebProduct(s, budgetMs) {
   let id = s.webProductId || null;
   try {
@@ -367,8 +390,11 @@ async function planOrder(order) {
   // ads and the only one that grounds the render in the scraped real product.
   if (product.indexOf('mode:') === 0 || product === 'auto') {
     const mode = product === 'auto' ? 'ugc' : product.slice(5);
-    const prompts = (await agentStoryboard(order, segments)) || writeStoryboard(order, segments);
+    // Resolve the scraped product first: its real name and description feed
+    // the storyboard, so the script talks about the actual product.
     const webProductId = await ensureWebProduct(s, 6000);
+    const facts = await webProductFacts(webProductId);
+    const prompts = (await agentStoryboard(order, segments, facts)) || writeStoryboard(order, segments, facts);
     return {
       kind: 'videos', jobType: 'marketing_studio_video',
       paramsList: prompts.map(function (prompt) {
@@ -393,7 +419,8 @@ async function planOrder(order) {
   }
 
   if (product === 'cinematic') {
-    let prompts = (await agentStoryboard(order, segments)) || writeStoryboard(order, segments);
+    const cinFacts = await webProductFacts(s.webProductId);
+    let prompts = (await agentStoryboard(order, segments, cinFacts)) || writeStoryboard(order, segments, cinFacts);
     // Cinematic Studio takes no hook_id/setting_id, so inject the full library
     // prompt text that Marketing Studio would have applied server-side.
     const hookRec = s.hook && promptLib.findHook(s.hook.id || s.hook.name);
@@ -422,11 +449,13 @@ async function planOrder(order) {
   if (product === 'photoshoot') {
     const COUNT = 10;
     const shootMode = (s.mode && s.mode.id) || 'product_shot';
+    const shootFacts = await webProductFacts(s.webProductId);
     const intent =
       (s.directions && String(s.directions).slice(0, 600)) ||
       ('Brand-quality ' + shootMode.replace(/_/g, ' ') + ' of ' +
-        (s.productName || s.desc || 'the product') +
-        (s.productSiteName ? ' by ' + s.productSiteName : '') + '.');
+        ((shootFacts && shootFacts.title) || s.productName || s.desc || 'the product') +
+        (s.productSiteName ? ' by ' + s.productSiteName : '') +
+        ((shootFacts && shootFacts.description) ? ' The product: ' + String(shootFacts.description).slice(0, 300) : '') + '.');
 
     let prompts = null;
     try {
@@ -483,6 +512,7 @@ function json(status, body) {
 exports.planOrder = planOrder; // exposed for tests and the concierge CLI path
 
 exports.handler = async (event) => {
+  require('./lib/blobs-context').connect(event);
   if (event.httpMethod !== 'POST') return json(405, { error: 'POST only' });
   if (!hf.configured()) return json(503, { error: 'generation backend not configured' });
 

@@ -22,6 +22,7 @@ function json(status, body) {
 }
 
 exports.handler = async (event) => {
+  require('./lib/blobs-context').connect(event);
   if (event.httpMethod !== 'POST') return json(405, { error: 'POST only' });
   if (!sb.configured()) return json(503, { error: 'accounts not configured' });
   if (!(await allow('account-delete', event, 10))) return json(429, { error: 'Too many attempts.' });

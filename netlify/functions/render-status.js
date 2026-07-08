@@ -115,6 +115,7 @@ async function refundFailed(ctx, paidSessionId) {
 }
 
 exports.handler = async (event) => {
+  require('./lib/blobs-context').connect(event);
   if (!hf.configured()) return json(503, { error: 'generation backend not configured' });
 
   const q = event.queryStringParameters || {};
