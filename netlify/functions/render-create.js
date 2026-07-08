@@ -376,10 +376,34 @@ async function planOrder(order) {
     };
   }
 
-  // Customer-supplied creator photos: the engine API takes avatar ids, not
-  // reference images, so these orders go concierge (501 -> honest queued
-  // state; ops fulfill via tools/run-order.py) until reference-image support.
-  if (s.avatar && s.avatar.id === 'custom') return null;
+  // Customer-supplied creator photos become a real custom avatar: each photo
+  // uploads as presigned media, the batch becomes a marketing-studio avatar,
+  // and the film is fronted by that exact person. Only if the whole chain
+  // fails does the order fall back to concierge (501 -> honest queued state).
+  if (s.avatar && s.avatar.id === 'custom') {
+    const photos = Array.isArray(s.avatarPhotos) ? s.avatarPhotos.slice(0, 3) : [];
+    if (!photos.length) return null;
+    try {
+      const refs = [];
+      for (const dataUrl of photos) {
+        const m = /^data:(image\/[a-z+.-]+);base64,(.+)$/i.exec(String(dataUrl));
+        if (!m) continue;
+        const media = await hf.uploadImageBytes(Buffer.from(m[2], 'base64'), m[1]);
+        if (media && media.id) refs.push({ type: 'media_input', id: media.id });
+      }
+      if (!refs.length) return null;
+      const made = await hf.createAvatars([{
+        name: 'Customer creator · ' + String(order.id || '').slice(0, 8),
+        image_references: refs,
+      }]);
+      const av = Array.isArray(made) ? made[0] : made;
+      if (!av || !av.id) return null;
+      s.avatar = { id: av.id, name: s.avatar.name || 'Your own creator' };
+    } catch (e) {
+      console.error('custom avatar creation failed, order goes concierge:', e.message);
+      return null;
+    }
+  }
 
   // 1080p on standard modes is a paid upgrade (priced per segment in
   // lib/pricing.js); premium products ship 1080p in their base price.

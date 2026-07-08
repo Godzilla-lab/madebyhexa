@@ -207,7 +207,28 @@ function photoshootEnhance(body) {
   return api('POST', '/developer/v2alpha/product-photoshoot/enhance', body);
 }
 
+/* Presigned media upload from raw bytes. This is the flow avatar references
+ * require: URL-import media (uploadImageFromUrl) are NOT accepted there. */
+async function uploadImageBytes(buf, contentType) {
+  const media = await api('POST', '/developer/v2alpha/media?type=image', {});
+  const put = await fetch(media.upload_url, {
+    method: 'PUT',
+    body: buf,
+    headers: { 'Content-Type': contentType || 'image/jpeg' },
+  });
+  if (!put.ok) throw new Error('media upload PUT failed (' + put.status + ')');
+  await api('POST', '/developer/v2alpha/media/' + media.id + '/confirm?type=image', {});
+  return media;
+}
+
+/* Create custom marketing-studio avatars from uploaded photo media.
+ * items: [{ name, image_references: [{ type: 'media_input', id }] }] */
+function createAvatars(items) {
+  return api('POST', '/developer/v1alpha/marketing-studio/avatars', { avatars: items });
+}
+
 module.exports = {
   api, createJob, getJob, getBalance, configured, apiKey,
   createWebProduct, getWebProduct, uploadImageFromUrl, photoshootEnhance,
+  uploadImageBytes, createAvatars,
 };

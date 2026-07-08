@@ -846,7 +846,7 @@
       pImg.alt = '';
       var pText = el('div', 'avatar-preview-text');
       var pName = el('strong');
-      var pNote = el('span', null, 'Locked as your creator. Every segment uses this exact person.');
+      var pNote = el('span', null, 'This is your creator. Every segment of your film uses this exact person.');
       pText.appendChild(pName);
       pText.appendChild(pNote);
       preview.appendChild(pImg);
