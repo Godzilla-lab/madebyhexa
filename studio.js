@@ -18,7 +18,7 @@
   var PEEK_MIN_MS = 900;    // minimum stage time, so the beat never flashes
   var PEEK_IMG_MS = 2800;   // budget for preloading the product image (re-hosted scrapes run large)
   var PEEK_HOLD_MS = 1100;  // how long the identified product holds the stage
-  var GUESS_HOLD_MS = 9000; // extra stage time while the scrape fetches the photo of a blocked page; after this the toast handles the arrival
+  var GUESS_HOLD_MS = 60000; // max stage time while the photo is fetched: seeing the product IS the payoff, so we wait for it (with a skip link)
 
   /* ── Video modes (rendered as tiles) ── */
   var MODE_CONFIG = {
@@ -1946,6 +1946,7 @@
     var priceEl = $('#peek-price');
     var progEl = $('#peek-progress');
     var noteEl = $('#peek-note');
+    var skipEl = $('#peek-skip');
 
     // reset the stage: no photo yet means no frame at all. The card reads as
     // a typographic slate until a real image earns the space.
@@ -1957,6 +1958,8 @@
     titleEl.hidden = true;
     priceEl.hidden = true;
     noteEl.hidden = true;
+    skipEl.hidden = true;
+    skipEl.onclick = null;
     progEl.hidden = false;
     eyebrow.textContent = 'Hexa Studio';
     var hostname = '';
@@ -2030,29 +2033,44 @@
       if (photoComing && frame.hidden) {
         progEl.hidden = false;
         if (pk.guessed && !pk.image) {
-          noteEl.textContent = 'The page will not open for us, so we are pulling the product photo another way.';
+          noteEl.textContent = 'That page is guarded, so we are fetching your product photo another way.';
           noteEl.hidden = false;
         }
         clearRevealTimers();
+        // The wait is long on purpose: seeing their own product on this card
+        // is the moment that sells the film. Keep the copy moving so the
+        // wait reads as work, not as a hang, and offer a way out.
         var waited = 0;
         var waiter = setInterval(function () {
           waited += 400;
+          if (waited === 8000 && frame.hidden) {
+            noteEl.textContent = 'A real browser is opening your page right now.';
+            noteEl.hidden = false;
+          } else if (waited === 18000 && frame.hidden) {
+            noteEl.textContent = 'Reading the page and picking the best product photo.';
+          } else if (waited === 34000 && frame.hidden) {
+            noteEl.textContent = 'Almost there. A good photo is worth a few more seconds.';
+          }
+          if (waited === 12000 && frame.hidden) skipEl.hidden = false;
           if (!frame.hidden) {
             clearInterval(waiter);
             eyebrow.textContent = pk.siteName ? 'Product found · ' + pk.siteName : 'Product found';
             if (pk.title) titleEl.textContent = pk.title;
             progEl.hidden = true;
             noteEl.hidden = true;
+            skipEl.hidden = true;
             revealTimers.push(setTimeout(function () { dock(pk); }, 1500));
           } else if (pk.scrapeFailed) {
             clearInterval(waiter);
             progEl.hidden = true;
+            skipEl.hidden = true;
             noteEl.textContent = 'This page keeps its photos to itself. Add one of yours on the next step; the film comes out just as sharp.';
             noteEl.hidden = false;
             revealTimers.push(setTimeout(function () { dock(pk); }, 2600));
           } else if (waited >= GUESS_HOLD_MS) {
             clearInterval(waiter);
             progEl.hidden = true;
+            skipEl.hidden = true;
             noteEl.textContent = pk.webProductId
               ? 'Still working on the photo. We pop it in the moment it lands.'
               : 'The photo would not load. You can add one on the next step.';
@@ -2061,6 +2079,11 @@
           }
         }, 400);
         revealTimers.push(waiter); // clearTimeout clears intervals too
+        skipEl.onclick = function () {
+          clearInterval(waiter);
+          skipEl.hidden = true;
+          dock(pk); // the toast still announces the photo when it lands
+        };
         return;
       }
       if (pk.guessed && !pk.image) {

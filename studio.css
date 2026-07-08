@@ -2474,6 +2474,27 @@ body.home .float-cta-link svg { color: var(--accent); }
   color: var(--text-mute);
 }
 
+.peek-skip[hidden] { display: none; }
+.peek-skip {
+  margin-top: 22px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  animation: peek-skip-in 0.5s var(--ease);
+}
+.peek-skip:hover { color: var(--text-mute); }
+@keyframes peek-skip-in {
+  from { opacity: 0; }
+}
+
 /* A photo that lands after the reveal stage is over gets its own moment:
  * a card that slides up over whatever step the customer is on. */
 .peek-toast {
