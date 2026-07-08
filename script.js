@@ -672,11 +672,12 @@
   if (heroFilm) {
     // First clip is local (instant first paint); the rest stream from the reel
     // CDN so the monitor shows range, not one loop reused across the site.
+    // Product films only: every clip in the rotation shows a product being
+    // held, used or unboxed. No dance clips, no lifestyle filler.
     const HERO_CLIPS = [
       { src: 'assets/film/hero-loop.mp4', label: 'UGC unboxing' },
-      { src: 'https://v1.pinimg.com/videos/iht/expMp4/59/9e/f9/599ef938df6f17431f75189f08b3f118_720w.mp4', label: 'Lip sync to camera' },
-      { src: 'https://v1.pinimg.com/videos/iht/expMp4/57/36/b0/5736b022041a97848d07cf558cf08797_720w.mp4', label: 'Photo to video' },
-      { src: 'https://v1.pinimg.com/videos/iht/expMp4/64/6e/62/646e6281d27ab0fc0c5fc7916a3919b6_720w.mp4', label: 'Street dance' },
+      { src: 'https://d8j0ntlcm91z4.cloudfront.net/user_3B9ysSkvPFs8NnELOqJwjcodGpA/hf_20260411_171147_ace9e350-0b28-4082-9685-3e4ac89288b0.mp4', label: 'Kitchen demo' },
+      { src: 'https://d8j0ntlcm91z4.cloudfront.net/user_3CIjqzTsrKEUr8OzFBaYO4ux3nG/hf_20260413_131601_e29e767d-fe44-4b42-a751-01b178692f67.mp4', label: 'Luxury unboxing' },
     ];
     let clipIdx = 0;
     const two = (n) => String(n).padStart(2, '0');
@@ -725,26 +726,6 @@
       } else {
         start();
       }
-
-      // ── Bank tiles drive the monitor: hover (or tap) a scene and the master
-      // monitor swaps to that render, so the range is felt, not just listed ──
-      document.querySelectorAll('.c-bank-tile').forEach((tile) => {
-        const v = tile.querySelector('video');
-        const cap = tile.querySelector('figcaption');
-        if (!v) return;
-        const swapTo = () => {
-          const src = v.getAttribute('src');
-          if (!src || heroFilm.getAttribute('src') === src) return;
-          heroFilm.classList.add('c-monitor-swap');
-          heroFilm.src = src;
-          if (heroCap) heroCap.textContent = (cap ? cap.textContent : 'Scene') + ' · rendered by Hexa';
-          heroFilm.load();
-          start();
-          heroFilm.addEventListener('playing', () => heroFilm.classList.remove('c-monitor-swap'), { once: true });
-        };
-        tile.addEventListener('mouseenter', swapTo);
-        tile.addEventListener('click', swapTo);
-      });
 
       heroFilm.addEventListener('hexa-resume', start);
     }
