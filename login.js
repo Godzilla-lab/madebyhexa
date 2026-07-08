@@ -150,6 +150,16 @@
         busy(false);
         if (r.error) { showError(niceError(r.error)); return; }
         if (r.data && r.data.session) { location.replace(NEXT); return; } // confirmations off
+        // Existing confirmed account: Supabase answers with an identity-less
+        // user and sends NO email (anti enumeration). Waiting on a code that
+        // never comes would be cruel; sign-in is one tap away instead.
+        var u = r.data && r.data.user;
+        if (u && Array.isArray(u.identities) && u.identities.length === 0) {
+          setState('signin');
+          els.email.value = email;
+          showNote('That email already has an account. Sign in below, or use "Forgot password?" if you lost the password.');
+          return;
+        }
         codeEmail = email;
         setState('signup-code');
       });
