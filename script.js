@@ -725,6 +725,42 @@
       } else {
         start();
       }
+
+      // ── Bank tiles drive the monitor: hover (or tap) a scene and the master
+      // monitor swaps to that render, so the range is felt, not just listed ──
+      document.querySelectorAll('.c-bank-tile').forEach((tile) => {
+        const v = tile.querySelector('video');
+        const cap = tile.querySelector('figcaption');
+        if (!v) return;
+        const swapTo = () => {
+          const src = v.getAttribute('src');
+          if (!src || heroFilm.getAttribute('src') === src) return;
+          heroFilm.classList.add('c-monitor-swap');
+          heroFilm.src = src;
+          if (heroCap) heroCap.textContent = (cap ? cap.textContent : 'Scene') + ' · rendered by Hexa';
+          heroFilm.load();
+          start();
+          heroFilm.addEventListener('playing', () => heroFilm.classList.remove('c-monitor-swap'), { once: true });
+        };
+        tile.addEventListener('mouseenter', swapTo);
+        tile.addEventListener('click', swapTo);
+      });
+
+      heroFilm.addEventListener('hexa-resume', start);
+    }
+
+    // ── Before/after flip: the boring product page vs the film it became ──
+    const pdp = document.getElementById('monitor-pdp');
+    const flip = document.getElementById('monitor-flip');
+    if (pdp && flip) {
+      flip.addEventListener('click', () => {
+        const showPage = pdp.hidden;
+        pdp.hidden = !showPage;
+        flip.textContent = showPage ? 'Watch the Hexa film' : 'The page it came from';
+        flip.classList.toggle('is-page', showPage);
+        if (showPage) heroFilm.pause();
+        else heroFilm.dispatchEvent(new Event('hexa-resume'));
+      });
     }
   }
 

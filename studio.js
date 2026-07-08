@@ -2125,9 +2125,36 @@
       openReveal(link);
     });
 
-    // one-click demo products: fill the bar and run the real flow
+    // one-click demo products: fill the bar and run the real flow.
+    // Hovering ghost-types the URL into the bar first, so the "paste a link"
+    // gesture is demonstrated before anything is clicked. The ghost never
+    // touches state and clears itself; a real value in the bar wins.
+    var ghostTimer = null;
+    function clearGhost() {
+      if (ghostTimer) { clearInterval(ghostTimer); ghostTimer = null; }
+      if (linkInput.classList.contains('is-ghost')) {
+        linkInput.value = '';
+        linkInput.classList.remove('is-ghost');
+      }
+    }
+    linkInput.addEventListener('focus', clearGhost);
     $all('.composer-try-chip').forEach(function (chip) {
+      chip.addEventListener('mouseenter', function () {
+        if (document.activeElement === linkInput) return;
+        if (linkInput.value && !linkInput.classList.contains('is-ghost')) return;
+        clearGhost();
+        var url = chip.getAttribute('data-try') || '';
+        var i = 0;
+        linkInput.classList.add('is-ghost');
+        ghostTimer = setInterval(function () {
+          i += 2;
+          linkInput.value = url.slice(0, i);
+          if (i >= url.length) { clearInterval(ghostTimer); ghostTimer = null; }
+        }, 12);
+      });
+      chip.addEventListener('mouseleave', clearGhost);
       chip.addEventListener('click', function () {
+        clearGhost();
         linkInput.value = chip.getAttribute('data-try');
         linkInput.dispatchEvent(new Event('input', { bubbles: true }));
         $('#composer-go').click();

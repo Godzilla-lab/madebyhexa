@@ -118,6 +118,7 @@
   color: var(--text-mute);
   margin: 14px 4px 0;
 }
+#composer-link.is-ghost { color: var(--text-faint); }
 .composer-nolink {
   display: inline;
   font: inherit;
@@ -1299,7 +1300,10 @@ body.home .tile:focus-visible {
   overflow: hidden;
   background: var(--surface-media);
   box-shadow: var(--shadow-3);
+  cursor: pointer;
+  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
 }
+.c-bank-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-3), 0 0 0 1px rgba(255, 255, 255, 0.22); }
 .c-bank-tile video {
   position: absolute;
   inset: 0;
@@ -1447,6 +1451,100 @@ body.home .tile:focus-visible {
   letter-spacing: 0.08em;
   color: var(--text-faint);
 }
+/* ── Before/after: the boring product page the film was rendered from ── */
+.c-monitor-pdp {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  background: #f4f2ee;
+}
+.c-monitor-pdp[hidden] { display: none; }
+.pdp-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 11px 12px;
+  background: #e7e4de;
+}
+.pdp-bar i { width: 8px; height: 8px; border-radius: 50%; background: #c9c5bd; }
+.pdp-bar span {
+  flex: 1;
+  margin-left: 6px;
+  padding: 5px 11px;
+  border-radius: 7px;
+  background: #f4f2ee;
+  font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 10.5px;
+  color: #8a857c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pdp-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 18px 20px 20px;
+  font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+.pdp-body img {
+  align-self: center;
+  height: 40%;
+  min-height: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #fff;
+}
+.pdp-title { margin: 8px 0 0; font-size: 15.5px; font-weight: 600; color: #2b2822; }
+.pdp-stars { margin: 0; font-size: 12.5px; letter-spacing: 2px; color: #e2a33d; }
+.pdp-stars span { letter-spacing: 0; color: #8a857c; }
+.pdp-price { margin: 0; font-size: 18px; font-weight: 700; color: #2b2822; }
+.pdp-btn {
+  padding: 10px 26px;
+  border-radius: 8px;
+  background: #dedad2;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #55514a;
+}
+.pdp-line { display: block; width: 100%; height: 8px; border-radius: 4px; background: #e4e1da; }
+.pdp-line.short { width: 58%; }
+
+.c-monitor-flip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 42px;
+  z-index: 5;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(10, 6, 8, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 160ms var(--ease), color 160ms var(--ease);
+}
+.c-monitor-flip:hover { border-color: rgba(255, 255, 255, 0.55); }
+.c-monitor-flip.is-page {
+  border-color: rgba(255, 77, 109, 0.55);
+  color: var(--accent);
+  background: rgba(10, 6, 8, 0.85);
+}
+
 .c-monitor-cap {
   position: absolute;
   left: 14px;
