@@ -174,7 +174,10 @@
       window.HexaAuth.verifyEmailCode(codeEmail, code, type).then(function (r) {
         busy(false);
         if (r.error) { showError(niceError(r.error)); els.code.select(); return; }
-        if (type === 'signup') location.replace(NEXT);
+        if (type === 'signup') {
+          // Brand-new account: land on the onboarding welcome, not a bare library.
+          location.replace(NEXT === '/account.html' ? '/account.html?welcome=1' : NEXT);
+        }
         else setState('newpass');
       });
       return;

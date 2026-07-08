@@ -4,6 +4,9 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var LIST_URL = '/.netlify/functions/account-creations';
+  // Fresh signup lands here with ?welcome=1: show the onboarding panel
+  // instead of a bare empty library.
+  var WELCOME = new URLSearchParams(location.search).get('welcome') === '1';
 
   function firstName(name) {
     if (!name) return null;
@@ -52,7 +55,17 @@
 
   function render(creations) {
     $('acct-loading').hidden = true;
-    if (!creations.length) { $('acct-empty').hidden = false; return; }
+    if (!creations.length) {
+      if (WELCOME) {
+        var fn = firstName(window.HexaAuth.name());
+        if (fn) $('welcome-title').textContent = 'You are in, ' + fn + ". Let's make your first film.";
+        $('acct-head').hidden = true;
+        $('acct-welcome').hidden = false;
+      } else {
+        $('acct-empty').hidden = false;
+      }
+      return;
+    }
     var grid = $('acct-grid');
     grid.innerHTML = creations.map(cardHtml).join('');
     grid.hidden = false;
@@ -66,6 +79,28 @@
       .catch(function () {
         $('acct-loading').textContent = 'Could not load your library. Refresh to try again.';
       });
+  }
+
+  /* ── Tabs ── */
+
+  function initTabs() {
+    var tabL = $('tab-library');
+    var tabS = $('tab-settings');
+    function show(which) {
+      var lib = which === 'library';
+      $('panel-library').hidden = !lib;
+      $('acct-settings').hidden = lib;
+      tabL.classList.toggle('is-active', lib);
+      tabS.classList.toggle('is-active', !lib);
+      tabL.setAttribute('aria-selected', String(lib));
+      tabS.setAttribute('aria-selected', String(!lib));
+      if (!lib) location.hash = 'settings';
+      else if (location.hash === '#settings') history.replaceState(null, '', location.pathname + location.search);
+    }
+    tabL.addEventListener('click', function () { show('library'); });
+    tabS.addEventListener('click', function () { show('settings'); });
+    // Deep link: /account.html#settings (privacy page points here)
+    if (location.hash === '#settings') show('settings');
   }
 
   /* ── Settings ── */
@@ -179,6 +214,7 @@
     $('acct-greeting').textContent = fn ? 'Everything you have made, ' + fn : 'Everything you have made';
     $('acct-user').textContent = window.HexaAuth.email() || '';
     loadLibrary();
+    initTabs();
     initSettings();
   });
 

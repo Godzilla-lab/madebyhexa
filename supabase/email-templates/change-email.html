@@ -1,36 +1,62 @@
-<!-- Supabase Auth template: "Change email address". Paste into
+<!-- Supabase Auth template: "Change email address". Paste EVERYTHING in this file into
      Dashboard -> Authentication -> Emails -> Change email address.
      Subject line: Confirm your new Hexa email -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0608;padding:40px 16px;">
-  <tr>
-    <td align="center">
-      <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;">
-        <tr>
-          <td style="padding:0 0 22px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:-0.02em;">
-            Hexa<span style="color:#ff4d6d;">&#183;</span>AI
-          </td>
-        </tr>
-        <tr>
-          <td style="background-color:#141016;border:1px solid #2b2230;border-radius:18px;padding:36px 34px;">
-            <p style="margin:0 0 8px;font-family:Courier,monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ff8fa3;">Email change</p>
-            <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.2;color:#ffffff;letter-spacing:-0.02em;">Confirm your new address</h1>
-            <p style="margin:0 0 26px;font-family:Arial,Helvetica,sans-serif;font-size:14.5px;line-height:1.55;color:#b8aebe;">You asked to move your Hexa account to this address. One tap confirms it.</p>
-            <table role="presentation" cellpadding="0" cellspacing="0" align="center">
-              <tr>
-                <td style="background-color:#ff4d6d;border-radius:12px;">
-                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 30px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">Confirm new email</a>
-                </td>
-              </tr>
-            </table>
-            <p style="margin:26px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;line-height:1.55;color:#7d7383;">If you did not ask for this change, ignore this email and your account stays exactly as it is.</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 8px 0;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7d7383;">
-            Hexa AI &#183; <a href="https://madebyhexa.co" style="color:#7d7383;">madebyhexa.co</a> &#183; <a href="mailto:support@madebyhexa.co" style="color:#7d7383;">support@madebyhexa.co</a>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<style>
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  /* Intentional light variant: when a client forces light mode this renders
+     as a designed light email instead of an ugly auto-inversion. */
+  @media (prefers-color-scheme: light) {
+    .em-bg { background-color: #f6f2f4 !important; }
+    .em-card { background-color: #fdfcfd !important; border-color: #e9dfe4 !important; }
+    .em-h { color: #1a1118 !important; }
+    .em-p { color: #5d5260 !important; }
+    .em-faint { color: #8a8087 !important; }
+    .em-logo { color: #1a1118 !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;word-spacing:normal;">
+  <!-- Preheader: inbox preview text, invisible in the opened email -->
+  <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">One tap confirms your new address.&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="em-bg" style="background-color:#0a0608;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;">
+          <tr>
+            <td class="em-logo" style="padding:0 0 22px;text-align:center;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:20px;font-weight:bold;color:#fafafa;letter-spacing:-0.02em;">
+              Hexa<span style="color:#ff4d6d;">&#183;</span>AI
+            </td>
+          </tr>
+          <tr>
+            <td class="em-card" style="background-color:#141016;border:1px solid #2b2230;border-radius:18px;padding:36px 34px;">
+              <p style="margin:0 0 8px;font-family:'SF Mono',Menlo,Consolas,'Courier New',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ff8fa3;">Email change</p>
+              <h1 class="em-h" style="margin:0 0 12px;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:22px;line-height:1.2;color:#fafafa;letter-spacing:-0.02em;">Confirm your new address</h1>
+              <p class="em-p" style="margin:0 0 26px;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.55;color:#b8aebe;">You asked to move your Hexa account to this address. One tap confirms it.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" align="center">
+                <tr>
+                  <td style="background-color:#ff4d6d;border-radius:12px;">
+                    <a href="{{ .ConfirmationURL }}" role="button" style="display:inline-block;padding:14px 30px;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:bold;color:#fafafa;text-decoration:none;">Confirm new email</a>
+                  </td>
+                </tr>
+              </table>
+              <p class="em-faint" style="margin:26px 0 0;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12.5px;line-height:1.55;color:#7d7383;">If you did not ask for this change, ignore this email and your account stays exactly as it is.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="em-faint" style="padding:20px 8px 0;text-align:center;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#7d7383;">
+              You are getting this because an email change was requested on a Hexa Studio account.<br>
+              Hexa AI &#183; <a href="https://madebyhexa.co" style="color:#7d7383;">madebyhexa.co</a> &#183; <a href="mailto:support@madebyhexa.co" style="color:#7d7383;">support@madebyhexa.co</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
+    [hidden] { display: none !important; }
     .acct-nav {
       display: flex;
       align-items: center;
@@ -96,8 +97,66 @@
 
     .acct-state { text-align: center; padding: 60px 20px; color: var(--text-faint); font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; }
 
+    /* ── Tabs ── */
+    .acct-tabs { display: inline-flex; gap: 4px; margin: 0 0 26px; padding: 4px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .acct-tab {
+      padding: 8px 18px; border-radius: 9px; border: none; cursor: pointer;
+      background: transparent; color: var(--text-mute);
+      font-family: inherit; font-size: 13.5px; font-weight: 600;
+      transition: background 160ms var(--ease), color 160ms var(--ease);
+    }
+    .acct-tab:hover { color: var(--text); }
+    .acct-tab.is-active { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+
+    /* ── Welcome onboarding (first sign-in, empty library) ── */
+    .acct-welcome {
+      border-radius: 24px; padding: clamp(28px, 4.5vw, 48px);
+      background: radial-gradient(130% 100% at 18% 0%, rgba(255, 77, 109, 0.14), transparent 58%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+      border: 1px solid var(--border-strong);
+    }
+    .acct-welcome-kicker {
+      margin: 0 0 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-soft);
+    }
+    .acct-welcome h2 { margin: 0 0 10px; font-family: var(--font-display); font-size: clamp(26px, 3.6vw, 38px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.08; }
+    .acct-welcome > p { margin: 0 0 26px; color: var(--text-mute); font-size: 15.5px; max-width: 520px; line-height: 1.55; }
+    .acct-progress { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; }
+    .acct-progress-bar { flex: 1; max-width: 260px; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+    .acct-progress-fill { display: block; width: 33%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-deep)); }
+    .acct-progress-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+    .acct-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0 0 28px; }
+    .acct-step {
+      padding: 18px 18px 20px; border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .acct-step-num {
+      display: inline-grid; place-items: center; width: 28px; height: 28px; margin-bottom: 12px;
+      border-radius: 9px; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+      background: rgba(255, 255, 255, 0.07); color: var(--text-mute);
+    }
+    .acct-step.is-done { border-color: rgba(255, 77, 109, 0.35); }
+    .acct-step.is-done .acct-step-num { background: linear-gradient(160deg, var(--accent), var(--accent-deep)); color: #fff; }
+    .acct-step h3 { margin: 0 0 5px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
+    .acct-step p { margin: 0; font-size: 13.5px; color: var(--text-mute); line-height: 1.5; }
+    .acct-step.is-done h3 { color: var(--text-mute); text-decoration: line-through; text-decoration-color: rgba(255, 77, 109, 0.5); text-decoration-thickness: 1.5px; }
+    .acct-welcome-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .acct-welcome-cta .acct-new { padding: 13px 24px; font-size: 15px; }
+    .acct-welcome-alt { color: var(--text-mute); font-size: 14px; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 1px; transition: color 160ms var(--ease); }
+    .acct-welcome-alt:hover { color: var(--text); }
+    .acct-inspo { margin-top: 34px; }
+    .acct-inspo-label { margin: 0 0 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+    .acct-inspo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .acct-inspo-grid a { display: block; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); transition: transform 180ms var(--ease), border-color 180ms var(--ease); }
+    .acct-inspo-grid a:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.25); }
+    .acct-inspo-grid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
+    @media (max-width: 720px) {
+      .acct-steps { grid-template-columns: 1fr; }
+      .acct-inspo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
     /* ── Settings ── */
-    .acct-settings { margin-top: 64px; }
+    .acct-settings { margin-top: 0; }
     .acct-settings-head { margin: 0 0 18px; }
     .acct-settings-head h2 { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
     .acct-settings-head p { margin: 6px 0 0; color: var(--text-mute); font-size: 14px; }
@@ -132,6 +191,10 @@
 
     @media (max-width: 560px) {
       .acct-user { display: none; }
+      .acct-nav { padding: 14px 16px; gap: 10px; }
+      .acct-nav-right { gap: 10px; }
+      .acct-nav .acct-new { padding: 8px 13px; font-size: 13px; }
+      .acct-main { padding: 14px 16px 60px; }
       .acct-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
     }
   </style>
@@ -147,7 +210,7 @@
     </a>
     <div class="acct-nav-right">
       <span class="acct-user" id="acct-user"></span>
-      <a class="acct-new" href="/">
+      <a class="acct-new" href="/#composer">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         New creation
       </a>
@@ -156,24 +219,71 @@
   </header>
 
   <main class="acct-main">
-    <div class="acct-head">
+    <div class="acct-head" id="acct-head">
       <p class="acct-kicker">Your library</p>
       <h1 class="acct-title" id="acct-greeting">Everything you have made</h1>
     </div>
 
-    <div class="acct-state" id="acct-loading">Loading your creations…</div>
-    <div class="acct-grid" id="acct-grid" hidden></div>
-
-    <div class="acct-empty" id="acct-empty" hidden>
-      <span class="acct-empty-badge" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8h.01M12.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7.5"/><path d="m3 16 5-5c.9-.9 2.1-.9 3 0l4 4"/><path d="M14 14l1-1c.9-.9 2.1-.9 3 0l3 3"/><path d="M19 16v6M22 19h-6"/></svg>
-      </span>
-      <h2>Your first creation is one link away</h2>
-      <p>Paste a product link in the studio and watch it become a film so real no one can tell. Everything you make lands here.</p>
-      <a class="acct-new" href="/">Start creating</a>
+    <div class="acct-tabs" role="tablist" aria-label="Account sections">
+      <button class="acct-tab is-active" id="tab-library" type="button" role="tab" aria-selected="true">Library</button>
+      <button class="acct-tab" id="tab-settings" type="button" role="tab" aria-selected="false">Settings</button>
     </div>
 
-    <section class="acct-settings" id="acct-settings">
+    <div id="panel-library">
+      <section class="acct-welcome" id="acct-welcome" hidden>
+        <p class="acct-welcome-kicker">Welcome to Hexa</p>
+        <h2 id="welcome-title">You are in. Let's make your first film.</h2>
+        <p>Three steps between you and a product film so real no one can tell it never touched a camera. The first one is already done.</p>
+        <div class="acct-progress" aria-hidden="true">
+          <span class="acct-progress-bar"><span class="acct-progress-fill"></span></span>
+          <span class="acct-progress-label">1 of 3 done</span>
+        </div>
+        <div class="acct-steps">
+          <div class="acct-step is-done">
+            <span class="acct-step-num" aria-hidden="true">&#10003;</span>
+            <h3>Create your account</h3>
+            <p>Done. Every film and photoshoot you make lives here.</p>
+          </div>
+          <div class="acct-step">
+            <span class="acct-step-num" aria-hidden="true">2</span>
+            <h3>Paste your product link</h3>
+            <p>Shopify, Amazon or any product page. We read the images and write the storyboard.</p>
+          </div>
+          <div class="acct-step">
+            <span class="acct-step-num" aria-hidden="true">3</span>
+            <h3>Watch it render</h3>
+            <p>Pick a style and length, and your film is ready in minutes, not weeks.</p>
+          </div>
+        </div>
+        <div class="acct-welcome-cta">
+          <a class="acct-new" href="/#composer">Make your first film</a>
+          <a class="acct-welcome-alt" href="/#reel">See what others made first</a>
+        </div>
+        <div class="acct-inspo">
+          <p class="acct-inspo-label">Made with Hexa</p>
+          <div class="acct-inspo-grid">
+            <a href="/#reel"><img src="assets/reel-thumbs/43a72eb58f.webp" alt="Hexa film still" loading="lazy" /></a>
+            <a href="/#reel"><img src="assets/reel-thumbs/20c70d0755.webp" alt="Hexa film still" loading="lazy" /></a>
+            <a href="/#reel"><img src="assets/reel-thumbs/21776f5939.webp" alt="Hexa film still" loading="lazy" /></a>
+            <a href="/#reel"><img src="assets/reel-thumbs/2b4354ce31.webp" alt="Hexa film still" loading="lazy" /></a>
+          </div>
+        </div>
+      </section>
+
+      <div class="acct-state" id="acct-loading">Loading your creations…</div>
+      <div class="acct-grid" id="acct-grid" hidden></div>
+
+      <div class="acct-empty" id="acct-empty" hidden>
+        <span class="acct-empty-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8h.01M12.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7.5"/><path d="m3 16 5-5c.9-.9 2.1-.9 3 0l4 4"/><path d="M14 14l1-1c.9-.9 2.1-.9 3 0l3 3"/><path d="M19 16v6M22 19h-6"/></svg>
+        </span>
+        <h2>Your first creation is one link away</h2>
+        <p>Paste a product link in the studio and watch it become a film so real no one can tell. Everything you make lands here.</p>
+        <a class="acct-new" href="/#composer">Start creating</a>
+      </div>
+    </div>
+
+    <section class="acct-settings" id="acct-settings" hidden>
       <div class="acct-settings-head">
         <h2>Account settings</h2>
         <p>Your profile, security and data. Changes apply to this account only.</p>

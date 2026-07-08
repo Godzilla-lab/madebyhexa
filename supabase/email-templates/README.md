@@ -9,14 +9,23 @@ generic link emails and the code screens cannot complete.
 
 Supabase Dashboard -> Authentication -> Emails (templates tab):
 
-| Template in dashboard  | File                  | Subject line to set                  |
-| ---------------------- | --------------------- | ------------------------------------ |
-| Confirm signup         | `confirm-signup.html` | `Your Hexa code: {{ .Token }}`       |
-| Reset password         | `reset-password.html` | `Your Hexa reset code: {{ .Token }}` |
-| Change email address   | `change-email.html`   | `Confirm your new Hexa email`        |
+| Template in dashboard  | File                  | Subject line to set           |
+| ---------------------- | --------------------- | ----------------------------- |
+| Confirm signup         | `confirm-signup.html` | `Your Hexa Studio code`       |
+| Reset password         | `reset-password.html` | `Your Hexa reset code`        |
+| Change email address   | `change-email.html`   | `Confirm your new Hexa email` |
 
 For each: open the file, copy everything, replace the template body in the
 dashboard, set the subject, save.
+
+Do NOT put `{{ .Token }}` in the subject line: the code would show on lock
+screens and inbox previews where anyone nearby can read it.
+
+The templates are full HTML documents on purpose. They carry dark-mode
+defenses: color-scheme meta tags, a designed light variant for clients that
+force light mode (Gmail and Outlook mobile invert dark emails), a hidden
+preheader for the inbox preview line, and a trust footer. Paste the whole
+file including the doctype.
 
 ## Set the code lifetime to 15 minutes
 
