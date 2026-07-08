@@ -10,8 +10,11 @@
 
   function firstName(name) {
     if (!name) return null;
-    if (name.indexOf('@') !== -1) return name.split('@')[0];
-    return name.split(' ')[0];
+    // an email prefix is not a name; the greeting reads better without one
+    if (name.indexOf('@') !== -1) return null;
+    var fn = name.trim().split(/\s+/)[0];
+    if (!fn) return null;
+    return fn.charAt(0).toUpperCase() + fn.slice(1);
   }
 
   function fmtDate(iso) {
@@ -61,6 +64,9 @@
         if (fn) $('welcome-title').textContent = 'You are in, ' + fn + ". Let's make your first film.";
         $('acct-head').hidden = true;
         $('acct-welcome').hidden = false;
+        // One path only: while onboarding, the checklist CTA is the way in.
+        // The nav button and tabs return once they own a creation.
+        document.body.classList.add('acct-onboarding');
       } else {
         $('acct-empty').hidden = false;
       }

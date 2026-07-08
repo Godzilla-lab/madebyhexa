@@ -122,7 +122,8 @@
     .acct-welcome h2 { margin: 0 0 10px; font-family: var(--font-display); font-size: clamp(26px, 3.6vw, 38px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.08; }
     .acct-welcome > p { margin: 0 0 26px; color: var(--text-mute); font-size: 15.5px; max-width: 520px; line-height: 1.55; }
     .acct-progress { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; }
-    .acct-progress-bar { flex: 1; max-width: 260px; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+    /* the bar spans the step cards below it, so bar and cards read as one unit */
+    .acct-progress-bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
     .acct-progress-fill { display: block; width: 33%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-deep)); }
     .acct-progress-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
     .acct-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0 0 28px; }
@@ -137,13 +138,19 @@
     }
     .acct-step.is-done { border-color: rgba(255, 77, 109, 0.35); }
     .acct-step.is-done .acct-step-num { background: linear-gradient(160deg, var(--accent), var(--accent-deep)); color: #fff; }
+    /* the next step reads as live, not static: done is behind you, this is where you go */
+    .acct-step.is-next { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.05); }
+    .acct-step.is-next .acct-step-num { background: rgba(255, 77, 109, 0.16); color: var(--accent); box-shadow: inset 0 0 0 1px rgba(255, 77, 109, 0.35); }
     .acct-step h3 { margin: 0 0 5px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
-    .acct-step p { margin: 0; font-size: 13.5px; color: var(--text-mute); line-height: 1.5; }
+    .acct-step p { margin: 0; font-size: 13.5px; color: rgba(255, 255, 255, 0.7); line-height: 1.5; }
     .acct-step.is-done h3 { color: var(--text-mute); text-decoration: line-through; text-decoration-color: rgba(255, 77, 109, 0.5); text-decoration-thickness: 1.5px; }
     .acct-welcome-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .acct-welcome-cta .acct-new { padding: 13px 24px; font-size: 15px; }
     .acct-welcome-alt { color: var(--text-mute); font-size: 14px; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 1px; transition: color 160ms var(--ease); }
     .acct-welcome-alt:hover { color: var(--text); }
+    /* onboarding keeps one path: no competing nav CTA, no tabs yet */
+    body.acct-onboarding .acct-nav .acct-new { display: none; }
+    body.acct-onboarding .acct-tabs { display: none; }
     .acct-inspo { margin-top: 34px; }
     .acct-inspo-label { margin: 0 0 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
     .acct-inspo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -244,7 +251,7 @@
             <h3>Create your account</h3>
             <p>Done. Every film and photoshoot you make lives here.</p>
           </div>
-          <div class="acct-step">
+          <div class="acct-step is-next">
             <span class="acct-step-num" aria-hidden="true">2</span>
             <h3>Paste your product link</h3>
             <p>Shopify, Amazon or any product page. We read the images and write the storyboard.</p>
