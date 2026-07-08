@@ -86,6 +86,15 @@
     resetPassword: function (email) {
       return client.auth.resetPasswordForEmail(email, { redirectTo: base() + '/account.html' });
     },
+    /* Six-digit email codes (the templates carry a code, not a link).
+     * type 'signup' activates a new account, 'recovery' starts a password
+     * reset; both return a live session on success. */
+    verifyEmailCode: function (email, code, type) {
+      return client.auth.verifyOtp({ email: email, token: String(code || '').trim(), type: type });
+    },
+    resendSignupCode: function (email) {
+      return client.auth.resend({ type: 'signup', email: email });
+    },
     signOut: function () { return client.auth.signOut(); },
     /* Revoke every session on every device (stolen laptop, shared machine). */
     signOutEverywhere: function () { return client.auth.signOut({ scope: 'global' }); },

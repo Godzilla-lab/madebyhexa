@@ -1,0 +1,36 @@
+<!-- Supabase Auth template: "Confirm signup". Paste into
+     Dashboard -> Authentication -> Emails -> Confirm signup (subject below).
+     Subject line: Your Hexa code: {{ .Token }} -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0608;padding:40px 16px;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;">
+        <tr>
+          <td style="padding:0 0 22px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:-0.02em;">
+            Hexa<span style="color:#ff4d6d;">&#183;</span>AI
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#141016;border:1px solid #2b2230;border-radius:18px;padding:36px 34px;">
+            <p style="margin:0 0 8px;font-family:Courier,monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ff8fa3;">Activate your account</p>
+            <h1 style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.2;color:#ffffff;letter-spacing:-0.02em;">Your code is below</h1>
+            <p style="margin:0 0 26px;font-family:Arial,Helvetica,sans-serif;font-size:14.5px;line-height:1.55;color:#b8aebe;">Type this code on the Hexa sign-up screen and your account goes live. It expires in 15 minutes.</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="background-color:#0a0608;border:1px solid #3a2d40;border-radius:12px;padding:20px 10px;">
+                  <span style="font-family:Courier,monospace;font-size:34px;font-weight:bold;letter-spacing:7px;color:#ffffff;">{{ .Token }}</span>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:26px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;line-height:1.55;color:#7d7383;">If you did not create a Hexa account, ignore this email and nothing happens.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 8px 0;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7d7383;">
+            Hexa AI &#183; <a href="https://madebyhexa.co" style="color:#7d7383;">madebyhexa.co</a> &#183; <a href="mailto:support@madebyhexa.co" style="color:#7d7383;">support@madebyhexa.co</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

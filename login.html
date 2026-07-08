@@ -13,6 +13,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
+    /* the state machine drives visibility via [hidden]; it must always win */
+    [hidden] { display: none !important; }
+
     .auth-shell {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
@@ -228,6 +231,17 @@
       .auth-visual { display: none; }
       .auth-panel { min-height: 100vh; }
     }
+    /* the emailed code: big, mono, unmistakable */
+    .auth-code {
+      font-family: var(--font-mono);
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-align: center;
+      text-indent: 0.3em; /* balance the trailing letter-spacing */
+    }
+    .auth-code::placeholder { color: var(--text-faint); opacity: 0.5; }
+
     @media (prefers-reduced-motion: reduce) {
       .auth-google, .auth-submit { transition: none; }
     }
@@ -261,13 +275,21 @@
             <span>Name</span>
             <input type="text" id="auth-name" autocomplete="name" placeholder="Your name" />
           </label>
-          <label class="auth-field">
+          <label class="auth-field" id="field-email">
             <span>Email</span>
             <input type="email" id="auth-email" autocomplete="email" placeholder="you@brand.com" required />
           </label>
           <label class="auth-field" id="field-password">
             <span>Password</span>
-            <input type="password" id="auth-password" autocomplete="current-password" placeholder="At least 6 characters" required minlength="6" />
+            <input type="password" id="auth-password" autocomplete="current-password" placeholder="At least 6 characters" minlength="6" />
+          </label>
+          <label class="auth-field" id="field-code" hidden>
+            <span>Code from your email</span>
+            <input type="text" id="auth-code" class="auth-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="00000000" />
+          </label>
+          <label class="auth-field" id="field-newpass" hidden>
+            <span>New password</span>
+            <input type="password" id="auth-newpass" autocomplete="new-password" placeholder="At least 8 characters" />
           </label>
 
           <p class="auth-error" id="auth-error" hidden></p>
@@ -277,11 +299,12 @@
         </form>
 
         <div class="auth-alt">
-          <button type="button" class="auth-link" id="auth-magic">Email me a magic link</button>
           <button type="button" class="auth-link" id="auth-forgot">Forgot password?</button>
+          <button type="button" class="auth-link" id="auth-resend" hidden>Send a new code</button>
+          <button type="button" class="auth-link" id="auth-back" hidden>Back to sign in</button>
         </div>
 
-        <p class="auth-toggle">
+        <p class="auth-toggle" id="auth-toggle-row">
           <span id="toggle-text">New to Hexa?</span>
           <button type="button" class="auth-link strong" id="auth-toggle">Create an account</button>
         </p>
@@ -291,7 +314,7 @@
     </section>
 
     <aside class="auth-visual" aria-hidden="true">
-      <video class="auth-visual-video" src="assets/hf/hooks/product_dodge.mp4" muted loop playsinline autoplay preload="metadata"></video>
+      <video class="auth-visual-video" src="assets/film/login-visual-1080.mp4" muted loop playsinline autoplay preload="metadata"></video>
       <div class="auth-visual-shade"></div>
       <div class="auth-visual-copy">
         <p class="auth-visual-kicker">Hexa Studio</p>
