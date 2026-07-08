@@ -68,6 +68,103 @@
       });
   }
 
+  /* ── Settings ── */
+
+  function note(id, msg, kind) {
+    var el = $(id);
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = 'acct-note' + (kind ? ' is-' + kind : '');
+  }
+
+  function initSettings() {
+    $('set-name').value = window.HexaAuth.name() || '';
+    $('set-email').value = window.HexaAuth.email() || '';
+
+    $('set-profile-save').addEventListener('click', function () {
+      var name = $('set-name').value.trim();
+      var email = $('set-email').value.trim();
+      var oldEmail = window.HexaAuth.email() || '';
+      note('set-profile-note', 'Saving…');
+      var work = [];
+      if (name && name !== (window.HexaAuth.name() || '')) work.push(window.HexaAuth.updateName(name));
+      var emailChanged = email && email.toLowerCase() !== oldEmail.toLowerCase();
+      if (emailChanged) work.push(window.HexaAuth.updateEmail(email));
+      if (!work.length) { note('set-profile-note', 'Nothing to save.'); return; }
+      Promise.all(work).then(function (results) {
+        var err = results.map(function (r) { return r && r.error; }).filter(Boolean)[0];
+        if (err) { note('set-profile-note', err.message || 'Could not save.', 'err'); return; }
+        note('set-profile-note', emailChanged
+          ? 'Saved. Check ' + email + ' for a confirmation link to finish the email change.'
+          : 'Saved.', 'ok');
+      }).catch(function () { note('set-profile-note', 'Could not save. Try again.', 'err'); });
+    });
+
+    $('set-pass-save').addEventListener('click', function () {
+      var p1 = $('set-pass').value, p2 = $('set-pass2').value;
+      if (p1.length < 8) { note('set-security-note', 'Password needs at least 8 characters.', 'err'); return; }
+      if (p1 !== p2) { note('set-security-note', 'The two passwords do not match.', 'err'); return; }
+      note('set-security-note', 'Changing…');
+      window.HexaAuth.updatePassword(p1).then(function (r) {
+        if (r && r.error) { note('set-security-note', r.error.message || 'Could not change password.', 'err'); return; }
+        $('set-pass').value = ''; $('set-pass2').value = '';
+        note('set-security-note', 'Password changed.', 'ok');
+      }).catch(function () { note('set-security-note', 'Could not change password. Try again.', 'err'); });
+    });
+
+    $('set-signout-all').addEventListener('click', function () {
+      note('set-security-note', 'Signing out everywhere…');
+      window.HexaAuth.signOutEverywhere().then(function () { location.href = '/login.html'; });
+    });
+
+    $('set-export').addEventListener('click', function () {
+      note('set-export-note', 'Preparing your export…');
+      fetch('/.netlify/functions/account-export', {
+        headers: { Authorization: 'Bearer ' + window.HexaAuth.accessToken() },
+      })
+        .then(function (r) { if (!r.ok) throw new Error('export failed'); return r.blob(); })
+        .then(function (blob) {
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'hexa-account-export.json';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+          note('set-export-note', 'Downloaded.', 'ok');
+        })
+        .catch(function () { note('set-export-note', 'Export failed. Try again.', 'err'); });
+    });
+
+    var delInput = $('set-del-confirm');
+    var delBtn = $('set-delete');
+    delInput.addEventListener('input', function () {
+      var match = delInput.value.trim().toLowerCase() === (window.HexaAuth.email() || '').toLowerCase();
+      delBtn.disabled = !match;
+    });
+    delBtn.addEventListener('click', function () {
+      delBtn.disabled = true;
+      note('set-delete-note', 'Deleting your account…');
+      fetch('/.netlify/functions/account-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + window.HexaAuth.accessToken(),
+        },
+        body: JSON.stringify({ confirm: delInput.value.trim() }),
+      })
+        .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d); }); })
+        .then(function () {
+          note('set-delete-note', 'Account deleted. Goodbye.', 'ok');
+          window.HexaAuth.signOut().finally(function () { location.href = '/'; });
+        })
+        .catch(function (d) {
+          delBtn.disabled = false;
+          note('set-delete-note', (d && d.error) || 'Deletion failed. Try again.', 'err');
+        });
+    });
+  }
+
   window.HexaAuth.ready().then(function () {
     var user = window.HexaAuth.user();
     if (!user) { window.HexaAuth.requireAuth('/account.html'); return; }
@@ -76,6 +173,7 @@
     $('acct-greeting').textContent = fn ? 'Everything you have made, ' + fn : 'Everything you have made';
     $('acct-user').textContent = window.HexaAuth.email() || '';
     loadLibrary();
+    initSettings();
   });
 
   $('acct-signout').addEventListener('click', function () {

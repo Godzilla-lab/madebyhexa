@@ -10,7 +10,7 @@
  * then sends a templated email to the customer via Zoho SMTP using nodemailer.
  *
  * Required env vars (set in Netlify dashboard, NOT committed):
- *   ZOHO_USER          e.g. hello@madebyhexa.co
+ *   ZOHO_USER          e.g. support@madebyhexa.co
  *   ZOHO_APP_PASSWORD  app-specific password from Zoho (not the login password)
  *   WEBHOOK_SECRET     random string; same value goes in Netlify form notification
  *   FROM_NAME          optional, defaults to "Mike"

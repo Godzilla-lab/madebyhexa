@@ -87,6 +87,24 @@
       return client.auth.resetPasswordForEmail(email, { redirectTo: base() + '/account.html' });
     },
     signOut: function () { return client.auth.signOut(); },
+    /* Revoke every session on every device (stolen laptop, shared machine). */
+    signOutEverywhere: function () { return client.auth.signOut({ scope: 'global' }); },
+
+    /* ── Account settings ── */
+    updateName: function (name) {
+      return client.auth.updateUser({ data: { name: String(name || '').trim() } });
+    },
+    updatePassword: function (password) {
+      return client.auth.updateUser({ password: password });
+    },
+    /* Sends a confirmation link to the new address; the change applies when
+     * the user clicks it, so a typo can never lock anyone out. */
+    updateEmail: function (email) {
+      return client.auth.updateUser(
+        { email: String(email || '').trim() },
+        { emailRedirectTo: base() + '/account.html' }
+      );
+    },
 
     /* Guard a page/action: if not signed in, bounce to login with a return path. */
     requireAuth: function (next) {

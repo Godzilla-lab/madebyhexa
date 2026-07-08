@@ -96,6 +96,40 @@
 
     .acct-state { text-align: center; padding: 60px 20px; color: var(--text-faint); font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; }
 
+    /* ── Settings ── */
+    .acct-settings { margin-top: 64px; }
+    .acct-settings-head { margin: 0 0 18px; }
+    .acct-settings-head h2 { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+    .acct-settings-head p { margin: 6px 0 0; color: var(--text-mute); font-size: 14px; }
+    .acct-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+    .acct-card-set {
+      background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 16px; padding: 20px 20px 18px;
+    }
+    .acct-card-set h3 { margin: 0 0 14px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
+    .acct-field { margin-bottom: 12px; }
+    .acct-field label { display: block; font-size: 12.5px; color: var(--text-mute); margin-bottom: 5px; }
+    .acct-field input {
+      width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px;
+      background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text); font: inherit; font-size: 14px;
+    }
+    .acct-field input:focus { outline: none; border-color: rgba(255, 255, 255, 0.3); }
+    .acct-btn {
+      display: inline-block; padding: 9px 16px; border-radius: 10px; cursor: pointer;
+      background: rgba(255, 255, 255, 0.09); border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--text); font-family: inherit; font-size: 13.5px; font-weight: 600; line-height: 1;
+      transition: background 160ms var(--ease);
+    }
+    .acct-btn:hover { background: rgba(255, 255, 255, 0.15); }
+    .acct-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+    .acct-btn-danger { background: rgba(255, 60, 60, 0.12); border-color: rgba(255, 80, 80, 0.35); color: #ff9d9d; }
+    .acct-btn-danger:hover { background: rgba(255, 60, 60, 0.22); }
+    .acct-note { font-size: 12.5px; color: var(--text-faint); margin: 10px 0 0; min-height: 16px; }
+    .acct-note.is-ok { color: #7ddb9a; }
+    .acct-note.is-err { color: #ff9d9d; }
+    .acct-danger-copy { font-size: 13px; color: var(--text-mute); margin: 0 0 12px; }
+
     @media (max-width: 560px) {
       .acct-user { display: none; }
       .acct-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
@@ -138,6 +172,63 @@
       <p>Paste a product link in the studio and watch it become a film so real no one can tell. Everything you make lands here.</p>
       <a class="acct-new" href="/">Start creating</a>
     </div>
+
+    <section class="acct-settings" id="acct-settings">
+      <div class="acct-settings-head">
+        <h2>Account settings</h2>
+        <p>Your profile, security and data. Changes apply to this account only.</p>
+      </div>
+      <div class="acct-cards">
+
+        <div class="acct-card-set">
+          <h3>Profile</h3>
+          <div class="acct-field">
+            <label for="set-name">Name</label>
+            <input id="set-name" type="text" autocomplete="name" />
+          </div>
+          <div class="acct-field">
+            <label for="set-email">Email</label>
+            <input id="set-email" type="email" autocomplete="email" />
+          </div>
+          <button class="acct-btn" id="set-profile-save" type="button">Save profile</button>
+          <p class="acct-note" id="set-profile-note" aria-live="polite"></p>
+        </div>
+
+        <div class="acct-card-set">
+          <h3>Security</h3>
+          <div class="acct-field">
+            <label for="set-pass">New password</label>
+            <input id="set-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters" />
+          </div>
+          <div class="acct-field">
+            <label for="set-pass2">Repeat new password</label>
+            <input id="set-pass2" type="password" autocomplete="new-password" />
+          </div>
+          <button class="acct-btn" id="set-pass-save" type="button">Change password</button>
+          <button class="acct-btn" id="set-signout-all" type="button" style="margin-left:8px">Sign out everywhere</button>
+          <p class="acct-note" id="set-security-note" aria-live="polite"></p>
+        </div>
+
+        <div class="acct-card-set">
+          <h3>Your data</h3>
+          <p class="acct-danger-copy">Download everything Hexa stores about you as one JSON file: your profile, orders and creations.</p>
+          <button class="acct-btn" id="set-export" type="button">Download my data</button>
+          <p class="acct-note" id="set-export-note" aria-live="polite"></p>
+        </div>
+
+        <div class="acct-card-set">
+          <h3>Delete account</h3>
+          <p class="acct-danger-copy">Deletes your account, orders and library permanently. This cannot be undone. Type your account email to confirm.</p>
+          <div class="acct-field">
+            <label for="set-del-confirm">Account email</label>
+            <input id="set-del-confirm" type="email" autocomplete="off" spellcheck="false" />
+          </div>
+          <button class="acct-btn acct-btn-danger" id="set-delete" type="button" disabled>Delete my account</button>
+          <p class="acct-note" id="set-delete-note" aria-live="polite"></p>
+        </div>
+
+      </div>
+    </section>
   </main>
 
   <script src="/vendor/supabase.js"></script>
