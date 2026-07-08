@@ -476,6 +476,40 @@
     }
     $('#product-chip-name').textContent = pk.title || 'Your product';
     $('#product-chip-site').textContent = pk.siteName || '';
+
+    // Guessed name (page refused to open): let the customer correct it in
+    // place. The corrected name feeds the film title and the storyboard.
+    var fix = $('#product-chip-fix');
+    if (fix) {
+      fix.hidden = !pk.guessed;
+      fix.onclick = function () {
+        var nameEl = $('#product-chip-name');
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'product-chip-input';
+        input.value = pk.title || '';
+        input.maxLength = 90;
+        nameEl.replaceWith(input);
+        fix.hidden = true;
+        input.focus();
+        input.select();
+        var commit = function () {
+          var v = input.value.trim();
+          if (v) pk.title = v;
+          nameEl.textContent = pk.title || 'Your product';
+          input.replaceWith(nameEl);
+          fix.hidden = false;
+          // ripple the corrected name into the composer bar chip
+          var linkInput = $('#composer-link');
+          if (linkInput) linkInput.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+        input.addEventListener('blur', commit);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+          if (e.key === 'Escape') { input.value = pk.title || ''; input.blur(); }
+        });
+      };
+    }
   }
 
   /* ── Rails ── */
@@ -1874,11 +1908,18 @@
         mono.hidden = false;
       }
       card.classList.add('peek-found');
-      eyebrow.textContent = pk.siteName ? 'Product found · ' + pk.siteName : 'Product found';
+      // Honest labeling: "found" only when the page actually answered. A
+      // guessed peek is a name derived from the URL, and we say so.
+      var kind = pk.guessed ? 'From your link' : 'Product found';
+      eyebrow.textContent = pk.siteName ? kind + ' · ' + pk.siteName : kind;
       lbl.textContent = '';
       if (pk.title) { titleEl.textContent = pk.title; titleEl.hidden = false; }
       var priceStr = formatPeekPrice(pk);
       if (priceStr) { priceEl.textContent = priceStr + (pk.siteName ? ' at ' + pk.siteName : ''); priceEl.hidden = false; }
+      else if (pk.guessed) {
+        priceEl.textContent = 'That page would not let us read it, so check the name on the next step.';
+        priceEl.hidden = false;
+      }
       revealTimers.push(setTimeout(function () { dock(pk); }, PEEK_HOLD_MS));
     }
 

@@ -2523,6 +2523,36 @@ body.home .float-cta-link svg { color: var(--accent); }
   text-transform: uppercase;
   color: var(--text-faint);
 }
+.product-chip-fix {
+  flex: none;
+  margin-left: 2px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: color 160ms var(--ease), border-color 160ms var(--ease);
+}
+.product-chip-fix:hover { color: var(--text); border-color: var(--border-strong); }
+.product-chip-fix[hidden] { display: none; }
+.product-chip-input {
+  min-width: 0;
+  width: 220px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 77, 109, 0.45);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--text);
+  font: 700 12.5px/1.3 var(--font-body, inherit);
+}
+.product-chip-input:focus { outline: none; border-color: var(--accent); }
 
 /* chooser upgrades */
 .chooser-group {
