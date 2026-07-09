@@ -6,10 +6,12 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# Onboarding drip: one pass a day, 10:00 UTC. The function itself decides
-# who is due for which email; DRIP_DRY_RUN=1 makes it log instead of send.
+# Onboarding drip: one pass an hour, so the day-0 welcome lands within the
+# hour of signup instead of up to a day later. Sent-state in Blobs makes
+# extra runs free; the function itself decides who is due for which email.
+# DRIP_DRY_RUN=1 makes it log instead of send.
 [functions."drip"]
-  schedule = "0 10 * * *"
+  schedule = "0 * * * *"
 
 # Netlify Image CDN: scraped product images live on Higgsfield's CloudFront
 # as multi-hundred-KB PNGs that take 10s+ to load cold. product-peek rewrites

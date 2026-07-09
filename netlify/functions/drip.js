@@ -1,9 +1,10 @@
 /* Onboarding drip: five educational emails from Mike: day 0, day 1, then weekly (7, 14, 21).
  *
- * Runs daily on a Netlify schedule (see netlify.toml). For every account it
- * computes days-since-signup and sends whichever step is due, at most one
- * email per user per day. Sent-state and opt-outs live in Netlify Blobs, so
- * nothing is ever sent twice and "unsubscribe" is honored forever.
+ * Runs hourly on a Netlify schedule (see netlify.toml), so the welcome lands
+ * within the hour of signup. For every account it computes days-since-signup
+ * and sends whichever step is due, at most one email per user per run.
+ * Sent-state and opt-outs live in Netlify Blobs, so nothing is ever sent
+ * twice and "unsubscribe" is honored forever.
  *
  * Research-backed shape (see commit message):
  *  - plain-text founder voice, one CTA per email, no more than 2 sends in
@@ -95,14 +96,20 @@ const STEPS = [
 
 function store() { return getStore('drip'); }
 
+/* Blobs reads fail closed (never double-send, never mail past an unsub),
+ * but a broken store must be loud in the run summary, not silent: with
+ * fail-closed reads a dead store looks exactly like "everyone was mailed
+ * already" and the drip goes quiet forever. */
+let blobErrors = 0;
+
 async function alreadySent(userId, key) {
-  try { return !!(await store().get(userId + ':' + key)); } catch (e) { return true; } // fail closed: never double-send
+  try { return !!(await store().get(userId + ':' + key)); } catch (e) { blobErrors++; return true; }
 }
 async function markSent(userId, key) {
-  try { await store().set(userId + ':' + key, String(Date.now())); } catch (e) { /* logged next run */ }
+  try { await store().set(userId + ':' + key, String(Date.now())); } catch (e) { blobErrors++; }
 }
 async function optedOut(userId) {
-  try { return !!(await store().get('optout:' + userId)); } catch (e) { return true; }
+  try { return !!(await store().get('optout:' + userId)); } catch (e) { blobErrors++; return true; }
 }
 
 /* ── Handler ──────────────────────────────────────────────────── */
@@ -174,6 +181,7 @@ exports.handler = async (event) => {
     }
   }
 
-  console.log('drip: run done.', users.length, 'users,', sent, DRY ? 'due (dry run),' : 'sent,', skipped, 'opted out');
-  return { statusCode: 200, body: JSON.stringify({ users: users.length, sent, dryRun: DRY }) };
+  if (blobErrors) console.error('drip: BLOBS BROKEN this run:', blobErrors, 'failed reads/writes; fail-closed means users were skipped, not mailed');
+  console.log('drip: run done.', users.length, 'users,', sent, DRY ? 'due (dry run),' : 'sent,', skipped, 'opted out,', blobErrors, 'blob errors');
+  return { statusCode: 200, body: JSON.stringify({ users: users.length, sent, dryRun: DRY, blobErrors }) };
 };
