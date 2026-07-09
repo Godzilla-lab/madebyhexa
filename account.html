@@ -64,6 +64,7 @@
       transition: transform 180ms var(--ease), box-shadow 180ms var(--ease), border-color 180ms var(--ease);
     }
     .cr-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); border-color: rgba(255, 255, 255, 0.22); }
+    .cr-link { display: flex; flex-direction: column; flex: 1; text-decoration: none; color: inherit; }
     .cr-thumb { aspect-ratio: 4 / 5; background: var(--surface-media) center/cover no-repeat; position: relative; }
     .cr-thumb video, .cr-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .cr-badge {
@@ -77,6 +78,42 @@
     .cr-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); letter-spacing: 0.04em; }
     .cr-card.pending .cr-thumb { display: grid; place-items: center; }
     .cr-pending-dot { font-family: var(--font-mono); font-size: 11px; color: var(--accent-soft); letter-spacing: 0.1em; text-transform: uppercase; }
+
+    /* Post-render actions: a quiet row of chips under each finished film */
+    .cr-actions {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 0 14px 13px;
+    }
+    .cr-act {
+      font: 600 11.5px/1 inherit; font-family: inherit;
+      color: var(--text-mute);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 11px;
+      cursor: pointer;
+      transition: color 150ms var(--ease), border-color 150ms var(--ease);
+    }
+    .cr-act:hover { color: var(--text); border-color: var(--border-strong); }
+    .cr-act em { font-style: normal; color: var(--accent-soft); }
+    .cr-pick {
+      display: flex; gap: 6px; align-items: center;
+      padding: 0 14px 13px;
+    }
+    .cr-pick select {
+      flex: 1; min-width: 0;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      color: var(--text);
+      font: 500 12.5px/1.2 inherit; font-family: inherit;
+      padding: 8px 9px;
+    }
+    .cr-pick button {
+      background: var(--accent); color: #fff; border: 0;
+      border-radius: 9px; font: 700 12px/1 inherit; font-family: inherit;
+      padding: 9px 13px; cursor: pointer;
+    }
 
     .acct-empty {
       max-width: 520px; margin: 40px auto; text-align: center;

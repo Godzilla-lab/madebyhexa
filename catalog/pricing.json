@@ -17,6 +17,9 @@
     "auto":           { "engine": "picks best mode (default 720p 15s)", "cost_credits": 80,  "cost_usd": 3.60, "retail_usd": 19, "margin_pct": 81, "eta": "~5 min" },
     "photoshoot":     { "engine": "product-photoshoot x10 images",    "cost_credits": 20,  "cost_usd": 0.90, "retail_usd": 15, "margin_pct": 94, "eta": "~2 min" },
     "adpack":         { "engine": "dtc-ads per format (base 5)",      "cost_credits": 10,  "cost_usd": 0.45, "retail_usd": 19, "margin_pct": 97, "eta": "~2 min", "extra_format_usd": 2 },
-    "soul":           { "engine": "soul-id training (one-time)",      "cost_credits": 40,  "cost_usd": 1.80, "retail_usd": 29, "margin_pct": 94, "eta": "~1 hr training" }
+    "soul":           { "engine": "soul-id training (one-time)",      "cost_credits": 40,  "cost_usd": 1.80, "retail_usd": 29, "margin_pct": 94, "eta": "~1 hr training" },
+    "revoice":        { "engine": "voice_change per 15s clip",        "cost_credits": 2,   "cost_usd": 0.09, "retail_usd": 4,  "margin_pct": 97, "eta": "~2 min" },
+    "translate":      { "engine": "dubbing per 15s clip",             "cost_credits": 45,  "cost_usd": 2.03, "retail_usd": 9,  "margin_pct": 77, "eta": "~3 min" },
+    "upscale":        { "engine": "video_upscale per 15s clip",       "cost_credits": 2,   "cost_usd": 0.09, "retail_usd": 4,  "margin_pct": 97, "eta": "~2 min" }
   }
 }

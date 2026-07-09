@@ -28,7 +28,41 @@
     });
   }
 
-  function cardHtml(c) {
+  /* Post-render actions on a finished film. Prices mirror catalog/pricing.json
+   * (the server reprices at checkout; these labels are display only). */
+  var ACTIONS = [
+    { product: 'action:revoice', label: 'New voice', price: '$4', pick: 'voice' },
+    { product: 'action:translate', label: 'Translate', price: '$9', pick: 'language' },
+    { product: 'action:upscale', label: 'Upscale', price: '$4', pick: null },
+  ];
+  /* Higgsfield preset voice roster (ids verified via the platform 2026-07-09). */
+  var VOICES = [
+    ['f32c8f51-449e-4ddf-bdf7-1527e11df917', 'Tallulah'], ['7e63ac18-5fcd-4aba-8078-a86d4e11c127', 'Roman'],
+    ['fa64fba4-ad02-405e-99d0-1f085d87c706', 'Mabel'], ['dc382508-c8bd-443c-8cb2-46e57b8d2e6f', 'Sterling'],
+    ['80914268-dfae-4f76-8306-36f2d55f58f8', 'Quinn'], ['73a45c18-0c56-4642-a61e-f6b303f8ded1', 'Leo'],
+    ['530df032-c311-483b-a750-cb3c9e1bcdfd', 'Gia'], ['95429266-c0ac-4137-a209-63b8812b0f23', 'Julian'],
+    ['c3204739-4084-41a3-9dc5-c805b307ec18', 'Vesper'], ['f1e8226e-2248-4d5f-b43c-0a79e9949dbf', 'Andre'],
+    ['f6448975-768e-4327-b932-1b7c973d58e9', 'Roxie'], ['c2acff45-84b2-4974-892d-89fa2d4e5598', 'Brooks'],
+    ['e0d40568-8c85-4c9b-bdb2-b638b253a24f', 'Tasha'], ['30fc8796-ceb6-4a66-b3a7-4a145ef7f346', 'Arthur'],
+    ['c25f78a0-714e-42af-8da3-a399cef94968', 'Hana'], ['1fb253b8-928b-4d29-a349-f242a71eaddf', 'Skye'],
+    ['b0f766b7-8703-4bd1-b973-f857c36837b6', 'Maya'], ['573e5163-59b3-4926-aab1-951ef2985f81', 'Harrison'],
+    ['3811e986-0891-47cf-a1f5-78a1d62a547a', 'Imogen'], ['b57b22a0-f287-405b-bc82-6f08f5e6bb1f', 'Sloane'],
+    ['9ddbff06-a984-4c0d-b641-4d8ca846bf60', 'Zane'], ['e9cfbbf0-4476-46be-b396-596eb774b165', 'Chloe'],
+    ['43173c95-3ec8-446a-a162-6504332c578b', 'Xavier'], ['ca83ca7f-c186-493d-bd69-0d765fa861b2', 'Elena'],
+    ['41023a48-71ab-478a-bea7-c7b5a78f6b36', 'Sienna'], ['7888649a-b139-4295-a57b-4e103079d817', 'Hugo'],
+    ['d0374db1-44b9-4f05-939e-0a9ae9dbbe6a', 'Zoe'], ['47fb207f-63fe-449e-915b-27b3d8098fd1', 'Harper'],
+    ['375a3398-e3b4-4f91-845d-42181e352899', 'Luna'], ['4af0ac8b-b5ad-4d12-8f6b-c48b9c369f87', 'Ava'],
+    ['80924413-1ea8-4e64-9719-e00b86796f05', 'Isabella'], ['d081b915-6623-4a44-bacf-80d0f1c90a03', 'Nora'],
+  ];
+  var LANGUAGES = [
+    ['spa', 'Spanish'], ['fra', 'French'], ['deu', 'German'], ['ita', 'Italian'],
+    ['por', 'Portuguese'], ['pol', 'Polish'], ['swe', 'Swedish'], ['fin', 'Finnish'],
+    ['rus', 'Russian'], ['tur', 'Turkish'], ['ara', 'Arabic'], ['hin', 'Hindi'],
+    ['cmn', 'Mandarin'], ['jpn', 'Japanese'], ['kor', 'Korean'], ['ind', 'Indonesian'],
+    ['fil', 'Filipino'], ['eng', 'English'],
+  ];
+
+  function cardHtml(c, i) {
     var completed = c.status === 'completed' && c.result_urls && c.result_urls.length;
     var thumb = c.thumb_url || (c.result_urls && c.result_urls[0]) || '';
     var isVideo = c.type === 'video';
@@ -50,10 +84,90 @@
       thumbInner = '';
     }
 
-    return '<a class="cr-card ' + (completed ? '' : 'pending') + '" href="' + escapeHtml(href) + '">' +
+    var actions = '';
+    if (completed && isVideo) {
+      actions = '<div class="cr-actions" data-idx="' + i + '">' + ACTIONS.map(function (a) {
+        return '<button type="button" class="cr-act" data-product="' + a.product + '">' +
+          a.label + ' <em>' + a.price + '</em></button>';
+      }).join('') + '</div>';
+    }
+
+    return '<div class="cr-card ' + (completed ? '' : 'pending') + '">' +
+      '<a class="cr-link" href="' + escapeHtml(href) + '">' +
       '<div class="cr-thumb">' + thumbInner + '<span class="cr-badge">' + badge + '</span></div>' +
       '<div class="cr-body"><p class="cr-name">' + escapeHtml(title) + '</p>' +
-      '<p class="cr-meta">' + escapeHtml(meta) + '</p></div></a>';
+      '<p class="cr-meta">' + escapeHtml(meta) + '</p></div></a>' +
+      actions + '</div>';
+  }
+
+  /* Action chip -> (optional picker) -> Stripe checkout. The server verifies
+   * ownership of the source film and reprices; this only shapes the order. */
+  function startAction(creation, product, extra) {
+    var sel = {
+      creationId: creation.id,
+      clipIndex: 0,
+      productName: creation.title || '',
+    };
+    if (extra) { for (var k in extra) sel[k] = extra[k]; }
+    var headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + window.HexaAuth.accessToken() };
+    fetch('/.netlify/functions/create-checkout', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ order: { product: product, title: 'Film touch-up', selections: sel } }),
+    })
+      .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d); }); })
+      .then(function (d) {
+        if (d && d.url) { location.href = d.url; return; }
+        return Promise.reject(d);
+      })
+      .catch(function (d) { alert((d && d.error) || 'Could not start checkout. Please try again.'); });
+  }
+
+  function showPicker(row, creation, action) {
+    var list = action.pick === 'voice' ? VOICES : LANGUAGES;
+    var pick = document.createElement('div');
+    pick.className = 'cr-pick';
+    var select = document.createElement('select');
+    list.forEach(function (v) {
+      var o = document.createElement('option');
+      o.value = v[0];
+      o.textContent = v[1];
+      select.appendChild(o);
+    });
+    var go = document.createElement('button');
+    go.type = 'button';
+    go.textContent = 'Go ' + action.price;
+    go.addEventListener('click', function () {
+      go.disabled = true;
+      go.textContent = 'Opening checkout…';
+      var extra = action.pick === 'voice' ? { voiceId: select.value } : { language: select.value };
+      startAction(creation, action.product, extra);
+    });
+    pick.appendChild(select);
+    pick.appendChild(go);
+    row.replaceWith(pick);
+  }
+
+  function initActions(creations) {
+    var grid = $('acct-grid');
+    grid.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.cr-act') : null;
+      if (!btn) return;
+      e.preventDefault();
+      var row = btn.parentElement;
+      var creation = creations[parseInt(row.getAttribute('data-idx'), 10)];
+      if (!creation) return;
+      var action = null;
+      ACTIONS.forEach(function (a) { if (a.product === btn.getAttribute('data-product')) action = a; });
+      if (!action) return;
+      if (!action.pick) {
+        btn.disabled = true;
+        btn.textContent = 'Opening checkout…';
+        startAction(creation, action.product, null);
+        return;
+      }
+      showPicker(row, creation, action);
+    });
   }
 
   function render(creations) {
@@ -75,6 +189,7 @@
     var grid = $('acct-grid');
     grid.innerHTML = creations.map(cardHtml).join('');
     grid.hidden = false;
+    initActions(creations);
   }
 
   function loadLibrary() {

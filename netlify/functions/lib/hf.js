@@ -202,6 +202,27 @@ function uploadImageFromUrl(url) {
   return api('POST', '/developer/v2alpha/media?type=image', { url: url });
 }
 
+/* A finished render's CDN URL becomes a media input for post-render jobs
+ * (voice_change, dubbing, video_upscale). The media endpoint only PRESIGNS
+ * for video (the url in the body is ignored); using the id without PUTting
+ * the bytes 500s the job. Verified live 2026-07-09: fetch + PUT + confirm,
+ * then voice_change accepted the id and rendered. */
+async function uploadVideoFromUrl(url) {
+  const media = await api('POST', '/developer/v2alpha/media?type=video', {});
+  const src = await fetch(url);
+  if (!src.ok) throw new Error('source video fetch failed (' + src.status + ')');
+  const buf = Buffer.from(await src.arrayBuffer());
+  const put = await fetch(media.upload_url, {
+    method: 'PUT',
+    body: buf,
+    headers: { 'Content-Type': src.headers.get('content-type') || 'video/mp4' },
+  });
+  if (!put.ok) throw new Error('video upload PUT failed (' + put.status + ')');
+  try { await api('POST', '/developer/v2alpha/media/' + media.id + '/confirm?type=video', {}); }
+  catch (e) { /* confirm is advisory for some types; the PUT is what matters */ }
+  return media;
+}
+
 /* Product photoshoot prompt writer: mode + intent -> structured prompts. */
 function photoshootEnhance(body) {
   return api('POST', '/developer/v2alpha/product-photoshoot/enhance', body);
@@ -229,6 +250,6 @@ function createAvatars(items) {
 
 module.exports = {
   api, createJob, getJob, getBalance, configured, apiKey,
-  createWebProduct, getWebProduct, uploadImageFromUrl, photoshootEnhance,
-  uploadImageBytes, createAvatars,
+  createWebProduct, getWebProduct, uploadImageFromUrl, uploadVideoFromUrl,
+  photoshootEnhance, uploadImageBytes, createAvatars,
 };

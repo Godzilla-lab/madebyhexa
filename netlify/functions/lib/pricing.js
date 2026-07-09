@@ -25,15 +25,19 @@ const PREMIUM_1080 = new Set(['tv_spot', 'pro_try_on', 'cinematic']);
 function priceStudioOrder(order) {
   if (!order || typeof order !== 'object') return null;
   const raw = String(order.product || '');
-  const key = raw.indexOf('mode:') === 0 ? raw.slice(5) : raw;
+  const key = raw.replace(/^(mode|action):/, '');
   const item = PRICING.items[key];
   if (!item) return null;
 
   const sel = order.selections && typeof order.selections === 'object' ? order.selections : {};
   let usd = item.retail_usd;
 
+  // Post-render actions (revoice/translate/upscale) run on one finished clip,
+  // 15s or less by construction: flat price, no length or quality extras.
+  const isAction = raw.indexOf('action:') === 0;
+
   const duration = Number(sel.duration) || 0;
-  const segments = duration > SEGMENT_SECONDS ? Math.ceil(duration / SEGMENT_SECONDS) : 1;
+  const segments = !isAction && duration > SEGMENT_SECONDS ? Math.ceil(duration / SEGMENT_SECONDS) : 1;
   if (segments > 1) usd += (segments - 1) * EXTRA_SEGMENT_USD;
 
   const formats = Array.isArray(sel.formats) ? sel.formats.length : 0;
@@ -82,6 +86,13 @@ function priceStudioOrder(order) {
     bits.push('Full commercial license');
     if (eta) bits.push('Ready in ' + eta);
     description = bits.join('. ') + '. Delivered in your browser and by email.';
+  }
+
+  if (isAction) {
+    const actionNames = { revoice: 'Voice change', translate: 'Translation', upscale: 'Upscale' };
+    name = (actionNames[key] || key) + (productName ? ' · ' + productName : ' · your film');
+    description = 'Applied to one finished clip from your library. Full commercial license.' +
+      (eta ? ' Ready in ' + eta + ',' : '') + ' delivered in your browser and by email.';
   }
 
   return {

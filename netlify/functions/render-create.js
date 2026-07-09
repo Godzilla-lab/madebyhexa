@@ -79,6 +79,12 @@ async function persistCreation(order, engine, paidSessionId, event) {
     // Samples carry a server-set prefix: it is both the library label and the
     // one-per-account dedup key, so it must never come from the client.
     if (product === 'sample') title = 'Free sample · ' + (sel.productName || 'your product');
+    // Action rows say what happened to which film, from server-resolved data.
+    if (product.indexOf('action:') === 0) {
+      const labels = { 'action:revoice': 'New voice', 'action:translate': 'Translated', 'action:upscale': 'Upscaled' };
+      const langName = sel.language && DUB_LANGUAGES[sel.language] ? ' (' + DUB_LANGUAGES[sel.language] + ')' : '';
+      title = (labels[product] || 'Edited') + langName + ' · ' + (sel._sourceTitle || 'your film');
+    }
     const { data: row, error } = await db.from('creations').insert({
       user_id: userId,
       order_id: orderId,
@@ -95,6 +101,41 @@ async function persistCreation(order, engine, paidSessionId, event) {
     return null;
   }
 }
+
+/* Post-render actions (action:revoice / action:translate / action:upscale)
+ * run on ONE finished clip the payer already owns. Resolve the source video
+ * from the buyer's library, never from a client-supplied URL: the orders row
+ * for the Stripe session names the owner, and the creation must be theirs. */
+async function resolveActionSource(order, paidSessionId) {
+  if (!sb.configured()) return { ok: false, status: 503, error: 'accounts not configured' };
+  const db = sb.admin();
+  const { data: o } = await db.from('orders')
+    .select('user_id').eq('stripe_session_id', paidSessionId).maybeSingle();
+  if (!o || !o.user_id) return { ok: false, status: 403, error: 'this order has no owner account' };
+
+  const sel = order.selections || {};
+  const { data: c } = await db.from('creations')
+    .select('id,user_id,title,type,result_urls')
+    .eq('id', String(sel.creationId || '')).maybeSingle();
+  if (!c || c.user_id !== o.user_id) {
+    return { ok: false, status: 404, error: 'source film not found in your library' };
+  }
+  const urls = Array.isArray(c.result_urls) ? c.result_urls : [];
+  const idx = Math.max(0, parseInt(sel.clipIndex, 10) || 0);
+  const url = urls[idx] || urls[0];
+  if (c.type !== 'video' || !url) {
+    return { ok: false, status: 409, error: 'that creation has no finished video yet' };
+  }
+  return { ok: true, url: url, sourceTitle: c.title || 'your film' };
+}
+
+/* Dubbing's 18 target languages, UI label -> engine code. */
+const DUB_LANGUAGES = {
+  eng: 'English', spa: 'Spanish', fra: 'French', deu: 'German', ita: 'Italian',
+  por: 'Portuguese', pol: 'Polish', swe: 'Swedish', fin: 'Finnish', rus: 'Russian',
+  tur: 'Turkish', ara: 'Arabic', hin: 'Hindi', cmn: 'Mandarin', jpn: 'Japanese',
+  kor: 'Korean', ind: 'Indonesian', fil: 'Filipino',
+};
 
 /*
  * Validate a paid Stripe session against the order. Returns:
@@ -418,6 +459,36 @@ async function planOrder(order) {
   const PREMIUM_1080 = { 'mode:tv_spot': 1, 'mode:pro_try_on': 1, cinematic: 1 };
   const resolution = (PREMIUM_1080[product] || s.quality === '1080p') ? '1080p' : '720p';
 
+  // Post-render actions: one finished clip in, one transformed clip out.
+  // Param shapes and per-clip costs verified live against the jobs API
+  // 2026-07-09 (voice_change 2cr, dubbing 45cr, video_upscale 2cr per 15s).
+  if (product.indexOf('action:') === 0) {
+    if (!s._sourceUrl) return null;
+    const media = await hf.uploadVideoFromUrl(s._sourceUrl);
+    if (!media || !media.id) return null;
+    const input = { type: 'media_input', id: media.id };
+    if (product === 'action:revoice') {
+      const voiceId = String(s.voiceId || '');
+      if (!/^[0-9a-f-]{36}$/i.test(voiceId)) return null;
+      return {
+        kind: 'videos', jobType: 'voice_change',
+        paramsList: [{ input_video: input, voice_id: voiceId, voice_type: 'preset' }],
+      };
+    }
+    if (product === 'action:translate') {
+      const lang = String(s.language || '');
+      if (!DUB_LANGUAGES[lang]) return null;
+      return {
+        kind: 'videos', jobType: 'dubbing',
+        paramsList: [{ input_video: input, target_language: lang }],
+      };
+    }
+    if (product === 'action:upscale') {
+      return { kind: 'videos', jobType: 'video_upscale', paramsList: [{ input_video: input }] };
+    }
+    return null;
+  }
+
   // Auto rides Marketing Studio too: it is the strongest engine for product
   // ads and the only one that grounds the render in the scraped real product.
   // The free sample is the same engine and grounding at 5 seconds: the taste
@@ -612,6 +683,21 @@ exports.handler = async (event) => {
     if (!paid.ok) return json(paid.status, { error: paid.error });
     if (paid.jobs) return json(200, { jobs: paid.jobs, engine: paid.engine, replay: true });
     stampJobs = paid.stamp;
+  }
+
+  // Action orders work on a clip from the payer's own library. The resolved
+  // URL is stamped server-side; a client-sent _sourceUrl is never trusted.
+  if (String(order.product).indexOf('action:') === 0) {
+    order.selections = order.selections || {};
+    if (devAuthorized && order.selections.sourceUrl) {
+      order.selections._sourceUrl = String(order.selections.sourceUrl);
+      order.selections._sourceTitle = 'dev test clip';
+    } else {
+      const src = await resolveActionSource(order, paidSessionId);
+      if (!src.ok) return json(src.status, { error: src.error });
+      order.selections._sourceUrl = src.url;
+      order.selections._sourceTitle = src.sourceTitle;
+    }
   }
 
   const plan = await planOrder(order);
