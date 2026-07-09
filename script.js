@@ -698,14 +698,15 @@
   const heroTc = document.getElementById('hero-tc');
   const heroCap = document.querySelector('.c-monitor-cap');
   if (heroFilm) {
-    // First clip is local (instant first paint); the rest stream from the reel
-    // CDN so the monitor shows range, not one loop reused across the site.
+    // All three clips are local, re-encoded to ~2MB faststart with no audio
+    // track (the monitor is muted). The raw CDN renders were 6-7MB without
+    // faststart and buffered like a slideshow; never stream raws here.
     // Product films only: every clip in the rotation shows a product being
     // held, used or unboxed. No dance clips, no lifestyle filler.
     const HERO_CLIPS = [
       { src: 'assets/film/hero-loop.mp4', label: 'UGC unboxing' },
-      { src: 'https://d8j0ntlcm91z4.cloudfront.net/user_3B9ysSkvPFs8NnELOqJwjcodGpA/hf_20260411_171147_ace9e350-0b28-4082-9685-3e4ac89288b0.mp4', label: 'Kitchen demo' },
-      { src: 'https://d8j0ntlcm91z4.cloudfront.net/user_3CIjqzTsrKEUr8OzFBaYO4ux3nG/hf_20260413_131601_e29e767d-fe44-4b42-a751-01b178692f67.mp4', label: 'Luxury unboxing' },
+      { src: 'assets/film/hero-kitchen.mp4', label: 'Kitchen demo' },
+      { src: 'assets/film/hero-luxury.mp4', label: 'Luxury unboxing' },
     ];
     let clipIdx = 0;
     const two = (n) => String(n).padStart(2, '0');
@@ -742,7 +743,31 @@
         setCap();
         heroFilm.load();
         start();
-        heroFilm.addEventListener('playing', () => heroFilm.classList.remove('c-monitor-swap'), { once: true });
+      });
+      // the dim lifts the moment the new clip CAN play, and a failsafe lifts
+      // it regardless: a stuck dark monitor is worse than a visible cut
+      heroFilm.addEventListener('playing', () => heroFilm.classList.remove('c-monitor-swap'));
+      heroFilm.addEventListener('canplay', () => heroFilm.classList.remove('c-monitor-swap'));
+      // a clip that cannot load (CDN hiccup, dropped connection) is skipped,
+      // not mourned: move to the next one and keep the monitor alive
+      heroFilm.addEventListener('error', () => {
+        heroFilm.classList.remove('c-monitor-swap');
+        clipIdx = (clipIdx + 1) % HERO_CLIPS.length;
+        heroFilm.src = HERO_CLIPS[clipIdx].src;
+        setCap();
+        heroFilm.load();
+        start();
+      });
+      // warm the next clip's HTTP cache while this one finishes, so the
+      // swap buffers from disk instead of a cold CDN fetch
+      let warmed = -1;
+      heroFilm.addEventListener('timeupdate', () => {
+        const d = heroFilm.duration;
+        if (!d || !isFinite(d) || d - heroFilm.currentTime > 3) return;
+        const next = (clipIdx + 1) % HERO_CLIPS.length;
+        if (warmed === next || HERO_CLIPS[next].src.indexOf('http') !== 0) return;
+        warmed = next;
+        fetch(HERO_CLIPS[next].src, { mode: 'no-cors' }).catch(() => {});
       });
       if ('IntersectionObserver' in window) {
         new IntersectionObserver((entries) => {
@@ -756,6 +781,17 @@
       }
 
       heroFilm.addEventListener('hexa-resume', start);
+
+      // watchdog: one missed play() must never freeze the monitor. If it sits
+      // paused while clearly on screen (and the page flip is not open), kick it.
+      const pdpEl = document.getElementById('monitor-pdp');
+      setInterval(() => {
+        if (!heroFilm.paused || document.hidden) return;
+        if (pdpEl && !pdpEl.hidden) return;
+        const r = heroFilm.getBoundingClientRect();
+        const vh = window.innerHeight;
+        if (r.top < vh * 0.7 && r.bottom > vh * 0.3) start();
+      }, 3000);
     }
 
     // ── Before/after flip: the boring product page vs the film it became ──
