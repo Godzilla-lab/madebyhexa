@@ -311,6 +311,22 @@
     gallery.appendChild(frag);
     gallery.setAttribute('aria-busy', 'false');
 
+    // Phones: 35 tiles two-up is eighteen screens of thumb. Show the first
+    // eight, put the rest behind one honest button. Tiles stay in the DOM
+    // (hidden, posters unloaded) so the lightbox still walks the full reel.
+    if (window.matchMedia('(max-width: 720px)').matches && items.length > 10) {
+      gallery.classList.add('gallery-capped');
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'gallery-more';
+      more.textContent = 'Show all ' + items.length + ' clips';
+      gallery.insertAdjacentElement('afterend', more);
+      more.addEventListener('click', () => {
+        gallery.classList.remove('gallery-capped');
+        more.remove();
+      });
+    }
+
     const eagerCount = saveData ? 4 : 8;
     tiles.slice(0, eagerCount).forEach(t => t.loadPoster());
 

@@ -357,6 +357,20 @@ body {
 @media (min-width: 760px) {
   .gallery { gap: 22px; }
 }
+.gallery-capped .tile:nth-child(n + 9) { display: none; }
+.gallery-more {
+  display: block;
+  margin: 18px auto 0;
+  padding: 12px 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
 .gallery-empty {
   text-align: center;
   color: var(--text-faint);
@@ -2278,8 +2292,26 @@ body.lb-open { overflow: hidden; }
 /* ───── Responsive ───── */
 @media (max-width: 720px) {
   .nav { padding: 14px 18px; }
-  .nav-links { gap: 16px; }
-  .nav-links a:not(.nav-cta) { display: none; }
+  .nav-links { gap: 10px; }
+  /* Phones keep the two doors: Sign in + Create, like every app header.
+   * Section anchors stay desktop-only. */
+  .nav-links a:not(.nav-cta):not(#nav-account) { display: none; }
+  .nav-links #nav-account {
+    display: inline-flex;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+  .nav-links .nav-cta {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13.5px;
+    padding: 9px 16px;
+  }
   .hero { padding: 44px 20px 36px; }
   .hero-title { font-size: clamp(28px, 8.2vw, 38px); line-height: 1.07; margin: 16px 0 12px; }
   .hero-sub { font-size: 15px; line-height: 1.5; }
