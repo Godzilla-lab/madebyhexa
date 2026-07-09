@@ -4,3 +4,5 @@ Disallow: /assets/nsfw/
 Disallow: /intake.html
 Disallow: /order-confirmed.html
 Disallow: /thanks.html
+
+Sitemap: https://madebyhexa.co/sitemap.xml
