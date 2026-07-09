@@ -6,6 +6,11 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Onboarding drip: one pass a day, 10:00 UTC. The function itself decides
+# who is due for which email; DRIP_DRY_RUN=1 makes it log instead of send.
+[functions."drip"]
+  schedule = "0 10 * * *"
+
 # Netlify Image CDN: scraped product images live on Higgsfield's CloudFront
 # as multi-hundred-KB PNGs that take 10s+ to load cold. product-peek rewrites
 # them to /.netlify/images?... so the browser gets a small cached webp.
