@@ -1,4 +1,4 @@
-/* Onboarding drip: five educational emails from Mike over ~16 days.
+/* Onboarding drip: five educational emails from Mike: day 0, day 1, then weekly (7, 14, 21).
  *
  * Runs daily on a Netlify schedule (see netlify.toml). For every account it
  * computes days-since-signup and sends whichever step is due, at most one
@@ -46,7 +46,7 @@ const STEPS = [
       'If anything confuses you, just reply. I read these.',
   },
   {
-    key: 'why-video', day: 2, skipIfActive: true,
+    key: 'why-video', day: 1, skipIfActive: true,
     subject: 'The honest numbers on product video',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
@@ -57,7 +57,7 @@ const STEPS = [
       'See what the films look like first, if you want:\n' + SITE + '/#reel',
   },
   {
-    key: 'best-film', day: 5, skipIfActive: true,
+    key: 'best-film', day: 7, skipIfActive: true,
     subject: 'How to get a great film from one link',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
@@ -68,7 +68,7 @@ const STEPS = [
       'Try it on your best seller:\n' + SITE + '/#composer',
   },
   {
-    key: 'formats', day: 10, skipIfActive: false,
+    key: 'formats', day: 14, skipIfActive: false,
     subject: 'Which video format sells which product',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
@@ -81,11 +81,11 @@ const STEPS = [
       'Make one for a product you are pushing this month.',
   },
   {
-    key: 'checkin', day: 16, skipIfActive: false,
+    key: 'checkin', day: 21, skipIfActive: false,
     subject: 'Anything in your way?',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
-      'No pitch in this one. You signed up a couple of weeks ago, and I would honestly like to know: did you get what you came for?\n\n' +
+      'No pitch in this one. You signed up a few weeks ago, and I would honestly like to know: did you get what you came for?\n\n' +
       'If something felt confusing, too expensive, or just off, reply and tell me. One line is plenty. I read and answer every reply, and the product gets better because of it.\n\n' +
       'Mike',
   },
