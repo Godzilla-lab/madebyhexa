@@ -230,6 +230,48 @@
       });
   }
 
+  /* Free sample arrival: the account is the ticket, not a Stripe session.
+   * Signed out lands on login and bounces straight back here, so the claim
+   * survives the round trip. 409 means the one free sample is already spent. */
+  function createSample(order) {
+    var auth = window.HexaAuth;
+    var loginNext = '/login.html?next=' + encodeURIComponent('/render.html?sample=1');
+    (auth ? auth.ready() : Promise.resolve()).then(function () {
+      if (auth && !auth.user()) { window.location.href = loginNext; return; }
+      var headers = { 'Content-Type': 'application/json' };
+      if (auth && auth.accessToken()) headers.Authorization = 'Bearer ' + auth.accessToken();
+      fetch(CREATE_URL, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ order: order }),
+      })
+        .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject({ status: r.status, body: d }); }); })
+        .then(function (d) {
+          if (!d.jobs || !d.jobs.length) return Promise.reject(d);
+          order.jobs = d.jobs;
+          try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
+          pollLive(order, d.jobs.map(function (j) { return j.id; }).join(','), null);
+        })
+        .catch(function (e) {
+          if (e && e.status === 401) { window.location.href = loginNext; return; }
+          if (e && e.status === 409) { sampleClaimedState(); return; }
+          console.error('sample create failed', e);
+          failState((e && e.body && e.body.error) || 'The sample could not start. Nothing was charged; try again in a minute.');
+        });
+    });
+  }
+
+  function sampleClaimedState() {
+    setStep(STEPS.length);
+    setPct(100);
+    $('#render-kicker').textContent = 'Free sample';
+    $('#render-title').textContent = 'Your free sample is already made';
+    $('#render-sub').textContent = 'One per account, and yours lives in your library. The full film, same look at any length, starts at $12.';
+    var note = $('#render-note');
+    note.hidden = false;
+    note.innerHTML = '<a href="/account.html">Open your library</a> · <a href="/#styles">Make the full film</a>';
+  }
+
   function paidQueuedState(order) {
     setStep(1);
     setPct(8);

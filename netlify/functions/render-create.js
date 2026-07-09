@@ -35,6 +35,11 @@ const { allow } = require('./lib/ratelimit');
 
 const SEGMENT_SECONDS = 15;
 
+/* The free taste: one short grounded clip per account, ever. Long enough for
+ * one hook beat with the real product in frame, short enough that giving it
+ * away costs ~a dollar in credits. */
+const SAMPLE_SECONDS = 5;
+
 /* Products whose output is stills, for the creations.type column. */
 const IMAGE_PRODUCTS = ['photoshoot', 'adpack'];
 
@@ -69,8 +74,11 @@ async function persistCreation(order, engine, paidSessionId, event) {
 
     const sel = (order.selections && typeof order.selections === 'object') ? order.selections : {};
     const product = String(order.product || '');
-    const title = [sel.productName, sel.styleName].filter(Boolean).join(' · ') ||
+    let title = [sel.productName, sel.styleName].filter(Boolean).join(' · ') ||
       product.replace(/^mode:/, '').replace(/_/g, ' ');
+    // Samples carry a server-set prefix: it is both the library label and the
+    // one-per-account dedup key, so it must never come from the client.
+    if (product === 'sample') title = 'Free sample · ' + (sel.productName || 'your product');
     const { data: row, error } = await db.from('creations').insert({
       user_id: userId,
       order_id: orderId,
@@ -412,8 +420,31 @@ async function planOrder(order) {
 
   // Auto rides Marketing Studio too: it is the strongest engine for product
   // ads and the only one that grounds the render in the scraped real product.
-  if (product.indexOf('mode:') === 0 || product === 'auto') {
-    const mode = product === 'auto' ? 'ugc' : product.slice(5);
+  // The free sample is the same engine and grounding at 5 seconds: the taste
+  // must look exactly like what they would buy, or it sells nothing.
+  if (product.indexOf('mode:') === 0 || product === 'auto' || product === 'sample') {
+    const mode = product === 'auto' || product === 'sample' ? 'ugc' : product.slice(5);
+    if (product === 'sample') {
+      const webProductId = await ensureWebProduct(s, 6000);
+      const facts = await webProductFacts(webProductId);
+      const name = (facts && facts.title) || s.productName || 'the product';
+      const p = {
+        prompt: 'UGC selfie video, handheld phone energy. A relatable creator holds ' + name +
+          ' up to the camera, hooks the viewer in the first second with genuine excitement about it, ' +
+          'and lands its single biggest promise. Natural indoor light, real skin texture, ' +
+          'looks shot on a phone, not produced.',
+        mode: mode,
+        aspect_ratio: aspect,
+        duration: SAMPLE_SECONDS,
+        resolution: '720p',
+        generate_audio: true,
+      };
+      if (webProductId) {
+        p.web_product_ids = [webProductId];
+        p.specific_mode = 'web_product';
+      }
+      return { kind: 'videos', jobType: 'marketing_studio_video', paramsList: [p] };
+    }
     // Resolve the scraped product first: its real name and description feed
     // the storyboard, so the script talks about the actual product.
     const webProductId = await ensureWebProduct(s, 6000);
@@ -558,7 +589,24 @@ exports.handler = async (event) => {
   }
 
   let stampJobs = null;
-  if (!devAuthorized) {
+  if (!devAuthorized && order.product === 'sample') {
+    // The free taste: no payment, but a real account and only ever one.
+    // Signed-in also means the drip picks them up and the film has a home.
+    if (!sb.configured()) return json(503, { error: 'accounts not configured' });
+    const user = await getUser(event);
+    if (!user) return json(401, { error: 'Sign in free to claim your sample.' });
+    if (!(await allow('sample', event, 3))) {
+      return json(429, { error: 'Too many sample requests. Please wait a bit and try again.' });
+    }
+    const { count, error: dupErr } = await sb.admin().from('creations')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.userId)
+      .ilike('title', 'Free sample%');
+    if (dupErr) return json(503, { error: 'could not check sample eligibility' });
+    if ((count || 0) > 0) {
+      return json(409, { error: 'Your free sample is already in your library. A full film starts at $12.' });
+    }
+  } else if (!devAuthorized) {
     if (!paidSessionId) return json(403, { error: 'payment required' });
     const paid = await checkPaidSession(paidSessionId, order);
     if (!paid.ok) return json(paid.status, { error: paid.error });

@@ -1860,6 +1860,42 @@
     auto.addEventListener('click', function () { openConfig('auto'); });
     grid.appendChild(auto);
 
+    // The free taste: a 5 second grounded clip, one per account. Only offered
+    // when a real link is in play; an ungrounded sample sells nothing.
+    if (state.composerLink) {
+      var sample = el('button', 'chooser-sample');
+      sample.type = 'button';
+      var sampleCopy = el('span', 'chooser-sample-copy');
+      var strong = document.createElement('strong');
+      strong.textContent = 'Not ready to pay? Watch it move, free.';
+      sampleCopy.appendChild(strong);
+      sampleCopy.appendChild(document.createTextNode(
+        ' A 5 second clip of ' + (pk && pk.title ? pk.title : 'your product') +
+        ' in a creator’s hands. One per account, no card.'));
+      sample.appendChild(el('span', 'chooser-sample-badge', 'Free'));
+      sample.appendChild(sampleCopy);
+      sample.appendChild(el('span', 'chooser-sample-arrow', '→'));
+      sample.addEventListener('click', function () {
+        var order = {
+          product: 'sample',
+          title: 'Free sample',
+          price: 0,
+          selections: { link: state.composerLink, aspect: '9:16' },
+          ts: new Date().toISOString(),
+        };
+        var pk2 = peekFor(state.composerLink);
+        if (pk2 && pk2.ok) {
+          if (pk2.title) order.selections.productName = pk2.title;
+          if (pk2.webProductId) order.selections.webProductId = pk2.webProductId;
+          if (pk2.image) order.selections.productImage = pk2.image;
+        }
+        try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
+        if (window.hexaTrack) window.hexaTrack('studio-sample', 'sample', 0);
+        window.location.href = 'render.html?sample=1';
+      });
+      grid.appendChild(sample);
+    }
+
     var used = {};
     CHOOSER_GROUPS.forEach(function (group) {
       var members = state.presets.filter(function (p) {
