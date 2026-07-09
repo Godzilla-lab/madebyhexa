@@ -26,9 +26,17 @@
 /WINNING-ADS.md       /  301!
 /HIGGSFIELD-YOUTUBE-RESEARCH.md  /  301!
 /MADEBYHEXA-ASSESSMENT.md        /  301!
+/MARKET-AND-FUNDING-ANALYSIS.md  /  301!
 /leads/*              /  301!
 /comments/*           /  301!
 /transcripts/*        /  301!
+/outreach/*           /  301!
+/tools/*              /  301!
+/netlify/*            /  301!
+/netlify.toml         /  301!
+/package.json         /  301!
+/package-lock.json    /  301!
+/deno.lock            /  301!
 
 # The studio reads these two; everything else in catalog/ stays private
 # (pricing margins, prompt recipes, raw engine exports). First match wins,
