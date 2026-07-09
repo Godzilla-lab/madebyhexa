@@ -98,6 +98,10 @@ body {
   background: linear-gradient(180deg, rgba(10,6,8,0.7), rgba(10,6,8,0.25));
   border-bottom: 1px solid rgba(255,255,255,0.04);
 }
+/* Phones scroll the bar over bright video; a firmer tint keeps it legible */
+@media (max-width: 720px) {
+  .nav { background: linear-gradient(180deg, rgba(10,6,8,0.92), rgba(10,6,8,0.78)); }
+}
 .brand {
   display: inline-flex;
   align-items: center;
@@ -1583,6 +1587,17 @@ body.lb-open { overflow: hidden; }
   text-transform: uppercase;
   color: var(--text-faint);
 }
+/* Phones: three stats share one row instead of wrapping 2 + 1 */
+@media (max-width: 560px) {
+  .proof-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .proof-bar-item { min-width: 0; padding: 12px 6px; text-align: center; }
+  .proof-bar-num { font-size: 19px; }
+  .proof-bar-label { font-size: 9px; letter-spacing: 0.08em; }
+}
 
 /* ───── Pricing / tiers ───── */
 .pricing {
@@ -2011,6 +2026,22 @@ body.lb-open { overflow: hidden; }
 @media (max-width: 560px) {
   .review-track .review-card { flex-basis: 264px; width: 264px; }
 }
+/* Phones: a finger-driven snap rail instead of the endless marquee */
+.review-marquee.review-swipe {
+  -webkit-mask-image: none;
+  mask-image: none;
+  overflow: visible;
+}
+.review-marquee.review-swipe .review-track {
+  animation: none;
+  width: auto;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+}
+.review-marquee.review-swipe .review-track::-webkit-scrollbar { display: none; }
+.review-marquee.review-swipe .review-card { scroll-snap-align: center; }
 @media (prefers-reduced-motion: reduce) {
   .review-track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; }
   .review-marquee { -webkit-mask-image: none; mask-image: none; }

@@ -264,7 +264,15 @@
 }
 @media (max-width: 1020px) { .style-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 720px)  { .style-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 440px)  { .style-grid { grid-template-columns: 1fr; } }
+/* Phones keep two columns: one giant card per row reads as 12 screens of
+ * scroll. Type and badges scale down to fit the narrower tile. */
+@media (max-width: 440px) {
+  .style-grid { gap: 10px; }
+  .style-tile .style-name { font-size: 13px; }
+  .style-tile .style-tag { font-size: 11px; margin-top: 2px; }
+  .style-tile .style-meta { left: 11px; right: 11px; bottom: 10px; }
+  .style-tile .style-badge { font-size: 9px; padding: 3px 7px; }
+}
 
 .style-tile {
   position: relative;
@@ -1746,6 +1754,12 @@ body.home .composer-hero { padding: 64px 0 30px; }
   flex-wrap: wrap;
   margin: var(--s-8) 0 0;
 }
+@media (max-width: 720px) {
+  .c-runtime { padding: 72px 0 56px; }
+  .c-strip-zone { margin-top: var(--s-6); }
+  .c-runtime-cta { margin-top: var(--s-6); justify-content: center; text-align: center; }
+  .styles, .modes, .avatars-band, .hooks-band, .more-band { padding-top: 40px; }
+}
 .c-runtime-cta-note {
   font-size: 13.5px;
   color: var(--text-mute);
@@ -2901,6 +2915,14 @@ body.home .studio:has(.composer-hero) { z-index: 2; }
   border-radius: 1px;
   background: var(--accent);
   transform: rotate(45deg);
+}
+/* Phones: two tidy pairs, never three ticks and an orphan */
+@media (max-width: 520px) {
+  .c-hero-ticks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px 12px;
+  }
 }
 
 /* ═════ Examples viewer: tiles open real footage, ordering is the CTA ═════ */

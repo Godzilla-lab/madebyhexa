@@ -164,7 +164,7 @@
 .quiz-band-tiles .quiz-tile:last-child { grid-column: span 2; }
 
 @media (max-width: 900px) {
-  .quiz-band { padding-top: 96px; }
+  .quiz-band { padding-top: 44px; }
   .quiz-band-inner { grid-template-columns: 1fr; gap: 22px; }
   .quiz-band-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .quiz-band-tiles .quiz-tile:last-child { grid-column: span 3; min-height: 64px; }

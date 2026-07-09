@@ -573,6 +573,17 @@
       // Unique cards: the real reviews plus one invite card.
       const unique = list.map(reviewCard);
       unique.push(inviteCard());
+      // Phones swipe through the real cards; the endless marquee is a desktop
+      // gesture (on a small screen it just looks like a card cut in half).
+      if (window.matchMedia('(max-width: 720px)').matches) {
+        const marquee = reviewStrip.closest('.review-marquee');
+        if (marquee) marquee.classList.add('review-swipe');
+        const frag = document.createDocumentFragment();
+        unique.forEach((n) => frag.appendChild(n));
+        reviewStrip.appendChild(frag);
+        reviewStrip.setAttribute('aria-busy', 'false');
+        return;
+      }
       // Build a segment wide enough to fill the viewport, then duplicate it so
       // the horizontal scroll loops seamlessly (the keyframe shifts by -50%,
       // i.e. exactly one segment).
