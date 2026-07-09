@@ -23,7 +23,6 @@
  *   FROM_NAME                display name on the email (default Hexa AI)
  */
 
-const nodemailer = require('nodemailer');
 
 function resp(statusCode, body) {
   return { statusCode, body: typeof body === 'string' ? body : JSON.stringify(body) };
@@ -127,26 +126,22 @@ exports.handler = async (event) => {
   // this webhook only owns the studio flow.
   if (!isStudio || !email) return resp(200, { ok: true, skipped: !isStudio ? 'not studio' : 'no email' });
 
-  if (!process.env.ZOHO_USER || !process.env.ZOHO_APP_PASSWORD) {
-    console.error('stripe-webhook: ZOHO_USER/ZOHO_APP_PASSWORD not set; cannot email', email);
+  const mailer = require('./lib/mailer');
+  if (!mailer.configured()) {
+    console.error('stripe-webhook: no mail transport configured (RESEND_API_KEY or ZOHO_*); cannot email', email);
     return resp(200, { ok: false, warning: 'email not configured' });
   }
 
   const origin = (process.env.URL || 'https://madebyhexa.co').replace(/\/$/, '');
   const { subject, text } = studioEmail({ session, origin });
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.zoho.com',
-    port: 465,
-    secure: true,
-    auth: { user: process.env.ZOHO_USER, pass: process.env.ZOHO_APP_PASSWORD },
-  });
+  const transporter = mailer.transport();
 
   try {
     await transporter.sendMail({
-      from: '"' + (process.env.FROM_NAME || 'Hexa AI') + '" <' + process.env.ZOHO_USER + '>',
+      from: '"' + (process.env.FROM_NAME || 'Hexa AI') + '" <' + mailer.fromAddress() + '>',
       to: email,
-      replyTo: process.env.ZOHO_USER,
+      replyTo: mailer.fromAddress(),
       subject,
       text,
     });

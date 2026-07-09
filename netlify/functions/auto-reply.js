@@ -7,7 +7,7 @@
  *
  * Triggered by a Netlify Form-submission outgoing webhook. Verifies the
  * incoming JWS signature against WEBHOOK_SECRET so only Netlify can fire it,
- * then sends a templated email to the customer via Zoho SMTP using nodemailer.
+ * then sends a templated email to the customer via lib/mailer (Resend or Zoho).
  *
  * Required env vars (set in Netlify dashboard, NOT committed):
  *   ZOHO_USER          e.g. support@madebyhexa.co
@@ -17,10 +17,9 @@
  */
 
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const { getStore } = require('@netlify/blobs');
 
-const REQUIRED_ENV = ['ZOHO_USER', 'ZOHO_APP_PASSWORD', 'WEBHOOK_SECRET'];
+const REQUIRED_ENV = ['WEBHOOK_SECRET']; // mail transport is checked via lib/mailer
 
 function verifyNetlifySignature(rawBody, signatureHeader, secret) {
   if (!signatureHeader) return false;
@@ -217,8 +216,8 @@ exports.handler = async (event) => {
   }
 
   const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
-  if (missing.length > 0) {
-    console.error('Skipping send, missing env vars:', missing.join(', '));
+  if (missing.length > 0 || !require('./lib/mailer').configured()) {
+    console.error('Skipping send, missing env vars:', missing.join(', ') || 'mail transport (RESEND_API_KEY or ZOHO_*)');
     return { statusCode: 200, body: 'Skipped (misconfigured, see logs)' };
   }
 
@@ -265,18 +264,11 @@ exports.handler = async (event) => {
       ? buildRepeatSampleEmail({ name, brand })
       : buildSampleEmail({ name, brand });
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.zoho.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.ZOHO_USER,
-      pass: process.env.ZOHO_APP_PASSWORD,
-    },
-  });
+  const mailer = require('./lib/mailer');
+  const transporter = mailer.transport();
 
   const fromName = process.env.FROM_NAME || 'Mike';
-  const fromAddress = process.env.ZOHO_USER;
+  const fromAddress = mailer.fromAddress();
 
   try {
     await transporter.sendMail({
