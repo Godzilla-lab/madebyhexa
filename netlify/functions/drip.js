@@ -47,6 +47,19 @@ const STEPS = [
       'If anything confuses you, just reply. I read these.',
   },
   {
+    /* Sample claimers only (and only until they buy): they have already seen
+     * their product move, so the pitch is the difference between 5 and 15.
+     * Sits before why-video so it wins the day-1 slot for this group. */
+    key: 'sample-upsell', day: 1, skipIfActive: false, onlyIfSampledUnconverted: true,
+    subject: (fn) => fn ? fn + ', your 5 seconds want to be 15' : 'Your 5 seconds want to be 15',
+    body: (fn) =>
+      'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
+      'You made the free sample, so you have already seen the honest version of the pitch: your product, in a real person’s hands, looking like it was filmed rather than generated.\n\n' +
+      'That was 5 seconds. The full film is where it starts selling: 15 seconds up to 2 minutes, same actor and same scene the whole way through, with a hook, a demo and the line that makes people click. It starts at $12, and most brands pick the $19 creator film.\n\n' +
+      'Your product is already loaded, so it is one click from here:\n' + SITE + '/#styles\n\n' +
+      'And if the sample missed the mark for your product, reply and tell me what felt off. I read these.',
+  },
+  {
     key: 'why-video', day: 1, skipIfActive: true,
     subject: (fn) => (fn ? fn + ', the' : 'The') + ' honest numbers on product video',
     body: (fn) =>
@@ -148,6 +161,16 @@ exports.handler = async (event) => {
     for (const step of STEPS) {
       if (ageDays < step.day || ageDays > step.day + GRACE_DAYS) continue;
       if (await alreadySent(u.id, step.key)) continue;
+      if (step.onlyIfSampledUnconverted) {
+        // A sampler owns only 'Free sample' creations; anything else means
+        // they bought. Non-samplers consume the step silently so it never
+        // re-evaluates on later runs.
+        const { count: totalCr } = await db.from('creations')
+          .select('id', { count: 'exact', head: true }).eq('user_id', u.id);
+        const { count: sampleCr } = await db.from('creations')
+          .select('id', { count: 'exact', head: true }).eq('user_id', u.id).ilike('title', 'Free sample%');
+        if (!sampleCr || (totalCr || 0) > sampleCr) { await markSent(u.id, step.key); continue; }
+      }
       if (step.skipIfActive) {
         if (active === null) {
           const { count } = await db.from('creations')
