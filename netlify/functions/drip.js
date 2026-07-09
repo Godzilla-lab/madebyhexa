@@ -37,7 +37,7 @@ function footer(userId) {
 const STEPS = [
   {
     key: 'welcome', day: 0, skipIfActive: false,
-    subject: 'Welcome to Hexa. Here is the whole trick.',
+    subject: (fn) => fn ? 'Welcome to Hexa, ' + fn + '. Here is the whole trick.' : 'Welcome to Hexa. Here is the whole trick.',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
       "Mike here, I run Hexa. Thanks for making an account.\n\n" +
@@ -47,7 +47,7 @@ const STEPS = [
   },
   {
     key: 'why-video', day: 1, skipIfActive: true,
-    subject: 'The honest numbers on product video',
+    subject: (fn) => (fn ? fn + ', the' : 'The') + ' honest numbers on product video',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
       'Before Hexa I sat on the other side of this, trying to sell products with photos, so let me share the numbers that changed my mind.\n\n' +
@@ -58,7 +58,7 @@ const STEPS = [
   },
   {
     key: 'best-film', day: 7, skipIfActive: true,
-    subject: 'How to get a great film from one link',
+    subject: (fn) => (fn ? fn + ', how' : 'How') + ' to get a great film from one link',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
       'Three things that make your Hexa film noticeably better:\n\n' +
@@ -69,7 +69,7 @@ const STEPS = [
   },
   {
     key: 'formats', day: 14, skipIfActive: false,
-    subject: 'Which video format sells which product',
+    subject: (fn) => 'Which video format sells which product' + (fn ? ', ' + fn : ''),
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
       'A cheat sheet we use with brands:\n\n' +
@@ -82,7 +82,7 @@ const STEPS = [
   },
   {
     key: 'checkin', day: 21, skipIfActive: false,
-    subject: 'Anything in your way?',
+    subject: (fn) => fn ? 'Anything in your way, ' + fn + '?' : 'Anything in your way?',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
       'No pitch in this one. You signed up a few weeks ago, and I would honestly like to know: did you get what you came for?\n\n' +
@@ -152,14 +152,14 @@ exports.handler = async (event) => {
       const fn = (u.user_metadata && u.user_metadata.name || '').trim().split(/\s+/)[0] || '';
       const niceFn = fn && fn.indexOf('@') === -1 ? fn.charAt(0).toUpperCase() + fn.slice(1) : '';
       if (DRY) {
-        console.log('[dry-run] would send', step.key, 'to', u.email, '(age', ageDays.toFixed(1), 'days)');
+        console.log('[dry-run] would send', step.key, 'to', u.email, '(age', ageDays.toFixed(1), 'days) subject:', step.subject(niceFn));
       } else {
         try {
           await mailer.transport().sendMail({
             from: FROM,
             to: u.email,
             replyTo: 'mike@madebyhexa.co',
-            subject: step.subject,
+            subject: step.subject(niceFn),
             text: step.body(niceFn) + footer(u.id),
             headers: { 'List-Unsubscribe': '<' + unsubLink(u.id) + '>' },
           });
