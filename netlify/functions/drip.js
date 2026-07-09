@@ -42,8 +42,9 @@ const STEPS = [
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
       "Mike here, I run Hexa. Thanks for making an account.\n\n" +
-      'The whole product is one move: paste your product link, and we turn the page into a finished film. A real-looking person holding, opening, using your product, ready to post.\n\n' +
+      'The whole product is one move: paste your product link, and we turn the page into a finished film. A real-looking person holding, opening, using your product, ready to post. Films made this way have pulled 10 million views for the brands that run them.\n\n' +
       'It takes about two minutes to see your first one:\n' + SITE + '/#composer\n\n' +
+      'One honest warning: the brands beating you on TikTok and Reels are not better at video. They just make more of it, because theirs costs lunch money. Now yours does too.\n\n' +
       'If anything confuses you, just reply. I read these.',
   },
   {
@@ -54,10 +55,11 @@ const STEPS = [
     subject: (fn) => fn ? fn + ', your 5 seconds want to be 15' : 'Your 5 seconds want to be 15',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
-      'You made the free sample, so you have already seen the honest version of the pitch: your product, in a real person’s hands, looking like it was filmed rather than generated.\n\n' +
-      'That was 5 seconds. The full film is where it starts selling: 15 seconds up to 2 minutes, same actor and same scene the whole way through, with a hook, a demo and the line that makes people click. It starts at $12, and most brands pick the $19 creator film.\n\n' +
-      'Your product is already loaded, so it is one click from here:\n' + SITE + '/#styles\n\n' +
-      'And if the sample missed the mark for your product, reply and tell me what felt off. I read these.',
+      'You made the free sample, so you have already seen it with your own eyes: your product, in a real person’s hands, looking filmed rather than generated. Most people never get past wondering if that is possible. You are already holding proof.\n\n' +
+      'Here is the thing about those 5 seconds: they are the most expensive part of the film, and you already own them. The hook, the casting, the scene, the product read, all done. The full film just lets it finish the sentence: 15 seconds up to 2 minutes, same actor and same scene the whole way, with the demo and the line that makes people click.\n\n' +
+      'It starts at $12. One coffee, against a product video your competitors pay an agency $500 and two weeks for. Every day the sample sits in your library is a day that film is not selling for you.\n\n' +
+      'Your product is already loaded, so it is one click:\n' + SITE + '/#styles\n\n' +
+      'And if the sample missed the mark for your product, reply and tell me what felt off. I read every one of these.',
   },
   {
     key: 'why-video', day: 1, skipIfActive: true,
@@ -68,6 +70,7 @@ const STEPS = [
       'Product pages with a video convert around 65% higher than pages without one. On the ad side it is even starker: video ads convert roughly three times better than static images, which is why the brands you compete with keep feeding the meter.\n\n' +
       'And here is the part nobody says out loud: most brands know all this and still quit video. When researchers ask why, the answers are always the same two: too expensive and no time. A single traditional shoot day runs thousands before you have tested a single angle.\n\n' +
       'That is the actual reason Hexa exists. Not to make video magic, just to make testing it cost lunch money instead of a shoot day.\n\n' +
+      'The math is simple and a little brutal: if video converts 3x and you are not running any, the brands in your category that are will happily keep taking the difference.\n\n' +
       'See what the films look like first, if you want:\n' + SITE + '/#reel',
   },
   {

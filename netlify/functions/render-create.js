@@ -37,8 +37,10 @@ const SEGMENT_SECONDS = 15;
 
 /* The free taste: one short grounded clip per account, ever. Long enough for
  * one hook beat with the real product in frame, short enough that giving it
- * away costs ~a dollar in credits. */
-const SAMPLE_SECONDS = 5;
+ * away costs ~a dollar in credits (5 credits/second at 720p: 5s = 25cr,
+ * 10s = 50cr). Chris can turn the dial with SAMPLE_SECONDS in Netlify env,
+ * clamped 4-10 so a typo can never give away a full film. */
+const SAMPLE_SECONDS = Math.min(10, Math.max(4, parseInt(process.env.SAMPLE_SECONDS, 10) || 5));
 
 /* Products whose output is stills, for the creations.type column. */
 const IMAGE_PRODUCTS = ['photoshoot', 'adpack'];
