@@ -311,10 +311,11 @@
     gallery.appendChild(frag);
     gallery.setAttribute('aria-busy', 'false');
 
-    // Phones: 35 tiles two-up is eighteen screens of thumb. Show the first
-    // eight, put the rest behind one honest button. Tiles stay in the DOM
-    // (hidden, posters unloaded) so the lightbox still walks the full reel.
-    if (window.matchMedia('(max-width: 720px)').matches && items.length > 10) {
+    // 35 tiles is eighteen phone screens or seven desktop rows: nobody needs
+    // the whole reel up front. Show the first rows, put the rest behind one
+    // honest button. Tiles stay in the DOM (hidden, posters unloaded) so the
+    // lightbox still walks the full reel.
+    if (items.length > 12) {
       gallery.classList.add('gallery-capped');
       const more = document.createElement('button');
       more.type = 'button';

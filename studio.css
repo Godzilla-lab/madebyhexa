@@ -1781,24 +1781,25 @@ body.home .composer-hero { padding: 64px 0 30px; }
 }
 
 /* ═════ Rails: Higgsfield media-surface tiles (homepage) ═════ */
+/* Section heads read top-down on every screen: kicker, heading, then the
+ * description underneath (Chris: never beside the heading). The count meta
+ * keeps the top-right corner. */
 .rail-head-c {
-  display: flex;
-  align-items: flex-end;
-  gap: 22px;
+  display: block;
+  position: relative;
   margin: 0 0 26px;
 }
-.rail-head-main { flex: none; }
 .rail-head-c .c-kicker { margin-bottom: 8px; }
 .rail-desc {
-  flex: 1;
-  margin: 0 0 4px;
+  margin: 10px 0 0;
+  max-width: 62ch;
   font-size: 14px;
   color: var(--text-mute);
 }
-.rail-head-c .c-head-meta { margin-left: auto; flex: none; }
-@media (max-width: 720px) {
-  .rail-head-c { flex-wrap: wrap; gap: 8px; }
-  .rail-desc { flex-basis: 100%; order: 3; }
+.rail-head-c .c-head-meta {
+  position: absolute;
+  top: 6px;
+  right: 0;
 }
 
 /* media-surface conversion: borderless, edge-fade label zone */
@@ -2651,6 +2652,44 @@ body.home .float-cta-link svg { color: var(--accent); }
   aspect-ratio: auto;
   min-height: 116px;
 }
+/* The free-sample band: quiet, one line, sits under the Auto hero */
+.chooser-sample {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border: 1px dashed rgba(255, 77, 109, 0.45);
+  border-radius: 14px;
+  background: rgba(255, 77, 109, 0.05);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+}
+.chooser-sample:hover {
+  border-color: rgba(255, 77, 109, 0.8);
+  background: rgba(255, 77, 109, 0.09);
+}
+.chooser-sample-badge {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.chooser-sample-copy {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-mute);
+}
+.chooser-sample-copy strong { color: var(--text); font-weight: 650; }
+.chooser-sample-arrow { flex: 0 0 auto; color: var(--accent-soft); font-size: 16px; }
 .chooser-grid .style-tile {
   animation: tile-in 0.4s var(--ease) both;
 }

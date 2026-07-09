@@ -357,7 +357,11 @@ body {
 @media (min-width: 760px) {
   .gallery { gap: 22px; }
 }
-.gallery-capped .tile:nth-child(n + 9) { display: none; }
+/* Capped reel: ~2 desktop rows, 4 phone rows; the button reveals the rest */
+.gallery-capped .tile:nth-child(n + 11) { display: none; }
+@media (max-width: 720px) {
+  .gallery-capped .tile:nth-child(n + 9) { display: none; }
+}
 .gallery-more {
   display: block;
   margin: 18px auto 0;
