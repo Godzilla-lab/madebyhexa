@@ -721,10 +721,12 @@ exports.handler = async (event) => {
     // Never let grounding hold the customer-facing response hostage: give the
     // create call a short budget, then answer with what we have. The scrape
     // keeps running server-side either way; render-create re-resolves it.
-    // Exception: when we have no image (blocked page), the grounding id IS
-    // the image path (the client polls it for the re-hosted photo), so it
-    // gets a longer budget; a cold token mint alone can eat the short one.
-    const budget = data.image ? 1500 : 4500;
+    // With a photo already in hand the wait is near zero: the id is nice to
+    // have, nothing downstream needs it from THIS response. Without a photo
+    // the grounding id IS the image path (the client polls it for the
+    // re-hosted photo), so it gets a longer budget; a cold token mint alone
+    // can eat the short one.
+    const budget = data.image ? 250 : 4500;
     const wp = await Promise.race([
       webProductPromise,
       new Promise((r) => setTimeout(() => r(null), budget)),
