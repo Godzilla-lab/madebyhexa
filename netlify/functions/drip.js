@@ -1,4 +1,6 @@
-/* Onboarding drip: five educational emails from Mike: day 0, day 1, then weekly (7, 14, 21).
+/* Onboarding drip: Mike's sequence. Day 0 goes out INSTANTLY via welcome-now.js
+ * at signup; this hourly run is its fallback and carries the rest: day 1, 3, 5,
+ * then the day-14 check-in.
  *
  * Runs hourly on a Netlify schedule (see netlify.toml), so the welcome lands
  * within the hour of signup. For every account it computes days-since-signup
@@ -24,6 +26,7 @@
 
 const { getStore } = require('@netlify/blobs');
 const { SITE, unsubLink } = require('./lib/drip-links');
+const { bodyHtml, footerHtml } = require('./lib/mail-html');
 
 const FROM = '"Mike from Hexa" <mike@madebyhexa.co>';
 const GRACE_DAYS = 3;
@@ -31,6 +34,21 @@ const GRACE_DAYS = 3;
 function footer(userId) {
   return '\n\n--\nMike, Hexa AI · madebyhexa.co\n' +
     'No more emails like this: ' + unsubLink(userId) + '\n';
+}
+
+/* Everything one send needs, computed once: used by the hourly loop below
+ * AND by welcome-now.js, which fires the day-0 email the moment an account
+ * is created instead of waiting for the next top of the hour. */
+function compose(step, niceFn, userId) {
+  const unsub = unsubLink(userId);
+  return {
+    from: FROM,
+    replyTo: 'mike@madebyhexa.co',
+    subject: step.subject(niceFn),
+    text: step.body(niceFn) + footer(userId),
+    html: bodyHtml(step.body(niceFn)) + footerHtml(unsub),
+    headers: { 'List-Unsubscribe': '<' + unsub + '>' },
+  };
 }
 
 /* ── The sequence ──────────────────────────────────────────────────
@@ -74,7 +92,7 @@ const STEPS = [
       'See what the films look like first, if you want:\n' + SITE + '/#reel',
   },
   {
-    key: 'best-film', day: 7, skipIfActive: true,
+    key: 'best-film', day: 3, skipIfActive: true,
     subject: (fn) => (fn ? fn + ', how' : 'How') + ' to get a great film from one link',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
@@ -85,7 +103,7 @@ const STEPS = [
       'Do it with your best seller. It already converts, which means it deserves the video treatment first, and the film pays for itself fastest there:\n' + SITE + '/#composer',
   },
   {
-    key: 'formats', day: 14, skipIfActive: false,
+    key: 'formats', day: 5, skipIfActive: false,
     subject: (fn) => 'Which video format sells which product' + (fn ? ', ' + fn : ''),
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
@@ -98,11 +116,11 @@ const STEPS = [
       'Make one for the product you are pushing this month. Testing a format costs less than the ad spend you would waste running the wrong one.',
   },
   {
-    key: 'checkin', day: 21, skipIfActive: false,
+    key: 'checkin', day: 14, skipIfActive: false,
     subject: (fn) => fn ? 'Anything in your way, ' + fn + '?' : 'Anything in your way?',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
-      'No pitch in this one. You signed up a few weeks ago, and I would honestly like to know: did you get what you came for?\n\n' +
+      'No pitch in this one. You signed up two weeks ago, and I would honestly like to know: did you get what you came for?\n\n' +
       'If something felt confusing, too expensive, or just off, reply and tell me. One line is plenty. I read and answer every reply, and the product gets better because of it.\n\n' +
       'Mike',
   },
@@ -188,14 +206,7 @@ exports.handler = async (event) => {
         console.log('[dry-run] would send', step.key, 'to', u.email, '(age', ageDays.toFixed(1), 'days) subject:', step.subject(niceFn));
       } else {
         try {
-          await mailer.transport().sendMail({
-            from: FROM,
-            to: u.email,
-            replyTo: 'mike@madebyhexa.co',
-            subject: step.subject(niceFn),
-            text: step.body(niceFn) + footer(u.id),
-            headers: { 'List-Unsubscribe': '<' + unsubLink(u.id) + '>' },
-          });
+          await mailer.transport().sendMail({ to: u.email, ...compose(step, niceFn, u.id) });
           await markSent(u.id, step.key);
         } catch (e) {
           console.error('drip: send failed for', u.email, step.key, e.message);
@@ -211,3 +222,10 @@ exports.handler = async (event) => {
   console.log('drip: run done.', users.length, 'users,', sent, DRY ? 'due (dry run),' : 'sent,', skipped, 'opted out,', blobErrors, 'blob errors');
   return { statusCode: 200, body: JSON.stringify({ users: users.length, sent, dryRun: DRY, blobErrors }) };
 };
+
+/* Shared with welcome-now.js (instant day-0 send). */
+exports.STEPS = STEPS;
+exports.compose = compose;
+exports.alreadySent = alreadySent;
+exports.markSent = markSent;
+exports.optedOut = optedOut;

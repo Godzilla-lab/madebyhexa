@@ -290,6 +290,12 @@ function extract(html, pageUrl) {
     if (m) title = m[1];
   }
   title = title ? decodeEntities(title).slice(0, 90) : null;
+  // A bot-wall's page title is not a product name. Dropping it lets the
+  // caller fall through to the archive copy or the slug guess instead of
+  // shipping "Robot or human?" as somebody's product.
+  if (title && /robot or human|access denied|just a moment|attention required|are you (a )?human|verify (you|yourself)|captcha|page not found|error \d{3}/i.test(title)) {
+    title = null;
+  }
 
   let image = bestImage(html, pageUrl, product);
 
@@ -347,14 +353,23 @@ function shopifyHandle(u) {
 async function tryShopifyJson(target, signal) {
   const handle = shopifyHandle(target);
   if (!handle) return null;
-  const jsUrl = await guardUrl(target.origin + '/products/' + handle + '.js');
+  let jsUrl = await guardUrl(target.origin + '/products/' + handle + '.js');
   if (!jsUrl) return null;
   try {
-    const res = await fetch(jsUrl.href, {
-      signal,
-      redirect: 'manual',
-      headers: { ...BROWSER_HEADERS, 'Accept': 'application/json,*/*;q=0.8' },
-    });
+    // follow up to two guarded redirects: stores commonly 301 apex -> www
+    let res;
+    for (let hop = 0; hop <= 2; hop++) {
+      res = await fetch(jsUrl.href, {
+        signal,
+        redirect: 'manual',
+        headers: { ...BROWSER_HEADERS, 'Accept': 'application/json,*/*;q=0.8' },
+      });
+      if (res.status < 300 || res.status >= 400) break;
+      const loc = res.headers.get('location');
+      if (!loc) return null;
+      jsUrl = await guardUrl(loc, jsUrl.href);
+      if (!jsUrl) return null;
+    }
     if (!res.ok) return null;
     const type = (res.headers.get('content-type') || '').toLowerCase();
     if (!type.includes('json') && !type.includes('javascript')) return null;
@@ -378,6 +393,110 @@ async function tryShopifyJson(target, signal) {
       price,
       currency: null,
     };
+  } catch (e) {
+    return null;
+  }
+}
+
+/* ── Strategy: Kickstarter widget card ────────────────────────────
+ * Kickstarter hard-blocks page reads (ours 403s, and even the engine's
+ * scraper fails with not_enough_data). But its embeddable widget card is
+ * MEANT to be fetched by other sites, answers without a bot check, and
+ * carries the campaign photo and title. */
+const KICKSTARTER_HOST = /(^|\.)kickstarter\.com$/i;
+
+async function tryKickstarterCard(target, signal) {
+  if (!KICKSTARTER_HOST.test(target.hostname)) return null;
+  const m = target.pathname.match(/^\/projects\/([^/]+)\/([^/?#]+)/);
+  if (!m) return null;
+  const cardUrl = 'https://www.kickstarter.com/projects/' + m[1] + '/' + m[2] + '/widget/card.html';
+  try {
+    const res = await fetch(cardUrl, { signal, redirect: 'follow', headers: BROWSER_HEADERS });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const t = html.match(/<title>([^<]+)<\/title>/i);
+    const img = html.match(/<img[^>]+src\s*=\s*"([^"]+)"/i);
+    let title = t ? decodeEntities(t[1]).replace(/\s+[-·|]\s+Kickstarter.*$/i, '').replace(/\.+$/, '').trim() : null;
+    if (title) title = title.slice(0, 90);
+    let image = img ? decodeEntities(img[1]) : null;
+    if (image && !/^https:\/\//i.test(image)) image = null;
+    if (!title && !image) return null;
+    return { title, image, siteName: 'Kickstarter', price: null, currency: null };
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Page markup lies (tracking beacons in <img> tags, expired signed URLs,
+ * moved CDNs). Whatever strategy found the image, trust it only if it still
+ * answers as an image. One ranged byte, ~150ms on healthy CDNs. */
+async function validateImage(url) {
+  try {
+    const ic = new AbortController();
+    const it = setTimeout(() => ic.abort(), 1800);
+    const probe = await fetch(url, {
+      headers: { ...BROWSER_HEADERS, Range: 'bytes=0-0', Accept: 'image/*,*/*;q=0.5' },
+      signal: ic.signal,
+    });
+    clearTimeout(it);
+    if (probe.body) probe.body.cancel().catch(() => {});
+    const ct = (probe.headers.get('content-type') || '').toLowerCase();
+    if (!probe.ok || !(ct.startsWith('image/') || ct === 'application/octet-stream')) return null;
+    // a 200 that is a 1px placeholder is a "no": real product shots are KBs.
+    // 206 => the total is after the slash in content-range; a full 200 =>
+    // content-length IS the total (on 206 content-length is just our 1 byte).
+    const total = probe.status === 206
+      ? parseInt((probe.headers.get('content-range') || '').split('/')[1], 10) || null
+      : parseInt(probe.headers.get('content-length') || '', 10) || null;
+    if (total !== null && total > 0 && total < 500) return null;
+    return url;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* ── Strategy: the Internet Archive's copy ────────────────────────
+ * Generic fallback for ANY guarded page: the Wayback Machine has a crawl of
+ * almost every popular product page, blocks nobody, and its id_ variant
+ * returns the ORIGINAL html, so the og/JSON-LD extraction runs unchanged.
+ * The metadata can be weeks old; for a product name and photo that is fine,
+ * and a dead archived image URL is healed client-side by peekImageFailed. */
+async function tryWayback(target, extract_, signal) {
+  try {
+    const av = await fetch('https://archive.org/wayback/available?url=' + encodeURIComponent(target.href), { signal });
+    if (!av.ok) return null;
+    const j = await av.json().catch(() => null);
+    const snap = j && j.archived_snapshots && j.archived_snapshots.closest;
+    if (!snap || !snap.available || !snap.url) return null;
+    const snapUrl = String(snap.url)
+      .replace(/^http:/, 'https:')
+      .replace(/\/(\d{14})\//, '/$1id_/');
+    const res = await fetch(snapUrl, { signal, redirect: 'follow', headers: BROWSER_HEADERS });
+    if (!res.ok) return null;
+    const type = (res.headers.get('content-type') || '').toLowerCase();
+    if (!type.includes('text/html')) return null;
+    const reader = res.body.getReader();
+    const chunks = [];
+    let total = 0;
+    while (total < MAX_BODY_BYTES) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      total += value.length;
+    }
+    reader.cancel().catch(() => {});
+    const html = Buffer.concat(chunks.map(Buffer.from)).toString('utf8');
+    const fields = extract_(html, target.href);
+    if (!fields.title && !fields.image) return null;
+    // archive-rewritten asset URLs still slip through on some snapshots;
+    // strip the wrapper so the browser loads the original image directly
+    if (fields.image) {
+      const m = fields.image.match(/^https?:\/\/web\.archive\.org\/web\/\d+(?:im_)?\/(https?:\/\/.+)$/i);
+      if (m) fields.image = m[1];
+    }
+    if (fields.image) fields.image = await validateImage(fields.image);
+    if (!fields.title && !fields.image) return null;
+    return fields;
   } catch (e) {
     return null;
   }
@@ -520,24 +639,65 @@ exports.handler = async (event) => {
 
   let data = nothing;
   try {
-    // 1) Shopify product JSON: exact title, image and price when available
-    const shopCtl = new AbortController();
-    const shopTimer = setTimeout(() => shopCtl.abort(), SHOPIFY_MS);
-    const shop = await tryShopifyJson(target, shopCtl.signal).finally(() => clearTimeout(shopTimer));
-    if (shop) {
-      data = { ok: true, url: raw, ...shop };
+    // 0) Kickstarter: the project page is unreadable, the widget card is not
+    const ks = await tryKickstarterCard(target, controller.signal);
+    if (ks) {
+      data = { ok: true, url: raw, ...ks };
     } else {
-      // 2) the page's own metadata (og / JSON-LD / title tag)
-      const page = await fetchHtml(target, controller.signal);
-      if (page) {
-        const fields = extract(page.html, page.finalUrl);
-        if (fields.title || fields.image) data = { ok: true, url: raw, ...fields };
+      // 1) Shopify product JSON: exact title, image and price when available
+      const shopCtl = new AbortController();
+      const shopTimer = setTimeout(() => shopCtl.abort(), SHOPIFY_MS);
+      const shop = await tryShopifyJson(target, shopCtl.signal).finally(() => clearTimeout(shopTimer));
+      if (shop) {
+        data = { ok: true, url: raw, ...shop };
+      } else {
+        // 2) the page's own metadata (og / JSON-LD / title tag)
+        const page = await fetchHtml(target, controller.signal);
+        if (page) {
+          const fields = extract(page.html, page.finalUrl);
+          if (fields.image) fields.image = await validateImage(fields.image);
+          if (fields.title || fields.image) data = { ok: true, url: raw, ...fields };
+        }
       }
     }
   } catch (e) {
     // timeouts, TLS failures, aborts: fall through to the URL itself
   } finally {
     clearTimeout(timer);
+  }
+
+  // 2a) Amazon without a photo: the ancient media endpoint still serves the
+  // primary product shot straight from the ASIN in the URL, no page read.
+  if ((!data.ok || !data.image) && /(^|\.)amazon\./i.test(target.hostname)) {
+    const asin = (target.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10})(?:[/?]|$)/i) || [])[1];
+    if (asin) {
+      const shot = await validateImage('https://images-na.ssl-images-amazon.com/images/P/' + asin.toUpperCase() + '.01._SL500_.jpg');
+      if (shot) {
+        if (data.ok) data.image = shot;
+        else data = { ok: true, url: raw, title: null, image: shot, siteName: 'Amazon', price: null, currency: null };
+      }
+    }
+  }
+
+  // 2b) guarded page, no photo yet: the Internet Archive's copy of the same
+  // page usually carries the metadata the live page refused to give us.
+  // Runs for any host; social links are excluded (a post is not a product).
+  if (!social && (!data.ok || !data.image)) {
+    const wbCtl = new AbortController();
+    const wbTimer = setTimeout(() => wbCtl.abort(), 5200);
+    const wb = await tryWayback(target, extract, wbCtl.signal);
+    clearTimeout(wbTimer);
+    if (wb) {
+      data = {
+        ok: true,
+        url: raw,
+        title: (data.ok && data.title) || wb.title,
+        image: (data.ok && data.image) || wb.image,
+        siteName: (data.ok && data.siteName) || wb.siteName,
+        price: (data.ok && data.price) || wb.price,
+        currency: (data.ok && data.currency) || wb.currency,
+      };
+    }
   }
 
   // Social post link: never pretend it is a product page. If its own og

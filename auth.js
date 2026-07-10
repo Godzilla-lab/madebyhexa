@@ -35,11 +35,30 @@
     _loaded = true;
     readyResolve();
     emit();
+    welcomePing();
   });
   client.auth.onAuthStateChange(function (_evt, session) {
     _session = session || null;
     emit();
+    welcomePing();
   });
+
+  /* The instant welcome email: any page that sees a session on an account
+   * younger than 2 days pings welcome-now once. The server is idempotent
+   * (same sent-state as the hourly drip), the flag here just saves calls. */
+  function welcomePing() {
+    var u = user();
+    if (!u || !u.created_at || !_session) return;
+    if (Date.now() - new Date(u.created_at).getTime() > 2 * 86400000) return;
+    var flag = 'hexa-welcomed-' + u.id;
+    try { if (localStorage.getItem(flag)) return; localStorage.setItem(flag, '1'); } catch (e) {}
+    fetch('/.netlify/functions/welcome-now', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + _session.access_token },
+    }).catch(function () {
+      try { localStorage.removeItem(flag); } catch (e) {} // retry on next page
+    });
+  }
 
   window.HexaAuth = {
     client: client,

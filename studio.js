@@ -2069,8 +2069,10 @@
       // page, or a known image that is just slow to load. Hold the stage and
       // wait for it instead of rushing past. The moment it paints (the frame
       // unhides), give it a beat, then move on. If the scrape dies, say so
-      // and stop promising.
-      var photoComing = pk.imageSlow || (pk.guessed && !pk.image && pk.webProductId);
+      // and stop promising. Seeing their own product on this card is the
+      // moment that sells the film, so ANY result that has a photo coming
+      // (guessed or not) waits for it; the stage never moves on without it.
+      var photoComing = pk.imageSlow || (!pk.image && pk.webProductId);
       if (photoComing && frame.hidden) {
         progEl.hidden = false;
         if (pk.guessed && !pk.image) {

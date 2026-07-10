@@ -26,12 +26,35 @@ function fromAddress() {
 
 function transport() {
   if (process.env.RESEND_API_KEY) {
-    return nodemailer.createTransport({
-      host: 'smtp.resend.com',
-      port: 465,
-      secure: true,
-      auth: { user: 'resend', pass: process.env.RESEND_API_KEY },
-    });
+    // Resend over plain HTTPS, not SMTP: an API call finishes in one round
+    // trip (SMTP is a multi-step handshake that eats seconds of function
+    // time and hangs entirely on networks that block port 465). Same
+    // sendMail(message) surface nodemailer callers already use.
+    return {
+      sendMail: async function (msg) {
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: msg.from,
+            to: Array.isArray(msg.to) ? msg.to : [msg.to],
+            subject: msg.subject,
+            text: msg.text,
+            html: msg.html || undefined,
+            reply_to: msg.replyTo || undefined,
+            headers: msg.headers || undefined,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error('resend ' + res.status + ': ' + (data.message || JSON.stringify(data).slice(0, 200)));
+        }
+        return data;
+      },
+    };
   }
   return nodemailer.createTransport({
     host: 'smtp.zoho.com',
