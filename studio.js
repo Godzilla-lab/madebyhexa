@@ -389,6 +389,28 @@
     return amount + ' ' + pk.currency;
   }
 
+  /* The free taste, from anywhere on the page: compose the sample order and
+   * hand off to the render stage. No sign-in asked here; the render page
+   * gates at the collect moment instead. */
+  function startFreeSample(link) {
+    var order = {
+      product: 'sample',
+      title: 'Free sample',
+      price: 0,
+      selections: { link: link, aspect: '9:16' },
+      ts: new Date().toISOString(),
+    };
+    var pk = peekFor(link);
+    if (pk && pk.ok) {
+      if (pk.title) order.selections.productName = pk.title;
+      if (pk.webProductId) order.selections.webProductId = pk.webProductId;
+      if (pk.image) order.selections.productImage = pk.image;
+    }
+    try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
+    if (window.hexaTrack) window.hexaTrack('studio-sample', 'sample', 0);
+    window.location.href = 'render.html?sample=1';
+  }
+
   /* Peek fields matching the given link, or null. */
   function peekFor(link) {
     var pk = state.peek;
@@ -1875,24 +1897,7 @@
       sample.appendChild(el('span', 'chooser-sample-badge', 'Free'));
       sample.appendChild(sampleCopy);
       sample.appendChild(el('span', 'chooser-sample-arrow', '→'));
-      sample.addEventListener('click', function () {
-        var order = {
-          product: 'sample',
-          title: 'Free sample',
-          price: 0,
-          selections: { link: state.composerLink, aspect: '9:16' },
-          ts: new Date().toISOString(),
-        };
-        var pk2 = peekFor(state.composerLink);
-        if (pk2 && pk2.ok) {
-          if (pk2.title) order.selections.productName = pk2.title;
-          if (pk2.webProductId) order.selections.webProductId = pk2.webProductId;
-          if (pk2.image) order.selections.productImage = pk2.image;
-        }
-        try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
-        if (window.hexaTrack) window.hexaTrack('studio-sample', 'sample', 0);
-        window.location.href = 'render.html?sample=1';
-      });
+      sample.addEventListener('click', function () { startFreeSample(state.composerLink); });
       grid.appendChild(sample);
     }
 
@@ -2371,11 +2376,22 @@
 
     // composer
     var linkInput = $('#composer-link');
+    // Prefetch the peek the moment a full URL is in the bar, however it got
+    // there. Phone keyboards' clipboard chips, "paste and go", autofill and
+    // drag-in insert text WITHOUT a paste event, so listening to paste alone
+    // meant the product chip never appeared for most phone users. Debounced
+    // so hand-typing peeks once at the end, not per keystroke; startPeek
+    // dedups repeats via its cache.
+    var peekDebounce = null;
     linkInput.addEventListener('input', function () {
       state.composerLink = linkInput.value.trim();
+      if (peekDebounce) clearTimeout(peekDebounce);
+      var link = looksLikeUrl(state.composerLink);
+      if (!link) { updateComposerProduct(); return; }
+      peekDebounce = setTimeout(function () {
+        startPeek(link).then(function () { updateComposerProduct(); });
+      }, 350);
     });
-    // prefetch the peek on paste: by the time they click Create, it's home,
-    // and the product chip appears right in the bar
     linkInput.addEventListener('paste', function () {
       setTimeout(function () {
         var link = looksLikeUrl(linkInput.value.trim());
@@ -2390,6 +2406,34 @@
       state.composerLink = link;
       openReveal(link);
     });
+
+    // The free-clip rubric under the bar: everybody's way in, no sign-in at
+    // the door. With a link in the bar it goes straight to the sample stage
+    // (giving the peek a short head start so the stage knows the product);
+    // without one it points the hand at the bar instead of dead-ending.
+    var freeBtn = $('#composer-free');
+    if (freeBtn) {
+      freeBtn.addEventListener('click', function () {
+        var link = looksLikeUrl(linkInput.value.trim());
+        if (!link) {
+          linkInput.focus();
+          var copy = freeBtn.querySelector('.composer-free-copy');
+          if (copy) {
+            copy.innerHTML = '<strong>Paste your product link above</strong> and this button does the rest.';
+            setTimeout(function () {
+              copy.innerHTML = '<strong>Your first clip is on us.</strong> Paste your product link and watch a 5 second clip of it render. No card.';
+            }, 3500);
+          }
+          return;
+        }
+        state.composerLink = link;
+        freeBtn.disabled = true;
+        Promise.race([
+          startPeek(link),
+          new Promise(function (r) { setTimeout(r, 1500); }),
+        ]).then(function () { startFreeSample(link); });
+      });
+    }
 
     // one-click demo products: fill the bar and run the real flow.
     // Hovering ghost-types the URL into the bar first, so the "paste a link"

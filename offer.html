@@ -288,11 +288,11 @@
               <p class="tier-price-note">No card required</p>
               <p class="tier-desc">See your product as a video before you pay a cent.</p>
               <ul class="tier-features">
-                <li>1 short sample video of your product</li>
-                <li>Delivered within 48 hours</li>
+                <li>1 short clip of your real product</li>
+                <li>Renders in minutes, right on screen</li>
                 <li>No commitment, you keep it</li>
               </ul>
-              <a class="btn btn-ghost" href="#claim">Get my free sample</a>
+              <a class="btn btn-ghost" href="#claim">Make my free clip</a>
             </div>
 
             <div class="tier">
@@ -398,48 +398,22 @@
       <div class="lead-inner">
         <div class="lead-copy">
           <div class="eyebrow"><span class="bolt">⚡</span><span>Free sample</span></div>
-          <h2 class="lead-title">Not ready to buy? <em>Get a free sample.</em></h2>
-          <p class="lead-sub">Tell us about your brand and we'll make a short sample video of your product, on us. No cost, no commitment. Love it? Scroll back up and grab a pack.</p>
+          <h2 class="lead-title">Not ready to buy? <em>Make a free clip right now.</em></h2>
+          <p class="lead-sub">Paste your product link and watch a 5 second clip of it render live: your real product, in a creator's hands. No brief, no call, no card.</p>
           <ul class="lead-points">
-            <li>Made from photos you already have</li>
-            <li>Delivered within 48 hours</li>
-            <li>You keep it, whether or not you hire us</li>
+            <li>Renders in minutes, right on your screen</li>
+            <li>Made from your actual product page</li>
+            <li>Yours to keep in your library, whether or not you buy</li>
           </ul>
         </div>
 
-        <form name="free-sample" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/thanks.html" class="lead-form">
-          <input type="hidden" name="form-name" value="free-sample" />
-          <p class="lead-hp" hidden aria-hidden="true">
-            <label>Leave this empty: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
-          </p>
-
+        <form class="lead-form" id="free-clip-form">
           <div class="field">
-            <label for="lf-name">Your name</label>
-            <input id="lf-name" name="name" type="text" required autocomplete="name" placeholder="Alex Rivera" />
+            <label for="lf-link">Your product link</label>
+            <input id="lf-link" type="url" required inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://yourbrand.com/products/your-product" />
           </div>
-          <div class="field">
-            <label for="lf-email">Work email</label>
-            <input id="lf-email" name="email" type="email" required autocomplete="email" placeholder="alex@yourbrand.com" />
-          </div>
-          <div class="field">
-            <label for="lf-brand">Brand / company</label>
-            <input id="lf-brand" name="brand" type="text" required placeholder="Your Brand Co." />
-          </div>
-          <div class="field">
-            <label for="lf-website">Website or store link</label>
-            <input id="lf-website" name="website" type="url" required placeholder="https://yourbrand.com" />
-          </div>
-          <div class="field">
-            <label for="lf-product">What do you sell?</label>
-            <input id="lf-product" name="product" type="text" required placeholder="e.g. skincare, sneakers, supplements" />
-          </div>
-          <div class="field">
-            <label for="lf-link">Link to the product you want sampled <span class="field-opt">(optional)</span></label>
-            <input id="lf-link" name="product_link" type="url" placeholder="https://yourbrand.com/product" />
-          </div>
-
-          <button class="btn btn-primary btn-lg lead-submit" type="submit">Get my free sample</button>
-          <p class="lead-form-fine">No cost, no commitment. We'll send your sample within 48 hours.</p>
+          <button class="btn btn-primary btn-lg lead-submit" type="submit">Make my free clip</button>
+          <p class="lead-form-fine">One per account. No card. You watch it render, then it saves to your library.</p>
         </form>
       </div>
     </section>
@@ -484,7 +458,7 @@
         </details>
         <details class="faq-item">
           <summary>How fast is delivery?</summary>
-          <p class="faq-a">Within 48 hours of receiving your product details, for both free samples and paid orders.</p>
+          <p class="faq-a">Free sample clips render in minutes, live on your screen. Paid orders are brand-ready within 48 hours of your product details.</p>
         </details>
         <details class="faq-item">
           <summary>What if I need a lot of content?</summary>

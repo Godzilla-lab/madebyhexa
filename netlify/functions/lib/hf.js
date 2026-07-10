@@ -98,21 +98,41 @@ async function refreshGrant(refreshToken) {
   };
 }
 
+/* Local-dev auto-refresh: the installed `higgsfield` CLI keeps its own Clerk
+ * session alive (a chain fully separate from HIGGSFIELD_REFRESH_TOKEN, so
+ * using it can never revoke production's rotation). Minting through the CLI
+ * means a stale HIGGSFIELD_TOKEN in .env no longer breaks localhost. */
+let cliToken = { access: null, exp: 0 };
+function cliBearer(force) {
+  if (force) cliToken.exp = 0;
+  if (cliToken.access && Date.now() < cliToken.exp) return cliToken.access;
+  try {
+    const out = require('child_process')
+      .execSync('higgsfield auth token', { timeout: 15000, stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString().trim();
+    if (out && out.split('\n').pop().length > 20) {
+      cliToken = { access: out.split('\n').pop(), exp: Date.now() + 20 * 60 * 1000 };
+      return cliToken.access;
+    }
+  } catch (e) { /* CLI missing or signed out: fall back to the static token */ }
+  return null;
+}
+
 /* The bearer token to send. force=true after a 401: the token was revoked
  * even though its clock looked fine, so skip every cache. */
 async function bearer(force) {
   if (!force && grant.access && Date.now() < grant.exp) return grant.access;
-  if (!canRefresh()) return process.env.HIGGSFIELD_TOKEN || null;
 
   // Refresh tokens rotate on every use and Clerk revokes the WHOLE chain on
   // reuse of a stale one. Only production may refresh: it persists rotations
   // in Blobs that every prod instance shares. Local dev / standalone scripts
   // have their own (or no) blob store, so a refresh there orphans the
-  // rotation and the next prod refresh trips reuse revocation. Static token
-  // only outside production; reseed via tools/hf-seed-token.js when stale.
+  // rotation and the next prod refresh trips reuse revocation. Locally the
+  // CLI session is the auto-refresh instead; the static token is the last resort.
   if (process.env.NETLIFY_DEV || !blobStore()) {
-    return process.env.HIGGSFIELD_TOKEN || null;
+    return cliBearer(force) || process.env.HIGGSFIELD_TOKEN || null;
   }
+  if (!canRefresh()) return process.env.HIGGSFIELD_TOKEN || null;
 
   const stored = await readStoredGrant();
   if (!force && stored && stored.access && stored.exp && Date.now() < stored.exp) {
@@ -159,7 +179,8 @@ async function api(method, path, body, _retried) {
     headers: h,
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (res.status === 401 && !key && !_retried && canRefresh()) {
+  if (res.status === 401 && !key && !_retried &&
+      (canRefresh() || process.env.NETLIFY_DEV || !blobStore())) {
     return api(method, path, body, true);
   }
   const text = await res.text();

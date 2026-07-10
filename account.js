@@ -170,8 +170,36 @@
     });
   }
 
+  /* The free-clip band: shown until this account's one sample exists. The
+   * server is the real gate (409 on a second claim); this only decides
+   * whether to advertise. */
+  function initFreeClip(creations) {
+    var band = $('acct-freeclip');
+    if (!band) return;
+    var claimed = creations.some(function (c) { return /^Free sample/i.test(c.title || ''); });
+    if (claimed) { band.hidden = true; return; }
+    band.hidden = false;
+    $('acct-freeclip-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var raw = $('acct-freeclip-link').value.trim();
+      if (raw && !/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
+      var link;
+      try { link = new URL(raw).href; } catch (err) { return; }
+      var order = {
+        product: 'sample',
+        title: 'Free sample',
+        price: 0,
+        selections: { link: link, aspect: '9:16' },
+        ts: new Date().toISOString(),
+      };
+      try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (err) {}
+      window.location.href = '/render.html?sample=1';
+    });
+  }
+
   function render(creations) {
     $('acct-loading').hidden = true;
+    initFreeClip(creations);
     if (!creations.length) {
       if (WELCOME) {
         var fn = firstName(window.HexaAuth.name());

@@ -230,14 +230,46 @@
       });
   }
 
-  /* Free sample arrival: the account is the ticket, not a Stripe session.
-   * Signed out lands on login and bounces straight back here, so the claim
-   * survives the round trip. 409 means the one free sample is already spent. */
+  /* Free sample: no sign-in wall at the door. A signed-out visitor gets the
+   * whole creation experience first (their product on the stage, the steps
+   * running); the account is only asked for at the collect moment, when the
+   * clip is staged and they want it rendered and kept. Sign-in bounces back
+   * here and the claim picks up where it left off. 409 = already spent. */
+  function sampleGate(order) {
+    showProductGhost(order);
+    var name = order.selections && order.selections.productName;
+    $('#render-kicker').textContent = 'Free sample';
+    $('#render-title').textContent = 'Staging your free clip';
+    $('#render-sub').textContent = 'Reading ' + (name || 'the product page') + ' and planning the shoot. A few seconds.';
+    // the honest staging pass: reading the product (the peek is real work),
+    // planning the shoot. It stops where money starts: the render itself.
+    var pct = 0, step = 0;
+    setStep(0);
+    var timer = setInterval(function () {
+      pct += Math.random() * 3 + 2;
+      if (pct >= 30 && step < 1) { step = 1; setStep(1); }
+      if (pct >= 62) {
+        clearInterval(timer);
+        pct = 62;
+        setPct(pct);
+        setStep(2);
+        $('#render-title').textContent = 'Your free clip is staged';
+        $('#render-sub').textContent = (name ? name + ' is read and the shoot is planned. ' : 'Product read, shoot planned. ') +
+          'Create your free account and the render starts; the clip appears right here and saves to your library.';
+        $('#render-gate').hidden = false;
+        if (window.hexaTrack) window.hexaTrack('sample-gate', 'sample', 0);
+        return;
+      }
+      setPct(pct);
+    }, 180);
+  }
+
   function createSample(order) {
     var auth = window.HexaAuth;
     var loginNext = '/login.html?next=' + encodeURIComponent('/render.html?sample=1');
     (auth ? auth.ready() : Promise.resolve()).then(function () {
-      if (auth && !auth.user()) { window.location.href = loginNext; return; }
+      if (auth && !auth.user()) { sampleGate(order); return; }
+      $('#render-gate').hidden = true;
       var headers = { 'Content-Type': 'application/json' };
       if (auth && auth.accessToken()) headers.Authorization = 'Bearer ' + auth.accessToken();
       fetch(CREATE_URL, {
@@ -326,6 +358,15 @@
       (order.jobs && order.jobs.map(function (j) { return j.id; }).join(','));
     if (jobsCsv) {
       pollLive(order, jobsCsv, params.get('paid'));
+      return;
+    }
+
+    // Free sample arrival (?sample=1). A refresh mid-render carries jobs and
+    // is caught above; otherwise stage the claim. Sign-in is asked at the
+    // collect moment inside createSample, never at the door.
+    if (params.get('sample') && order.product === 'sample') {
+      setStep(0);
+      createSample(order);
       return;
     }
 

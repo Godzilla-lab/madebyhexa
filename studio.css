@@ -3424,3 +3424,48 @@ body.home .bg-glow {
 /* Hero monitor: cross-fade when cycling between distinct renders */
 #hero-film { transition: opacity 0.4s var(--ease); }
 #hero-film.c-monitor-swap { opacity: 0.12; }
+
+/* ── Free-clip rubric under the composer ──────────────────────────
+ * Same visual language as the chooser's free band: dashed accent border,
+ * Free pill. Visible to everybody before any link is pasted, because the
+ * freebie is the reason a cold visitor tries the bar at all. */
+.composer-free {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1px dashed rgba(255, 77, 109, 0.45);
+  border-radius: 14px;
+  background: rgba(255, 77, 109, 0.05);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease), opacity 0.25s;
+}
+.composer-free:hover {
+  border-color: rgba(255, 77, 109, 0.8);
+  background: rgba(255, 77, 109, 0.09);
+}
+.composer-free:disabled { opacity: 0.55; cursor: default; }
+.composer-free-badge {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.composer-free-copy {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-mute);
+}
+.composer-free-copy strong { color: var(--text); font-weight: 650; }
+.composer-free-arrow { flex: 0 0 auto; color: var(--accent-soft); font-size: 16px; }

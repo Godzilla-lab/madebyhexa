@@ -146,6 +146,39 @@
     .acct-tab.is-active { background: rgba(255, 255, 255, 0.1); color: var(--text); }
 
     /* ── Welcome onboarding (first sign-in, empty library) ── */
+    .acct-freeclip {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 18px 28px;
+      margin: 0 0 22px; padding: 20px 24px;
+      border: 1px dashed rgba(255, 77, 109, 0.45); border-radius: 18px;
+      background: rgba(255, 77, 109, 0.05);
+    }
+    .acct-freeclip[hidden] { display: none; }
+    .acct-freeclip-copy { flex: 1 1 260px; min-width: 240px; }
+    .acct-freeclip-badge {
+      display: inline-block; margin: 0 0 8px; font-family: var(--font-mono); font-size: 10px;
+      font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fff;
+      background: var(--accent); border-radius: 999px; padding: 4px 10px;
+    }
+    .acct-freeclip h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 21px; font-weight: 700; letter-spacing: -0.02em; }
+    .acct-freeclip p { margin: 0; color: var(--text-mute); font-size: 13.5px; line-height: 1.5; max-width: 420px; }
+    .acct-freeclip-form { flex: 1 1 320px; display: flex; gap: 10px; min-width: 0; }
+    .acct-freeclip-form input {
+      flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--text);
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-strong);
+      border-radius: 12px; padding: 12px 14px; outline: none; transition: border-color 0.25s;
+    }
+    .acct-freeclip-form input:focus { border-color: rgba(255, 77, 109, 0.55); }
+    .acct-freeclip-form button {
+      font: inherit; font-size: 13.5px; font-weight: 800; color: #fff; white-space: nowrap;
+      background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 100%);
+      border: none; border-radius: 12px; padding: 12px 18px; cursor: pointer;
+      box-shadow: 0 12px 30px -12px rgba(255, 77, 109, 0.55); transition: transform 0.25s;
+    }
+    .acct-freeclip-form button:hover { transform: translateY(-1px); }
+    @media (max-width: 560px) {
+      .acct-freeclip-form { flex-direction: column; }
+      .acct-freeclip-form button { width: 100%; }
+    }
     .acct-welcome {
       border-radius: 24px; padding: clamp(28px, 4.5vw, 48px);
       background: radial-gradient(130% 100% at 18% 0%, rgba(255, 77, 109, 0.14), transparent 58%),
@@ -274,6 +307,18 @@
     </div>
 
     <div id="panel-library">
+      <section class="acct-freeclip" id="acct-freeclip" hidden>
+        <div class="acct-freeclip-copy">
+          <span class="acct-freeclip-badge">Free</span>
+          <h2>Your free clip is waiting</h2>
+          <p>Every account gets one 5 second clip of its product, on us. Paste the product link and watch it render.</p>
+        </div>
+        <form class="acct-freeclip-form" id="acct-freeclip-form">
+          <input type="url" id="acct-freeclip-link" inputmode="url" autocomplete="off" spellcheck="false" required placeholder="https://yourbrand.com/products/your-product" />
+          <button type="submit">Make my free clip</button>
+        </form>
+      </section>
+
       <section class="acct-welcome" id="acct-welcome" hidden>
         <p class="acct-welcome-kicker">Welcome to Hexa</p>
         <h2 id="welcome-title">You are in. Let's make your first film.</h2>

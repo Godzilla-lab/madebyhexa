@@ -730,13 +730,29 @@
         if (!heroFilm.paused) requestAnimationFrame(tick);
         else ticking = false;
       };
+      // The film waits its turn: its megabytes must not race the CSS, fonts
+      // and product images for the connection (that race is what made first
+      // load feel slow). The poster holds the monitor until the page has
+      // painted, then the film starts. Visibility is tracked so a post-load
+      // start never plays an off-screen video.
+      let pageReady = document.readyState === 'complete';
+      let heroVisible = true;
       const start = () => {
+        if (!pageReady || !heroVisible) return;
         heroFilm.play().then(() => {
           if (!ticking) { ticking = true; requestAnimationFrame(tick); }
         }).catch(() => {});
       };
-      // when a clip finishes, cross-fade to the next distinct render
+      if (!pageReady) {
+        window.addEventListener('load', () => { pageReady = true; start(); }, { once: true });
+      }
+      // when a clip finishes, cross-fade to the next distinct render. On a
+      // Data Saver / 2G connection the first clip loops instead: the other
+      // clips are megabytes this visitor asked us not to spend.
+      const conn = navigator.connection || {};
+      const dataTight = !!conn.saveData || /2g/.test(String(conn.effectiveType || ''));
       heroFilm.addEventListener('ended', () => {
+        if (dataTight) { heroFilm.currentTime = 0; start(); return; }
         clipIdx = (clipIdx + 1) % HERO_CLIPS.length;
         heroFilm.classList.add('c-monitor-swap');
         heroFilm.src = HERO_CLIPS[clipIdx].src;
@@ -772,7 +788,8 @@
       if ('IntersectionObserver' in window) {
         new IntersectionObserver((entries) => {
           entries.forEach((e) => {
-            if (e.intersectionRatio > 0.25) start();
+            heroVisible = e.intersectionRatio > 0.25;
+            if (heroVisible) start();
             else heroFilm.pause();
           });
         }, { threshold: [0, 0.25] }).observe(heroFilm);
@@ -867,5 +884,31 @@
       window.addEventListener('resize', onScroll);
       update();
     }
+  }
+
+  // ── Free clip entry on the offer page ──────────────────────────
+  // Composes the sample order and hands off to the render stage. No account
+  // asked here; the render page gates at the collect moment, after the
+  // visitor has watched their product get staged. Lives here (not inline)
+  // because the site CSP allows self-hosted scripts only.
+  const freeClipForm = document.getElementById('free-clip-form');
+  if (freeClipForm) {
+    freeClipForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      let raw = document.getElementById('lf-link').value.trim();
+      if (raw && !/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
+      let link;
+      try { link = new URL(raw).href; } catch (err) { return; }
+      const order = {
+        product: 'sample',
+        title: 'Free sample',
+        price: 0,
+        selections: { link, aspect: '9:16' },
+        ts: new Date().toISOString(),
+      };
+      try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (err) {}
+      if (window.hexaTrack) window.hexaTrack('offer-sample', 'sample', 0);
+      window.location.href = '/render.html?sample=1';
+    });
   }
 })();
