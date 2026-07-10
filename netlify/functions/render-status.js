@@ -59,12 +59,30 @@ async function recordCompleted(ctx, urls, thumb) {
       result_urls: urls.filter(Boolean),
       thumb_url: thumb || null,
     };
+    let updated = null;
     if (ctx.order) {
-      await ctx.db.from('creations').update(patch)
-        .eq('order_id', ctx.order.id).eq('status', 'rendering');
+      const { data } = await ctx.db.from('creations').update(patch)
+        .eq('order_id', ctx.order.id).eq('status', 'rendering').select('id');
+      updated = data;
     } else if (ctx.creationId) {
-      await ctx.db.from('creations').update(patch)
-        .eq('id', ctx.creationId).eq('status', 'rendering');
+      const { data } = await ctx.db.from('creations').update(patch)
+        .eq('id', ctx.creationId).eq('status', 'rendering').select('id');
+      updated = data;
+    }
+    // Multi-segment film: hand the finished segments to the stitcher, exactly
+    // once (the status='rendering' guard means only the first completing poll
+    // gets rows back). Fire-and-forget; a lost invoke just means the customer
+    // keeps per-segment delivery, same as before the stitcher existed.
+    const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(patch.result_urls[0] || '');
+    if (updated && updated.length && isVideo && patch.result_urls.length > 1 && process.env.WEBHOOK_SECRET) {
+      const base = (process.env.URL || '').replace(/\/$/, '');
+      for (const row of updated) {
+        await fetch(base + '/.netlify/functions/stitch-master-background', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-stitch-key': process.env.WEBHOOK_SECRET },
+          body: JSON.stringify({ creationId: row.id }),
+        }).catch((e) => console.error('stitch invoke failed:', e.message));
+      }
     }
   } catch (e) {
     console.error('record completed failed:', e.message);

@@ -6,6 +6,12 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# The stitcher shells out to a real ffmpeg; esbuild cannot inline a binary,
+# so ship it alongside the bundle. ffmpeg-static resolves the right build
+# per platform at install time (linux x64 on Netlify's build image).
+[functions."stitch-master-background"]
+  included_files = ["node_modules/ffmpeg-static/ffmpeg"]
+
 # Onboarding drip: one pass an hour, so the day-0 welcome lands within the
 # hour of signup instead of up to a day later. Sent-state in Blobs makes
 # extra runs free; the function itself decides who is due for which email.
