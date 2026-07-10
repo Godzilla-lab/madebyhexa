@@ -65,9 +65,12 @@ function studioEmail({ session, origin }) {
     m.studio_aspect && 'Format: ' + m.studio_aspect,
   ].filter(Boolean);
 
+  const text = lines.slice(0, 2).concat(summary.length ? summary.concat(['']) : []).concat(lines.slice(2)).join('\n');
+  const { bodyHtml } = require('./lib/mail-html');
   return {
     subject: 'Your Hexa ' + thing + ' is rendering' + (productName ? ': ' + productName : ''),
-    text: lines.slice(0, 2).concat(summary.length ? summary.concat(['']) : []).concat(lines.slice(2)).join('\n'),
+    text,
+    html: bodyHtml(text, { [link]: 'Watch it render live' }),
   };
 }
 
@@ -136,7 +139,7 @@ exports.handler = async (event) => {
   }
 
   const origin = (process.env.URL || 'https://madebyhexa.co').replace(/\/$/, '');
-  const { subject, text } = studioEmail({ session, origin });
+  const { subject, text, html } = studioEmail({ session, origin });
 
   const transporter = mailer.transport();
 
@@ -147,6 +150,7 @@ exports.handler = async (event) => {
       replyTo: mailer.fromAddress(),
       subject,
       text,
+      html,
     });
     console.log('stripe-webhook: confirmation sent to', email, 'for session', session.id);
   } catch (e) {

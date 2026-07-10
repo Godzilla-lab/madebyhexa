@@ -142,25 +142,28 @@ async function emailMaster(db, creation, url, durationS) {
   const mins = Math.floor(durationS / 60);
   const secs = Math.round(durationS % 60);
   const runtime = (mins ? mins + ':' + String(secs).padStart(2, '0') : secs + ' seconds');
+  const text = [
+    'Your segments finished rendering, and the full film is stitched: one continuous ' + runtime + ' take, ready to post.',
+    '',
+    'Download it here (link is good for a year):',
+    url,
+    '',
+    'It also lives in your library: https://madebyhexa.co/account.html',
+    '',
+    'Questions? Reply to this email, a human answers.',
+    '',
+    'Hexa AI',
+    '',
+    'P.S. From your library you can swap the voice, translate it into 18 languages, or upscale it, one click each.',
+  ].join('\n');
+  const { bodyHtml } = require('./lib/mail-html');
   await mailer.transport().sendMail({
     from: '"' + (process.env.FROM_NAME || 'Hexa AI') + '" <' + mailer.fromAddress() + '>',
     to: email,
     replyTo: mailer.fromAddress(),
     subject: 'Your full film is ready' + (creation.title ? ': ' + creation.title : ''),
-    text: [
-      'Your segments finished rendering, and the full film is stitched: one continuous ' + runtime + ' take, ready to post.',
-      '',
-      'Download it here (link is good for a year):',
-      url,
-      '',
-      'It also lives in your library: https://madebyhexa.co/account.html',
-      '',
-      'Questions? Reply to this email, a human answers.',
-      '',
-      'Hexa AI',
-      '',
-      'P.S. From your library you can swap the voice, translate it into 18 languages, or upscale it, one click each.',
-    ].join('\n'),
+    text,
+    html: bodyHtml(text, { [url]: 'Download your film' }),
   });
 }
 
