@@ -49,12 +49,15 @@ function studioEmail({ session, origin }) {
     link,
     '',
     'That link is yours: it always reopens this order, even days later.',
-    'If a render ever fails, you are not charged for it.',
+    'If a render ever fails, you are not charged for it. Ever.',
     '',
-    'Questions? Just reply to this email.',
+    'Questions? Just reply to this email, a human answers.',
     '',
     'Hexa AI',
   ];
+  if (isVideo) {
+    lines.push('', 'P.S. Once it lands in your library, you can swap the voice, translate it into 18 languages, or upscale it, each in one click from your account.');
+  }
 
   const summary = [
     style && 'Style: ' + style,
@@ -63,7 +66,7 @@ function studioEmail({ session, origin }) {
   ].filter(Boolean);
 
   return {
-    subject: 'Your Hexa ' + thing + ' is rendering' + (productName ? ' — ' + productName : ''),
+    subject: 'Your Hexa ' + thing + ' is rendering' + (productName ? ': ' + productName : ''),
     text: lines.slice(0, 2).concat(summary.length ? summary.concat(['']) : []).concat(lines.slice(2)).join('\n'),
   };
 }

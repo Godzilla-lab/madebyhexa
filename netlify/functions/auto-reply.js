@@ -87,24 +87,24 @@ function buildSampleEmail({ name, brand }) {
   const firstName = name && name.trim() ? name.trim().split(/\s+/)[0] : 'there';
   const brandLabel = brand && brand.trim() ? brand.trim() : 'your brand';
 
-  const subject = 'Your free Hexa AI sample is on the way';
+  const subject = `Your ${brandLabel} sample is in production`;
 
   const text =
     `Hey ${firstName},\n\n` +
-    `Thanks for sending over ${brandLabel}, we got it.\n\n` +
-    `Our team is already on it. Within the next 48 hours you'll have a short sample video of your product, sent to this email.\n\n` +
-    `If you have a specific vibe, reference clip, or angle you'd like us to try, just hit reply. Totally optional, we'll go with our best judgment if you don't.\n\n` +
-    `Once it lands, we'd love a quick honest line on what you think. It helps us a lot, and the best ones go on our site (with your okay).\n\n` +
-    `If you'd rather skip the wait and talk through a full campaign, here's our calendar: https://cal.com/hexaiagency\n` +
+    `Thanks for sending over ${brandLabel}, we got it and a producer already has it on the desk.\n\n` +
+    `Within 48 hours you'll have a short sample video of your product in this inbox: a real-looking person with ${brandLabel} in frame, the kind of clip that has pulled 10M+ views for the brands running them. You judge it against anything an agency ever sent you.\n\n` +
+    `If you have a specific vibe, reference clip, or angle you'd like us to try, just hit reply now, before we lock the creative. Totally optional, we'll go with our best judgment if you don't.\n\n` +
+    `Once it lands, send back one honest line on what you think. The best ones go on our site (with your okay).\n\n` +
+    `P.S. If you already know you'll want more than a taste, here's our calendar: https://cal.com/hexaiagency\n` +
     SIGNATURE;
 
   const html = emailShell(
     `<p>Hey ${escapeHtml(firstName)},</p>` +
-    `<p>Thanks for sending over <strong>${escapeHtml(brandLabel)}</strong>, we got it.</p>` +
-    `<p>Our team is already on it. Within the next 48 hours you'll have a short sample video of your product, sent to this email.</p>` +
-    `<p>If you have a specific vibe, reference clip, or angle you'd like us to try, just hit reply. Totally optional, we'll go with our best judgment if you don't.</p>` +
-    `<p>Once it lands, we'd love a quick honest line on what you think. It helps us a lot, and the best ones go on our site (with your okay).</p>` +
-    `<p>If you'd rather skip the wait and talk through a full campaign, here's our calendar:<br>` +
+    `<p>Thanks for sending over <strong>${escapeHtml(brandLabel)}</strong>, we got it and a producer already has it on the desk.</p>` +
+    `<p>Within 48 hours you'll have a short sample video of your product in this inbox: a real-looking person with ${escapeHtml(brandLabel)} in frame, the kind of clip that has pulled <strong>10M+ views</strong> for the brands running them. You judge it against anything an agency ever sent you.</p>` +
+    `<p>If you have a specific vibe, reference clip, or angle you'd like us to try, just hit reply now, before we lock the creative. Totally optional, we'll go with our best judgment if you don't.</p>` +
+    `<p>Once it lands, send back one honest line on what you think. The best ones go on our site (with your okay).</p>` +
+    `<p>P.S. If you already know you'll want more than a taste, here's our calendar:<br>` +
     `<a href="https://cal.com/hexaiagency" style="color:#ff4d6d;">cal.com/hexaiagency</a></p>`
   );
 
@@ -117,22 +117,22 @@ function buildRepeatSampleEmail({ name, brand }) {
   const firstName = name && name.trim() ? name.trim().split(/\s+/)[0] : 'there';
   const brandLabel = brand && brand.trim() ? brand.trim() : 'your brand';
 
-  const subject = 'You already have a Hexa AI sample on the way';
+  const subject = `Your ${brandLabel} sample is already in production`;
 
   const text =
     `Hey ${firstName},\n\n` +
-    `Looks like you already requested a free sample for ${brandLabel}. It's on the way to this inbox within 48 hours of your first request, no need to ask again.\n\n` +
-    `Free samples are one per brand. If you want more than one video, or you want it faster, you can grab a pack and we ship in 48 hours:\n` +
+    `Good news: your free sample for ${brandLabel} is already in production from your first request, landing in this inbox within 48 hours of it. No need to ask twice, your spot is held.\n\n` +
+    `Free samples are one per brand. If you already know one video won't be enough, or you want it faster, grab a pack now and it ships in 48 hours:\n` +
     `https://madebyhexa.co/offer#pricing\n\n` +
-    `Want to talk through a full campaign instead? Here's our calendar: https://cal.com/hexaiagency\n` +
+    `Rather talk through a full campaign? Here's our calendar: https://cal.com/hexaiagency\n` +
     SIGNATURE;
 
   const html = emailShell(
     `<p>Hey ${escapeHtml(firstName)},</p>` +
-    `<p>Looks like you already requested a free sample for <strong>${escapeHtml(brandLabel)}</strong>. It's on the way to this inbox within 48 hours of your first request, no need to ask again.</p>` +
-    `<p>Free samples are one per brand. If you want more than one video, or you want it faster, you can grab a pack and we ship in 48 hours:<br>` +
+    `<p>Good news: your free sample for <strong>${escapeHtml(brandLabel)}</strong> is already in production from your first request, landing in this inbox within 48 hours of it. No need to ask twice, your spot is held.</p>` +
+    `<p>Free samples are one per brand. If you already know one video won't be enough, or you want it faster, grab a pack now and it ships in 48 hours:<br>` +
     `<a href="https://madebyhexa.co/offer#pricing" style="color:#ff4d6d;">madebyhexa.co/offer</a></p>` +
-    `<p>Want to talk through a full campaign instead? Here's our calendar:<br>` +
+    `<p>Rather talk through a full campaign? Here's our calendar:<br>` +
     `<a href="https://cal.com/hexaiagency" style="color:#ff4d6d;">cal.com/hexaiagency</a></p>`
   );
 
@@ -176,20 +176,20 @@ function buildOrderEmail({ name, brand, tier }) {
   const brandLabel = brand && brand.trim() ? brand.trim() : 'your brand';
   const tierLabel = TIER_LABELS[String(tier || '').toLowerCase()] || 'your order';
 
-  const subject = 'Your Hexa AI order is in production';
+  const subject = `${brandLabel}: your order is in production`;
 
   const text =
     `Hey ${firstName},\n\n` +
     `Payment received and your details are in, thank you. Your order (${tierLabel}) for ${brandLabel} is now in production.\n\n` +
-    `You'll have your brand-ready video delivered to this email within 48 hours, cut for 9:16, 1:1 and 16:9 with captions and a hook.\n\n` +
-    `If there's a specific angle, reference, or must-have detail, just hit reply and we'll fold it in. Every order includes a free revision round, so we'll get it right.\n` +
+    `Within 48 hours this inbox gets your brand-ready video, cut for 9:16, 1:1 and 16:9 with captions and a hook. Post it the day it lands; the sooner it's live, the sooner it's working.\n\n` +
+    `If there's a specific angle, reference, or must-have detail, hit reply now, before we lock the edit. Every order includes a free revision round, so we'll get it right either way.\n` +
     SIGNATURE;
 
   const html = emailShell(
     `<p>Hey ${escapeHtml(firstName)},</p>` +
     `<p>Payment received and your details are in, thank you. Your order (<strong>${escapeHtml(tierLabel)}</strong>) for <strong>${escapeHtml(brandLabel)}</strong> is now in production.</p>` +
-    `<p>You'll have your brand-ready video delivered to this email within 48 hours, cut for 9:16, 1:1 and 16:9 with captions and a hook.</p>` +
-    `<p>If there's a specific angle, reference, or must-have detail, just hit reply and we'll fold it in. Every order includes a free revision round, so we'll get it right.</p>`
+    `<p>Within 48 hours this inbox gets your brand-ready video, cut for 9:16, 1:1 and 16:9 with captions and a hook. Post it the day it lands; the sooner it's live, the sooner it's working.</p>` +
+    `<p>If there's a specific angle, reference, or must-have detail, hit reply now, before we lock the edit. Every order includes a free revision round, so we'll get it right either way.</p>`
   );
 
   return { subject, text, html };

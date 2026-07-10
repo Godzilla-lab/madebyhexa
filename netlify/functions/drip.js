@@ -82,7 +82,7 @@ const STEPS = [
       '1. Paste the product page itself, not your homepage. We read the photos and the copy on that exact page.\n' +
       '2. If your page hides its photos (some stores block robots), add one photo on the next step. Same quality either way.\n' +
       '3. Not sure which format? Pick Auto. We choose what sells your kind of product best.\n\n' +
-      'Try it on your best seller:\n' + SITE + '/#composer',
+      'Do it with your best seller. It already converts, which means it deserves the video treatment first, and the film pays for itself fastest there:\n' + SITE + '/#composer',
   },
   {
     key: 'formats', day: 14, skipIfActive: false,
@@ -95,7 +95,7 @@ const STEPS = [
       'Tutorial or demo: show the product working. Best for anything with a learning curve.\n' +
       'TV spot: polished and cinematic. Best for brand ads and retargeting warm audiences.\n\n' +
       'Every format is one click in the studio:\n' + SITE + '/#composer\n\n' +
-      'Make one for a product you are pushing this month.',
+      'Make one for the product you are pushing this month. Testing a format costs less than the ad spend you would waste running the wrong one.',
   },
   {
     key: 'checkin', day: 21, skipIfActive: false,
