@@ -32,10 +32,6 @@ const sb = require('./lib/supabase');
 const BUCKET = 'masters';
 const DURATION_TOLERANCE_S = 1.5;
 
-function ffmpegPath() {
-  try { return require('ffmpeg-static'); } catch (e) { return 'ffmpeg'; }
-}
-
 function run(bin, args, opts) {
   return new Promise((resolve, reject) => {
     execFile(bin, args, { maxBuffer: 16 * 1024 * 1024, ...opts }, (err, stdout, stderr) => {
@@ -45,10 +41,35 @@ function run(bin, args, opts) {
   });
 }
 
+/* CLI deploys bundle from the deploying machine, so the ffmpeg-static binary
+ * in the bundle can be the wrong OS (a Mac binary on Netlify's Linux). Trust
+ * nothing: try each candidate with -version, and if none actually executes,
+ * pull the pinned Linux build (the exact release ffmpeg-static installs) to
+ * /tmp once per container. */
+const FFMPEG_LINUX_URL = 'https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffmpeg-linux-x64';
+let ffmpegResolved = null;
+
+async function ffmpegBin() {
+  if (ffmpegResolved) return ffmpegResolved;
+  const candidates = ['/tmp/hexa-ffmpeg'];
+  try { const p = require('ffmpeg-static'); if (p) candidates.unshift(p); } catch (e) { /* not bundled */ }
+  for (const c of candidates) {
+    try {
+      if (fs.existsSync(c)) { await run(c, ['-version']); ffmpegResolved = c; return c; }
+    } catch (e) { /* wrong platform or corrupt; keep looking */ }
+  }
+  const res = await fetch(FFMPEG_LINUX_URL, { redirect: 'follow' });
+  if (!res.ok) throw new Error('ffmpeg download failed: ' + res.status);
+  fs.writeFileSync('/tmp/hexa-ffmpeg', Buffer.from(await res.arrayBuffer()), { mode: 0o755 });
+  await run('/tmp/hexa-ffmpeg', ['-version']);
+  ffmpegResolved = '/tmp/hexa-ffmpeg';
+  return ffmpegResolved;
+}
+
 /* ffmpeg prints "Duration: 00:01:30.04" to stderr on -i; good enough and
  * avoids shipping a second binary for ffprobe. */
 async function videoDuration(file) {
-  const out = await run(ffmpegPath(), ['-hide_banner', '-i', file, '-f', 'null', '-'])
+  const out = await run(await ffmpegBin(), ['-hide_banner', '-i', file, '-f', 'null', '-'])
     .catch((e) => ({ stderr: e.stderr || '' })); // -i alone exits 1 by design
   const m = /Duration:\s*(\d+):(\d+):(\d+\.?\d*)/.exec(out.stderr);
   if (!m) throw new Error('could not read duration of ' + path.basename(file));
@@ -72,7 +93,7 @@ async function stitch(urls, workDir) {
   const listFile = path.join(workDir, 'list.txt');
   fs.writeFileSync(listFile, segs.map((s) => "file '" + s + "'").join('\n'));
   const master = path.join(workDir, 'master.mp4');
-  await run(ffmpegPath(), [
+  await run(await ffmpegBin(), [
     '-hide_banner', '-loglevel', 'error',
     '-f', 'concat', '-safe', '0', '-i', listFile,
     '-c', 'copy', '-movflags', '+faststart', '-y', master,
@@ -88,7 +109,7 @@ async function stitch(urls, workDir) {
 
   // Verification 2: a full decode pass must be error-free (catches broken
   // frames, codec mismatches between segments, truncated downloads).
-  const decode = await run(ffmpegPath(), ['-v', 'error', '-i', master, '-f', 'null', '-']);
+  const decode = await run(await ffmpegBin(), ['-v', 'error', '-i', master, '-f', 'null', '-']);
   const errors = decode.stderr.trim();
   if (errors) throw new Error('decode errors in master: ' + errors.slice(0, 300));
 
