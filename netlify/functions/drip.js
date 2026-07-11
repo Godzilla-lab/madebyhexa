@@ -28,7 +28,11 @@ const { getStore } = require('@netlify/blobs');
 const { SITE, unsubLink } = require('./lib/drip-links');
 const { bodyHtml, footerHtml } = require('./lib/mail-html');
 
-const FROM = '"Mike from Hexa" <mike@madebyhexa.co>';
+/* Drip sender. Once updates.madebyhexa.co is verified in Resend, set
+ * DRIP_FROM='"Mike from Hexa" <mike@updates.madebyhexa.co>' in Netlify env:
+ * marketing reputation moves to the subdomain, receipts and film deliveries
+ * stay on the root, and replies still land in the Zoho inbox via replyTo. */
+const FROM = process.env.DRIP_FROM || '"Mike from Hexa" <mike@madebyhexa.co>';
 const GRACE_DAYS = 3;
 
 function footer(userId) {
