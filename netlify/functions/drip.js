@@ -18,7 +18,7 @@
  * Unsubscribe is its own public function (drip-unsub.js): scheduled
  * functions are not HTTP-reachable in production.
  *
- * env: RESEND_API_KEY (or ZOHO_*), SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+ * env: ZOHO_USER/ZOHO_APP_PASSWORD, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
  *      WEBHOOK_SECRET (unsub token signing), DRIP_DRY_RUN=1 to log only.
  */
 
@@ -28,11 +28,14 @@ const { getStore } = require('@netlify/blobs');
 const { SITE, unsubLink } = require('./lib/drip-links');
 const { bodyHtml, footerHtml } = require('./lib/mail-html');
 
-/* Drip sender. Once updates.madebyhexa.co is verified in Resend, set
- * DRIP_FROM='"Mike from Hexa" <mike@updates.madebyhexa.co>' in Netlify env:
- * marketing reputation moves to the subdomain, receipts and film deliveries
- * stay on the root, and replies still land in the Zoho inbox via replyTo. */
-const FROM = process.env.DRIP_FROM || '"Mike from Hexa" <mike@madebyhexa.co>';
+/* Drip sender. Zoho refuses any From that is not the authenticated mailbox
+ * or one of its aliases, so the default rides mailer.fromAddress() with
+ * Mike's display name. DRIP_FROM overrides (set it to a Zoho ALIAS like
+ * mike@madebyhexa.co once that alias exists on the account). */
+function dripFrom() {
+  return process.env.DRIP_FROM ||
+    '"Mike from Hexa" <' + require('./lib/mailer').fromAddress() + '>';
+}
 const GRACE_DAYS = 3;
 
 function footer(userId) {
@@ -46,7 +49,7 @@ function footer(userId) {
 function compose(step, niceFn, userId) {
   const unsub = unsubLink(userId);
   return {
-    from: FROM,
+    from: dripFrom(),
     replyTo: 'mike@madebyhexa.co',
     subject: step.subject(niceFn),
     text: step.body(niceFn) + footer(userId),

@@ -1,15 +1,19 @@
-/* One outbound-mail transport for every function.
+/* One outbound-mail transport for every function: Zoho SMTP.
  *
- * Resend when RESEND_API_KEY is set: the domain madebyhexa.co is verified
- * there, so any From address on it works (support@) with no mailbox needed.
- * Falls back to Zoho SMTP (needs the paid Mail Lite plan) when only the
- * ZOHO_* pair is present. Incoming mail is unaffected either way; replies
- * still land in the Zoho inbox.
+ * Chris's decision 2026-07-11: Resend is gone (account deleted); all mail
+ * rides the Zoho mailbox. Zoho SMTP requires the paid Mail Lite plan; until
+ * that subscription is active, sends fail and the callers are built for it:
+ * the drip retries hourly inside each step's grace window, and the Stripe
+ * webhook answers 500 so Stripe redelivers the receipt event for days.
+ * Everything catches up on its own once SMTP unlocks.
+ *
+ * Zoho rule worth remembering: the From address must be the authenticated
+ * mailbox (ZOHO_USER) or one of its configured aliases, or Zoho refuses the
+ * send. fromAddress() therefore defaults to ZOHO_USER.
  *
  * env:
- *   RESEND_API_KEY   re_...            preferred sender
- *   MAIL_FROM        support@madebyhexa.co   From/Reply-To (default below)
- *   ZOHO_USER / ZOHO_APP_PASSWORD      legacy fallback sender
+ *   ZOHO_USER / ZOHO_APP_PASSWORD   the sending mailbox + app password
+ *   MAIL_FROM                       optional From override (must be an alias)
  */
 
 'use strict';
@@ -17,7 +21,7 @@
 const nodemailer = require('nodemailer');
 
 function configured() {
-  return !!(process.env.RESEND_API_KEY || (process.env.ZOHO_USER && process.env.ZOHO_APP_PASSWORD));
+  return !!(process.env.ZOHO_USER && process.env.ZOHO_APP_PASSWORD);
 }
 
 function fromAddress() {
@@ -25,37 +29,6 @@ function fromAddress() {
 }
 
 function transport() {
-  if (process.env.RESEND_API_KEY) {
-    // Resend over plain HTTPS, not SMTP: an API call finishes in one round
-    // trip (SMTP is a multi-step handshake that eats seconds of function
-    // time and hangs entirely on networks that block port 465). Same
-    // sendMail(message) surface nodemailer callers already use.
-    return {
-      sendMail: async function (msg) {
-        const res = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: msg.from,
-            to: Array.isArray(msg.to) ? msg.to : [msg.to],
-            subject: msg.subject,
-            text: msg.text,
-            html: msg.html || undefined,
-            reply_to: msg.replyTo || undefined,
-            headers: msg.headers || undefined,
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error('resend ' + res.status + ': ' + (data.message || JSON.stringify(data).slice(0, 200)));
-        }
-        return data;
-      },
-    };
-  }
   return nodemailer.createTransport({
     host: 'smtp.zoho.com',
     port: 465,

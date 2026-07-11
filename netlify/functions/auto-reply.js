@@ -217,7 +217,7 @@ exports.handler = async (event) => {
 
   const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
   if (missing.length > 0 || !require('./lib/mailer').configured()) {
-    console.error('Skipping send, missing env vars:', missing.join(', ') || 'mail transport (RESEND_API_KEY or ZOHO_*)');
+    console.error('Skipping send, missing env vars:', missing.join(', ') || 'mail transport (ZOHO_*)');
     return { statusCode: 200, body: 'Skipped (misconfigured, see logs)' };
   }
 

@@ -19,7 +19,7 @@
  * done; concurrent invokes are additionally guarded by a Blobs claim.
  *
  * env: WEBHOOK_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
- *      RESEND_API_KEY (or ZOHO_*) for the delivery email.
+ *      ZOHO_USER/ZOHO_APP_PASSWORD for the delivery email.
  */
 
 const { execFile } = require('child_process');

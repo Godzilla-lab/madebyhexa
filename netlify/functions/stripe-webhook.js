@@ -134,7 +134,7 @@ exports.handler = async (event) => {
 
   const mailer = require('./lib/mailer');
   if (!mailer.configured()) {
-    console.error('stripe-webhook: no mail transport configured (RESEND_API_KEY or ZOHO_*); cannot email', email);
+    console.error('stripe-webhook: no mail transport configured (ZOHO_USER/ZOHO_APP_PASSWORD); cannot email', email);
     return resp(200, { ok: false, warning: 'email not configured' });
   }
 
