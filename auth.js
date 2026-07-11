@@ -55,8 +55,11 @@
     fetch('/.netlify/functions/welcome-now', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + _session.access_token },
+    }).then(function (r) {
+      // mail paused or send failed: clear the flag so a later visit retries
+      if (!r.ok) throw new Error('welcome-now ' + r.status);
     }).catch(function () {
-      try { localStorage.removeItem(flag); } catch (e) {} // retry on next page
+      try { localStorage.removeItem(flag); } catch (e) {}
     });
   }
 

@@ -32,9 +32,29 @@ function linkify(p, labels) {
   }).join('');
 }
 
+/* A URL alone on its own line is the email's call to action: render it as a
+ * real button, not a bare underlined link. Inline URLs stay quiet text. */
+function buttonFor(url, labels) {
+  let label = labels[url];
+  if (!label && url.indexOf(SITE) === 0) label = 'Open the studio';
+  if (!label) {
+    try { label = new URL(url).hostname.replace(/^www\./, ''); } catch (e) { label = 'Open'; }
+  }
+  return '<a href="' + esc(url) + '" style="display:inline-block;background:#e0245e;color:#ffffff;' +
+    'font-weight:600;font-size:14px;text-decoration:none;padding:11px 20px;border-radius:10px;margin:4px 0">' +
+    esc(label) + '</a>';
+}
+
 function bodyHtml(text, labels) {
-  const paras = String(text).split(/\n\n+/).map((p) =>
-    '<p style="margin:0 0 16px">' + linkify(p, labels || {}) + '</p>');
+  labels = labels || {};
+  const paras = String(text).split(/\n\n+/).map((p) => {
+    const lines = String(p).split('\n').map((line) => {
+      const t = line.trim();
+      if (/^https?:\/\/\S+$/.test(t)) return buttonFor(t.replace(/[).,;:!?]+$/, ''), labels);
+      return linkify(line, labels);
+    });
+    return '<p style="margin:0 0 16px">' + lines.join('<br>') + '</p>';
+  });
   return '<div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#1a1a1a;max-width:560px">' +
     paras.join('') + '</div>';
 }

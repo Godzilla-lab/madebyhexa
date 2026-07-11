@@ -20,7 +20,13 @@
 
 const nodemailer = require('nodemailer');
 
+/* Master switch: Chris paused ALL outbound mail until the Zoho Mail Lite
+ * subscription is paid (2026-07-11). Flip it by setting MAIL_READY=1 in
+ * Netlify env (all contexts) and publishing. While off, every sender takes
+ * its not-configured path: the drip skips without consuming steps and
+ * welcome-now answers 503 so the client retries on a later visit. */
 function configured() {
+  if (process.env.MAIL_READY !== '1') return false;
   return !!(process.env.ZOHO_USER && process.env.ZOHO_APP_PASSWORD);
 }
 
