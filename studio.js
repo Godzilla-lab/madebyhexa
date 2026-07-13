@@ -479,6 +479,45 @@
     pollWebProduct(pk);
   }
 
+  /* The image proxy (/.netlify/images) keeps scraped photos small, but it is
+   * one more moving part: when its transform chokes, the customer loses a
+   * photo we actually have. Heal by swapping the peek to the raw source URL
+   * so callers can retry once without the proxy. */
+  function healProxyImage(pk) {
+    if (!pk || !pk.image || pk.image.indexOf('/.netlify/images?') !== 0) return false;
+    var m = pk.image.match(/[?&]url=([^&]+)/);
+    if (!m) return false;
+    var raw;
+    try { raw = decodeURIComponent(m[1]); } catch (e) { return false; }
+    if (!/^https:\/\//i.test(raw)) return false;
+    pk.image = raw;
+    return true;
+  }
+
+  /* Every product img wears a live skeleton while its photo is in flight and
+   * goes white only UNDER a loaded photo (cutout PNGs need the white). An
+   * error retries once with the proxy healed away; only then is the image
+   * given up (gone() cleans up the element, default hides it). */
+  function wireProductImg(img, pk, gone) {
+    img.classList.remove('img-loaded');
+    img.classList.add('img-loading');
+    img.onload = function () {
+      img.classList.remove('img-loading');
+      img.classList.add('img-loaded');
+    };
+    img.onerror = function () {
+      // a sibling img may have healed the shared peek already: follow it.
+      // Bounded: once src matches pk.image, failure falls through to heal
+      // or to giving up, never back here with the same URL.
+      if (pk && pk.image && img.getAttribute('src') !== pk.image) { img.src = pk.image; return; }
+      if (healProxyImage(pk)) { img.src = pk.image; return; }
+      img.classList.remove('img-loading');
+      if (gone) gone(); else img.hidden = true;
+      peekImageFailed(pk);
+    };
+    img.src = pk.image;
+  }
+
   /* The photo arrived after the reveal stage moved on: celebrate it where
    * the customer is now, instead of quietly swapping a 34px chip. */
   var peekToastTimer = null;
@@ -490,9 +529,8 @@
     var t = el('div', 'peek-toast');
     t.id = 'peek-toast';
     var img = el('img');
-    img.src = pk.image;
     img.alt = '';
-    img.onerror = function () { t.remove(); };
+    wireProductImg(img, pk, function () { t.remove(); });
     t.appendChild(img);
     var txt = el('div', 'peek-toast-text');
     txt.appendChild(el('strong', null, 'Product photo found'));
@@ -548,6 +586,9 @@
         var t = $('#peek-title');
         if (t && pk.title) { t.textContent = pk.title; t.hidden = false; }
       };
+      pre.onerror = function () {
+        if (healProxyImage(pk)) pre.src = pk.image;
+      };
       pre.src = pk.image;
       return;
     }
@@ -569,9 +610,8 @@
     if (!pk) return;
     var img = $('#product-chip-img');
     if (pk.image) {
-      img.src = pk.image;
       img.hidden = false;
-      img.onerror = function () { img.hidden = true; peekImageFailed(pk); };
+      wireProductImg(img, pk);
     } else {
       img.hidden = true;
     }
@@ -1817,9 +1857,8 @@
 
   function productInset(pk) {
     var img = el('img', 'tile-product');
-    img.src = pk.image;
     img.alt = '';
-    img.onerror = function () { img.remove(); };
+    wireProductImg(img, pk, function () { img.remove(); });
     return img;
   }
 
@@ -2195,6 +2234,7 @@
           reveal(true);
         };
         pre.onerror = function () {
+          if (healProxyImage(pk)) { pre.src = pk.image; return; }
           if (settled) return; settled = true; clearTimeout(imgTimer);
           peekImageFailed(pk);
           reveal(false);
@@ -2483,9 +2523,8 @@
       if (chipEl.hidden) return;
       var img = $('#composer-product-img');
       if (pk.image) {
-        img.src = pk.image;
         img.hidden = false;
-        img.onerror = function () { img.hidden = true; peekImageFailed(pk); };
+        wireProductImg(img, pk);
       } else {
         img.hidden = true;
       }

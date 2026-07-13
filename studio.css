@@ -2537,7 +2537,7 @@ body.home .float-cta-link svg { color: var(--accent); }
   height: 54px;
   object-fit: cover;
   border-radius: 9px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.08);
   flex: none;
 }
 .peek-toast-text {
@@ -2581,7 +2581,7 @@ body.home .float-cta-link svg { color: var(--accent); }
   height: 34px;
   object-fit: cover;
   border-radius: 7px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.08);
   flex: none;
 }
 .product-chip-text {
@@ -2709,7 +2709,7 @@ img.tile-product {
   object-fit: cover;
   border-radius: 9px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.08);
   box-shadow: var(--shadow-2);
 }
 .chooser-grid .style-tile img.tile-product {
@@ -2752,10 +2752,33 @@ img.tile-product {
   height: 30px;
   object-fit: cover;
   border-radius: 7px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.08);
   flex: none;
 }
 .composer-product img[hidden] { display: none; }
+
+/* Product photos in flight: a live skeleton instead of a dead white square.
+ * White appears only UNDER a loaded photo (cutout PNGs sit on white).
+ * The .style-tile variants out-rank the base tile rule's specificity. */
+img.img-loading,
+.style-tile img.tile-product.img-loading {
+  background: linear-gradient(100deg,
+    rgba(255, 255, 255, 0.07) 35%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0.07) 65%);
+  background-size: 200% 100%;
+  animation: img-skeleton 1.1s linear infinite;
+}
+img.img-loaded,
+.style-tile img.tile-product.img-loaded {
+  background: #fff;
+}
+@keyframes img-skeleton {
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  img.img-loading { animation: none; }
+}
 .composer-product-name {
   font-size: 12px;
   font-weight: 600;
