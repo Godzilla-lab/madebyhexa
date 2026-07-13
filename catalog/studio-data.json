@@ -874,55 +874,55 @@
   {
    "id": "ugc",
    "name": "UGC",
-   "poster": "assets/hf/site/slides_talking-head.png",
+   "poster": "assets/hf/site/slides_talking-head.webp",
    "video": "assets/hf/site/slides_talking-head-mini.mp4"
   },
   {
    "id": "tv_spot",
    "name": "TV Spot",
-   "poster": "assets/hf/site/slides_tv-spot.png",
+   "poster": "assets/hf/site/slides_tv-spot.webp",
    "video": "assets/hf/site/slides_cleanshot.mp4"
   },
   {
    "id": "product_review",
    "name": "Product Review",
-   "poster": "assets/hf/site/slides_product-review.png",
+   "poster": "assets/hf/site/slides_product-review.webp",
    "video": "assets/hf/site/slides_product-review-mini.mp4"
   },
   {
    "id": "unboxing",
    "name": "Unboxing",
-   "poster": "assets/hf/site/slides_unboxing.png",
+   "poster": "assets/hf/site/slides_unboxing.webp",
    "video": "assets/hf/site/slides_unboxing-mini.mp4"
   },
   {
    "id": "tutorial",
    "name": "Tutorial",
-   "poster": "assets/hf/site/slides_tutorial.png",
+   "poster": "assets/hf/site/slides_tutorial.webp",
    "video": "assets/hf/site/slides_tutorial-mini.mp4"
   },
   {
    "id": "ugc_try_on",
    "name": "UGC Virtual Try On",
-   "poster": "assets/hf/site/slides_ugc-virtual-try-on.png",
+   "poster": "assets/hf/site/slides_ugc-virtual-try-on.webp",
    "video": "assets/hf/site/slides_ugc-virtual-try-on-mini.mp4"
   },
   {
    "id": "pro_try_on",
    "name": "Pro Virtual Try On",
-   "poster": "assets/hf/site/slides_pro-virtual-try-on.png",
+   "poster": "assets/hf/site/slides_pro-virtual-try-on.webp",
    "video": "assets/hf/site/slides_pro-virtual-try-on-mini.mp4"
   },
   {
    "id": "hyper_motion",
    "name": "Hyper Motion",
-   "poster": "assets/hf/site/modes_hyper.png",
+   "poster": "assets/hf/site/modes_hyper.webp",
    "video": "assets/hf/site/slides_hyper-mini.mp4"
   },
   {
    "id": "wild_card",
    "name": "Wild Card",
-   "poster": "assets/hf/site/slides_wild-card.png",
+   "poster": "assets/hf/site/slides_wild-card.webp",
    "video": "assets/hf/site/slides_wild-card-mini.mp4"
   }
  ]

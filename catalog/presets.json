@@ -14,7 +14,7 @@
     "aspect": "9:16"
    },
    "seed": "Late-afternoon golden hour, warm rim light, soft lens flare, relaxed handheld energy, creator smiling into the sun.",
-   "preview": "assets/hf/site/slides_talking-head.png"
+   "preview": "assets/hf/site/slides_talking-head.webp"
   },
   {
    "id": "gym-rat",
@@ -63,7 +63,7 @@
     "aspect": "9:16"
    },
    "seed": "Soft desk lamp, tight macro on hands, deliberate slow reveal, crisp tactile ASMR sound design, tissue and wrap.",
-   "preview": "assets/hf/site/slides_unboxing.png"
+   "preview": "assets/hf/site/slides_unboxing.webp"
   },
   {
    "id": "kitchen-demo",
@@ -78,7 +78,7 @@
     "aspect": "9:16"
    },
    "seed": "Bright kitchen counter, clean daylight from a window, three tidy steps, hands-focused inserts, satisfying result.",
-   "preview": "assets/hf/site/slides_tutorial.png"
+   "preview": "assets/hf/site/slides_tutorial.webp"
   },
   {
    "id": "editorial-tryon",
@@ -89,7 +89,7 @@
     "aspect": "9:16"
    },
    "seed": "Studio seamless backdrop, controlled soft key with clean shadow, deliberate slow movement, catalog-grade fabric fidelity.",
-   "preview": "assets/hf/site/slides_pro-virtual-try-on.png"
+   "preview": "assets/hf/site/slides_pro-virtual-try-on.webp"
   },
   {
    "id": "bullet-time-hero",
@@ -100,7 +100,7 @@
     "aspect": "16:9"
    },
    "seed": "Single continuous impossible camera move, slow 360 orbit into a dive, product tack-sharp while the world speed-blurs.",
-   "preview": "assets/hf/site/slides_wild-card.png"
+   "preview": "assets/hf/site/slides_wild-card.webp"
   },
   {
    "id": "midnight-drop",
@@ -114,7 +114,7 @@
     "aspect": "16:9"
    },
    "seed": "Dark premium set, cold steel palette, backlit contre-jour rim, confident slow push-in, macro over material and label.",
-   "preview": "assets/hf/site/slides_tv-spot.png"
+   "preview": "assets/hf/site/slides_tv-spot.webp"
   },
   {
    "id": "neon-nights",
@@ -128,7 +128,7 @@
     "aspect": "9:16"
    },
    "seed": "Neon-drenched night city, practical light sources, reflective wet surfaces, kinetic impossible camera, product as the glowing hero.",
-   "preview": "assets/hf/site/slides_wild-card.png"
+   "preview": "assets/hf/site/slides_wild-card.webp"
   },
   {
    "id": "sun-bleached",
@@ -142,7 +142,7 @@
     "aspect": "4:3"
    },
    "seed": "Soft bleached-warm grade, window light, intimate observational framing, dewy skin and gentle highlights, beauty-editorial calm.",
-   "preview": "assets/hf/site/slides_product-review.png"
+   "preview": "assets/hf/site/slides_product-review.webp"
   },
   {
    "id": "studio-white",
@@ -157,7 +157,7 @@
     "aspect": "1:1"
    },
    "seed": "Seamless white sweep, even softbox light, crisp contact shadow, true-to-reference color, ten clean catalog compositions.",
-   "preview": "assets/hf/site/slides_cleanshot.png"
+   "preview": "assets/hf/site/slides_cleanshot.webp"
   },
   {
    "id": "lifestyle-flatlay",
