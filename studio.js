@@ -330,9 +330,15 @@
     img.src = url;
   }
 
-  /* The product step is satisfied by ANY of: link, photos, description. */
+  /* The product step is satisfied by ANY of: link, photos, description.
+   * A social link alone is not a product: the engine cannot read Facebook
+   * or Instagram any more than we can, so those orders must carry the
+   * customer's own photos or words for the film to stand on. */
   function hasProduct(s) {
-    return !!(s.link || (s.photos && s.photos.length) || s.desc);
+    if ((s.photos && s.photos.length) || s.desc) return true;
+    if (!s.link) return false;
+    var pk = peekFor(s.link);
+    return !(pk && pk.social);
   }
 
   /* ── Product peek plumbing ── */
@@ -874,10 +880,17 @@
       input.placeholder = 'https://yourstore.com/products/...';
       if (state.sel.link) input.value = state.sel.link;
       var linkHint = el('p', 'hint');
-      var pk0 = peekFor(state.sel.link);
-      linkHint.textContent = pk0 && pk0.title
-        ? 'We read this page and found ' + pk0.title + '. Its images and details flow straight into your order.'
-        : 'We pull the images and details from the page automatically.';
+      var setLinkHint = function () {
+        var pk0 = peekFor(state.sel.link);
+        if (pk0 && pk0.social) {
+          linkHint.textContent = pk0.social + ' keeps its pages closed, so this link cannot carry your product photo. Add photos in the Upload photos tab and the film builds around the real thing.';
+        } else if (pk0 && pk0.title) {
+          linkHint.textContent = 'We read this page and found ' + pk0.title + '. Its images and details flow straight into your order.';
+        } else {
+          linkHint.textContent = 'We pull the images and details from the page automatically.';
+        }
+      };
+      setLinkHint();
       input.addEventListener('input', function () {
         state.sel.link = input.value.trim();
         // the peek belongs to the link it was read from; editing the link voids it
@@ -887,9 +900,9 @@
           delete state.sel.productSiteName;
           delete state.sel.productPrice;
           delete state.sel.productCurrency;
-          linkHint.textContent = 'We pull the images and details from the page automatically.';
           productChip(false);
         }
+        setLinkHint();
         updatePrice();
       });
       paneLink.appendChild(input);
@@ -1868,10 +1881,19 @@
       if (pk.scrapeFailed && !pk.image) {
         return base + ' That page kept its photo to itself, so add one of yours on the next step. The film comes out just as sharp.';
       }
+      if (pk.social) {
+        return base + ' Add a product photo on the next step and it goes straight into frame.';
+      }
       if (!pk.image && pk.webProductId) {
         return base + ' Your product photo is still on its way and pops in here the moment it lands.';
       }
+      if (!pk.image) {
+        return base + ' Add a photo of it on the next step and it goes straight into frame.';
+      }
       return base + ' Pick one and we make it with your product in frame.';
+    }
+    if (pk && pk.social) {
+      return 'Here is what we can make. ' + pk.social + ' keeps its pages to itself, so add a product photo on the next step and we build the film around the real thing.';
     }
     return state.composerLink
       ? 'Here is what we can make for your product. Pick one and we build exactly that.'
@@ -2461,9 +2483,9 @@
           linkInput.focus();
           var copy = freeBtn.querySelector('.composer-free-copy');
           if (copy) {
-            copy.innerHTML = '<strong>Paste your product link above</strong> and this button does the rest.';
+            copy.innerHTML = '<strong>Paste your product link above</strong><span class="composer-free-sub">This button does the rest.</span>';
             setTimeout(function () {
-              copy.innerHTML = '<strong>Your first clip is on us.</strong> Paste your product link and watch a 5 second clip of it render. No card.';
+              copy.innerHTML = '<strong>Watch yours move first, free.</strong><span class="composer-free-sub">A 5 second clip of your product, rendered while you watch. No card, no sign-up.</span>';
             }, 3500);
           }
           return;
@@ -2474,6 +2496,16 @@
           startPeek(link),
           new Promise(function (r) { setTimeout(r, 1500); }),
         ]).then(function () { startFreeSample(link); });
+      });
+    }
+
+    // the closer's free line: walk them back up to the bar and let the
+    // free button take over (it nudges for a link when the bar is empty)
+    var closerFree = $('#closer-free');
+    if (closerFree && freeBtn) {
+      closerFree.addEventListener('click', function () {
+        document.getElementById('composer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(function () { freeBtn.click(); }, 650);
       });
     }
 

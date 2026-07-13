@@ -639,6 +639,87 @@
   box-shadow: 0 18px 50px -14px rgba(255, 77, 109, 0.6);
 }
 .closer-cta:hover { transform: translateY(-2px); box-shadow: 0 26px 64px -14px rgba(255, 77, 109, 0.8); }
+.closer-free {
+  display: block;
+  margin: 16px auto 0;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-mute);
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 77, 109, 0.5);
+  padding: 2px 1px;
+  cursor: pointer;
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+.closer-free:hover { color: var(--text); border-color: var(--accent); }
+
+/* ═════ Done-for-you band ═════
+ * The hands-off lane for brands that want volume, placed right after
+ * pricing so anyone hesitating at the tiers sees a way to skip the tool
+ * entirely. One card, one CTA: book a call. */
+.dfy { padding: 26px 0 64px; }
+.dfy-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 22px;
+  padding: clamp(28px, 4.5vw, 52px);
+  background:
+    radial-gradient(120% 160% at 100% 0%, rgba(255, 77, 109, 0.13), transparent 55%),
+    rgba(255, 255, 255, 0.025);
+}
+.dfy-copy { max-width: 640px; }
+.dfy .c-sub { margin-top: 14px; }
+.dfy-points {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dfy-points li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text-mute);
+}
+.dfy-points li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.dfy-cta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 28px;
+}
+.dfy-cta {
+  display: inline-block;
+  font-size: 14.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-decoration: none;
+  background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border-radius: 14px;
+  padding: 15px 34px;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  box-shadow: 0 14px 40px -12px rgba(255, 77, 109, 0.55);
+}
+.dfy-cta:hover { transform: translateY(-2px); box-shadow: 0 20px 52px -12px rgba(255, 77, 109, 0.75); }
+.dfy-note { font-size: 13px; color: var(--text-mute); }
 
 /* ═════ Configurator drawer ═════ */
 .config-overlay[hidden] { display: none; }
@@ -3448,30 +3529,35 @@ body.home .bg-glow {
 #hero-film { transition: opacity 0.4s var(--ease); }
 #hero-film.c-monitor-swap { opacity: 0.12; }
 
-/* ── Free-clip rubric under the composer ──────────────────────────
- * Same visual language as the chooser's free band: dashed accent border,
- * Free pill. Visible to everybody before any link is pasted, because the
- * freebie is the reason a cold visitor tries the bar at all. */
+/* ── Free-clip offer under the composer ───────────────────────────
+ * First thing under the bar, styled as a real secondary CTA: the freebie
+ * is the reason a cold visitor tries the bar at all, so it pairs with
+ * Create instead of trailing the hint text as an afterthought. Friction
+ * killers (no card, no sign-up) sit inside the button, under the verb. */
 .composer-free {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   margin-top: 12px;
-  padding: 12px 16px;
-  border: 1px dashed rgba(255, 77, 109, 0.45);
+  padding: 13px 18px;
+  border: 1px solid rgba(255, 77, 109, 0.55);
   border-radius: 14px;
-  background: rgba(255, 77, 109, 0.05);
+  background: linear-gradient(180deg, rgba(255, 77, 109, 0.15), rgba(255, 77, 109, 0.07));
+  box-shadow: 0 6px 22px rgba(255, 77, 109, 0.12);
   cursor: pointer;
   text-align: left;
   font: inherit;
-  transition: border-color 0.25s var(--ease), background 0.25s var(--ease), opacity 0.25s;
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease),
+    transform 0.25s var(--ease), box-shadow 0.25s var(--ease), opacity 0.25s;
 }
 .composer-free:hover {
-  border-color: rgba(255, 77, 109, 0.8);
-  background: rgba(255, 77, 109, 0.09);
+  border-color: rgba(255, 77, 109, 0.95);
+  background: linear-gradient(180deg, rgba(255, 77, 109, 0.2), rgba(255, 77, 109, 0.1));
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(255, 77, 109, 0.18);
 }
-.composer-free:disabled { opacity: 0.55; cursor: default; }
+.composer-free:disabled { opacity: 0.55; cursor: default; transform: none; }
 .composer-free-badge {
   flex: 0 0 auto;
   font-family: var(--font-mono);
@@ -3490,5 +3576,6 @@ body.home .bg-glow {
   line-height: 1.45;
   color: var(--text-mute);
 }
-.composer-free-copy strong { color: var(--text); font-weight: 650; }
+.composer-free-copy strong { display: block; color: var(--text); font-weight: 700; font-size: 14.5px; }
+.composer-free-sub { display: block; margin-top: 2px; font-size: 12.5px; color: var(--text-mute); }
 .composer-free-arrow { flex: 0 0 auto; color: var(--accent-soft); font-size: 16px; }

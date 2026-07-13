@@ -84,6 +84,13 @@
                 <button type="button" class="composer-go" id="composer-go">Create</button>
               </div>
               <div class="composer-tools" id="composer-tools" aria-label="Order settings"><!-- studio.js --></div>
+
+              <button type="button" class="composer-free" id="composer-free">
+                <span class="composer-free-badge">Free</span>
+                <span class="composer-free-copy"><strong>Watch yours move first, free.</strong><span class="composer-free-sub">A 5 second clip of your product, rendered while you watch. No card, no sign-up.</span></span>
+                <span class="composer-free-arrow" aria-hidden="true">→</span>
+              </button>
+
               <p class="composer-hint">Paste your product link and watch it happen. Other tools stop at a 15 second clip.
                 <button type="button" class="composer-nolink" id="composer-nolink">No product link? Start with photos or a description</button>
               </p>
@@ -92,12 +99,6 @@
                 <button type="button" class="composer-try-chip" data-try="https://www.allbirds.com/products/mens-wool-runners">Allbirds Wool Runners</button>
                 <button type="button" class="composer-try-chip" data-try="https://www.glossier.com/products/cloud-paint">Glossier Cloud Paint</button>
               </div>
-
-              <button type="button" class="composer-free" id="composer-free">
-                <span class="composer-free-badge">Free</span>
-                <span class="composer-free-copy"><strong>Your first clip is on us.</strong> Paste your product link and watch a 5 second clip of it render. No card.</span>
-                <span class="composer-free-arrow" aria-hidden="true">→</span>
-              </button>
             </div>
 
             <button type="button" class="composer-quiz-entry" data-quiz-open>
@@ -508,6 +509,27 @@
       </div>
     </section>
 
+    <section id="done-for-you" class="dfy">
+      <div class="c-wrap">
+        <div class="dfy-card" data-reveal>
+          <div class="dfy-copy">
+            <p class="c-kicker">Done for you</p>
+            <h2 class="c-display c-display-m">Need videos every week,<br />not just one?</h2>
+            <p class="c-sub">Some brands want a steady feed of films without running a tool. We handle it end to end: same faces across every video, new scenes every drop, and nobody on your team ever steps in front of a camera. You approve, we deliver.</p>
+            <ul class="dfy-points">
+              <li>A fresh batch of films every month, for ads and feed</li>
+              <li>The same creators carry your whole feed, so it reads as one brand</li>
+              <li>Send your products once. We storyboard, render and deliver ready to post</li>
+            </ul>
+            <div class="dfy-cta-row">
+              <a class="dfy-cta" href="intake.html">Book a call</a>
+              <span class="dfy-note">Leave your details, we set the call up within a day.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="faq" class="faq">
       <div class="c-head c-head-center" data-reveal>
         <p class="c-kicker">FAQ</p>
@@ -555,6 +577,7 @@
       <div class="c-wrap c-closer-inner">
         <h2 class="c-display c-display-l">Your product is ready.<span class="hl-line">Your film isn't. Yet.</span></h2>
         <button class="closer-cta" type="button" id="closer-cta">Start with your link</button>
+        <button class="closer-free" type="button" id="closer-free">Not sure yet? Watch a free 5 second clip of your product first</button>
         <p class="c-closer-tc" aria-hidden="true">00:00 <span class="c-closer-arrow">→</span> 02:00</p>
       </div>
     </section>
