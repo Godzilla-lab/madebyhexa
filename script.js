@@ -774,16 +774,18 @@
         heroFilm.load();
         start();
       });
-      // warm the next clip's HTTP cache while this one finishes, so the
-      // swap buffers from disk instead of a cold CDN fetch
+      // warm the next clip's HTTP cache as soon as this one is playing, so
+      // the swap buffers from disk instead of a cold fetch. The old version
+      // only warmed http(s) URLs, which skipped these relative paths and left
+      // every swap cold: that was the visible beat between clips. Data Saver
+      // visitors loop the first clip and never swap, so nothing to warm.
       let warmed = -1;
-      heroFilm.addEventListener('timeupdate', () => {
-        const d = heroFilm.duration;
-        if (!d || !isFinite(d) || d - heroFilm.currentTime > 3) return;
+      heroFilm.addEventListener('playing', () => {
+        if (dataTight) return;
         const next = (clipIdx + 1) % HERO_CLIPS.length;
-        if (warmed === next || HERO_CLIPS[next].src.indexOf('http') !== 0) return;
+        if (warmed === next) return;
         warmed = next;
-        fetch(HERO_CLIPS[next].src, { mode: 'no-cors' }).catch(() => {});
+        fetch(HERO_CLIPS[next].src).catch(() => {});
       });
       if ('IntersectionObserver' in window) {
         new IntersectionObserver((entries) => {
