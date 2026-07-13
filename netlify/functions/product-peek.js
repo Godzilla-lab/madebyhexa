@@ -54,6 +54,79 @@ function socialLabel(hostname) {
   return null;
 }
 
+/* ── Meta links carry the brand in the URL itself ─────────────────
+ * Nobody can scrape Facebook or Instagram (they serve a JS shell, and even
+ * the engine's scraper fails), but small brands live there, so their links
+ * land here anyway. Two things ARE public: the Graph picture endpoint
+ * serves any page's photo tokenless (by id or username), and the URL path
+ * names the account. An Ads Library link even carries the brand's page id.
+ * Resolve what we can; guessed:true lets the customer fix the name inline. */
+const FB_RESERVED = /^(marketplace|groups|watch|gaming|events|people|reel|reels|stories|share|sharer(\.php)?|photo(\.php)?|permalink\.php|story\.php|login|home\.php|help|business|legal|settings|friends|messages|notifications|search|hashtag|dialog|plugins|media|notes|live|games|fundraisers|places|posts)$/i;
+const IG_RESERVED = /^(p|reel|reels|stories|tv|explore|accounts|direct|about|developer|legal|web|challenge)$/i;
+
+function prettyHandle(s) {
+  const words = decodeURIComponent(s).replace(/[._-]+/g, ' ').trim();
+  if (!/[a-z]/i.test(words)) return null;
+  return words.replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 90);
+}
+
+async function socialResolve(target, label) {
+  const segs = target.pathname.split('/').filter(Boolean);
+  if (label === 'Facebook') {
+    let id = null;
+    let name = null;
+    const pageIdParam = target.searchParams.get('view_all_page_id');
+    if (segs[0] === 'ads' && pageIdParam && /^\d+$/.test(pageIdParam)) {
+      id = pageIdParam;
+    } else if (segs[0] === 'profile.php' && /^\d+$/.test(target.searchParams.get('id') || '')) {
+      id = target.searchParams.get('id');
+    } else if (segs[0] === 'pages' && segs[1]) {
+      name = prettyHandle(segs[1]);
+      if (segs[2] && /^\d+$/.test(segs[2])) id = segs[2];
+    } else if (segs[0] === 'pg' && segs[1] && !FB_RESERVED.test(segs[1])) {
+      id = segs[1];
+      name = prettyHandle(segs[1]);
+    } else if (segs[0] && segs[0] !== 'ads' && !FB_RESERVED.test(segs[0]) && /^[a-z0-9.]+$/i.test(segs[0])) {
+      id = segs[0];
+      if (!/^\d+$/.test(segs[0])) name = prettyHandle(segs[0]);
+    }
+    if (!id && !name) return null;
+    let image = null;
+    if (id) {
+      // roomier budget than page images: this runs as the LAST hope for a
+      // Meta link, and a cold TLS handshake to graph alone can eat 2s
+      image = await validateImage('https://graph.facebook.com/' + encodeURIComponent(id) + '/picture?width=720', 4000);
+    }
+    if (!name && id && /^\d+$/.test(id)) {
+      // a bare page id (Ads Library, profile.php): the page's own og:title
+      // names the brand. Residential networks get it; when Facebook walls
+      // off our datacenter this just falls through to the fixable chip.
+      try {
+        const pageUrl = await guardUrl('https://www.facebook.com/' + id);
+        if (pageUrl) {
+          const ctl = new AbortController();
+          const t = setTimeout(() => ctl.abort(), 3500);
+          const page = await fetchHtml(pageUrl, ctl.signal).finally(() => clearTimeout(t));
+          if (page) {
+            const og = extract(page.html, page.finalUrl);
+            if (og.title && og.title !== 'Facebook') name = og.title.replace(/\s*\|\s*Facebook\s*$/i, '').slice(0, 90);
+          }
+        }
+      } catch (e) { /* walled off: the photo still identifies the brand */ }
+    }
+    if (!image && !name) return null;
+    return { title: name, image, siteName: 'Facebook', price: null, currency: null };
+  }
+  if (label === 'Instagram') {
+    const h = segs[0];
+    if (!h || IG_RESERVED.test(h) || !/^[a-z0-9._]{2,30}$/i.test(h)) return null;
+    const name = prettyHandle(h);
+    if (!name) return null;
+    return { title: name, image: null, siteName: 'Instagram', price: null, currency: null };
+  }
+  return null;
+}
+
 function json(statusCode, data, cacheControl) {
   return {
     statusCode,
@@ -175,6 +248,7 @@ async function fetchHtml(startUrl, signal) {
 
 function decodeEntities(s) {
   return String(s)
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(Math.min(parseInt(n, 16), 0x10ffff)))
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Math.min(parseInt(n, 10), 0x10ffff)))
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
@@ -430,10 +504,10 @@ async function tryKickstarterCard(target, signal) {
 /* Page markup lies (tracking beacons in <img> tags, expired signed URLs,
  * moved CDNs). Whatever strategy found the image, trust it only if it still
  * answers as an image. One ranged byte, ~150ms on healthy CDNs. */
-async function validateImage(url) {
+async function validateImage(url, budgetMs) {
   try {
     const ic = new AbortController();
-    const it = setTimeout(() => ic.abort(), 1800);
+    const it = setTimeout(() => ic.abort(), budgetMs || 1800);
     const probe = await fetch(url, {
       headers: { ...BROWSER_HEADERS, Range: 'bytes=0-0', Accept: 'image/*,*/*;q=0.5' },
       signal: ic.signal,
@@ -576,7 +650,18 @@ exports.handler = async (event) => {
   const hit = cache.get(raw);
   if (hit && !rescrape && Date.now() - hit.ts < (hit.ttl || CACHE_TTL_MS)) return json(200, hit.data);
 
-  const target = await guardUrl(raw);
+  // Links copied out of Facebook/Instagram/Messenger arrive wrapped in the
+  // l.facebook.com shim; unwrap to the real destination before anything else.
+  let unwrapped = raw;
+  try {
+    const shim = new URL(raw);
+    if (/^(l|lm)\.(facebook|instagram|messenger)\.com$/i.test(shim.hostname)) {
+      const u = shim.searchParams.get('u');
+      if (u && /^https?:\/\//i.test(u)) unwrapped = u;
+    }
+  } catch (e) { /* not parseable here: guardUrl decides */ }
+
+  const target = await guardUrl(unwrapped);
   if (!target) return json(200, nothing);
 
   const controller = new AbortController();
@@ -700,12 +785,26 @@ exports.handler = async (event) => {
     }
   }
 
-  // Social post link: never pretend it is a product page. If its own og
-  // tags gave us something, keep that but still flag it; a slug guess on a
-  // social URL would be gibberish, so skip that entirely.
+  // Social link: never pretend it is a product page, but resolve the brand
+  // when the URL itself names it (page id, username, handle). A page read
+  // that only echoed the platform's name ("Facebook") counts as nothing.
   if (social) {
-    if (!data.ok) {
-      data = { ok: true, url: raw, social, title: null, image: null, siteName: social, price: null, currency: null };
+    if (data.ok && data.title) {
+      // page reads that DO get through return boilerplate around the brand:
+      // "Nike (@nike) • Instagram photos and videos" is Nike, and a bare
+      // platform echo ("Facebook") is nothing at all
+      data.title = data.title
+        .replace(/\s*\(@[a-z0-9._]+\)\s*/i, ' ')
+        .replace(/\s*[•|·–—-]?\s*Instagram (photos and videos|profile).*$/i, '')
+        .replace(/\s*[•|·–—-]?\s*(on\s+)?Facebook\s*$/i, '')
+        .replace(/\s+/g, ' ').trim() || null;
+      if (data.title === social) data.title = null;
+    }
+    if (!data.ok || (!data.title && !data.image)) {
+      const res = await socialResolve(target, social).catch(() => null);
+      data = res
+        ? { ok: true, url: raw, social, guessed: true, ...res }
+        : { ok: true, url: raw, social, title: null, image: null, siteName: social, price: null, currency: null };
     } else {
       data.social = social;
     }
