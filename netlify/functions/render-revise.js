@@ -32,16 +32,21 @@ const { allow } = require('./lib/ratelimit');
 const { planOrder } = require('./render-create');
 
 const DONE = ['completed'];
-const DEAD = ['failed', 'canceled', 'cancelled', 'nsfw', 'error'];
+const { DEAD, explain } = require('./lib/failure');
 
 /* One pack's worth of re-rolls per pack. Generous enough that nobody hits it
  * doing honest work, finite enough that a scripted loop cannot mine free
  * images out of a single order. */
 const REVISION_ALLOWANCE = 20;
 
+/* The same catalogue render-create.js:93 reads, shaped the same way: the file
+ * is { pulled_at, engine, items: [...] }, not a bare array, and the
+ * review_shaped formats are excluded. A re-roll must not become the way in to
+ * a concept the pack itself refuses to render. */
 const AD_FORMAT_NAMES = Array.from(new Set(
-  require('../../catalog/higgsfield/ad-formats.json')
-    .map(function (f) { return f && f.name; })
+  require('../../catalog/higgsfield/ad-formats.json').items
+    .filter(function (f) { return f && !f.review_shaped; })
+    .map(function (f) { return f.name; })
     .filter(Boolean)
 ));
 
@@ -206,7 +211,19 @@ async function pollRevision(event, q) {
     if (used > 0) {
       await ctx.db.from('creations').update({ revisions_used: used - 1 }).eq('id', ctx.creation.id);
     }
-    return json(200, { status: 'failed', message: 'That re-roll did not render. Your edit is back in the bank; try again.' });
+    /* A re-roll costs an allowance rather than money, so refundText says what
+     * actually came back instead of naming a payment that never moved. */
+    const why = explain(status, {
+      scope: 'one',
+      refundText: used > 0 ? ' Your edit is back in the bank.' : '',
+    });
+    return json(200, {
+      status: 'failed',
+      reason: why.kind,
+      retryable: why.retryable,
+      // One line to fill here, so the two halves are joined.
+      message: why.headline + '. ' + why.message,
+    });
   }
 
   if (DONE.indexOf(status) >= 0 && job.result_url) {

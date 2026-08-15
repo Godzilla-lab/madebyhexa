@@ -26,7 +26,10 @@ function json(status, body) {
 }
 
 const DONE = ['completed'];
-const DEAD = ['failed', 'canceled', 'cancelled', 'nsfw', 'error'];
+/* DEAD, and the difference between "the engine broke" and "we would not make
+ * this", both live in lib/failure.js so the three files that need the list
+ * cannot drift apart. */
+const { DEAD, explain } = require('./lib/failure');
 
 /*
  * Engines whose jobs are independent deliverables rather than segments of one
@@ -197,30 +200,71 @@ async function recordCompleted(ctx, urls, thumb) {
   }
 }
 
-/* The site's promise: a failed render is never charged. Refund the whole
- * payment (idempotent per session, so repeated polls cannot double-refund)
- * and mark the order + creation. Returns true when the money is on its way
- * back, so the customer-facing message can say so honestly. */
+/*
+ * The site's promise: a failed render is never charged. Refund the whole
+ * payment and mark the order + creation. Returns { refunded, credits } so the
+ * customer-facing message can say what actually happened, since "refunded to
+ * your card" and "back in your balance" are not the same sentence.
+ *
+ * Both refund paths are idempotent: Stripe by idempotency key on the session,
+ * credits by the ledger's unique index on refund refs. This runs on a poll that
+ * several tabs may hit at once, so it will genuinely be asked twice.
+ */
 async function refundFailed(ctx, paidSessionId) {
+  const none = { refunded: false, credits: false };
   try {
-    if (!ctx.db) return false;
+    if (!ctx.db) return none;
+
+    // Mark the library row dead first, by whichever handle we have. A render
+    // that stays 'rendering' forever is its own support ticket.
     if (ctx.creationId) {
       await ctx.db.from('creations').update({ status: 'failed' })
         .eq('id', ctx.creationId).eq('status', 'rendering');
-      return false; // dev render: nothing was charged
     }
-    if (!ctx.order) return false;
+    if (!ctx.order) return none; // dev render: nothing was charged
     await ctx.db.from('creations').update({ status: 'failed' })
       .eq('order_id', ctx.order.id).eq('status', 'rendering');
-    if (ctx.order.status === 'refunded') return true; // already done
 
-    if (!process.env.STRIPE_SECRET_KEY) return false;
+    /*
+     * A credit render has an order row but no Stripe session, and the spend is
+     * keyed 'order:<id>' (render-create.js:1220). Refunding it was missed
+     * entirely: the old code returned early on ctx.creationId with the comment
+     * "dev render: nothing was charged", which was true only while the dev key
+     * was the sole way a creation id reached here. Credit renders now identify
+     * themselves on every poll, so a dead one would otherwise be marked failed
+     * and silently keep the money.
+     */
+    if (!paidSessionId && ctx.order.user_id) {
+      const { data: spend } = await ctx.db.from('credit_ledger')
+        .select('delta')
+        .eq('user_id', ctx.order.user_id)
+        .eq('kind', 'spend')
+        .eq('ref', 'order:' + ctx.order.id)
+        .maybeSingle();
+      const amount = spend ? Math.abs(Number(spend.delta) || 0) : 0;
+      if (!amount) return none;
+      /* Same ref render-create.js:1309 uses when job creation itself fails, so
+       * the two paths can never both pay out for one order. */
+      await ctx.db.rpc('credit_refund', {
+        p_user: ctx.order.user_id,
+        p_amount: amount,
+        p_ref: 'order-failed:' + ctx.order.id,
+        p_note: 'Render failed',
+      });
+      await ctx.db.from('orders')
+        .update({ status: 'refunded', refunded_at: new Date().toISOString() })
+        .eq('id', ctx.order.id);
+      return { refunded: true, credits: true };
+    }
+
+    if (ctx.order.status === 'refunded') return { refunded: true, credits: false };
+    if (!process.env.STRIPE_SECRET_KEY) return none;
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const session = await stripe.checkout.sessions.retrieve(paidSessionId);
     const pi = typeof session.payment_intent === 'string'
       ? session.payment_intent
       : session.payment_intent && session.payment_intent.id;
-    if (session.payment_status !== 'paid' || !pi) return false;
+    if (session.payment_status !== 'paid' || !pi) return none;
     try {
       await stripe.refunds.create(
         { payment_intent: pi },
@@ -233,10 +277,10 @@ async function refundFailed(ctx, paidSessionId) {
       .update({ status: 'refunded', refunded_at: new Date().toISOString() })
       .eq('id', ctx.order.id);
     console.log('refunded failed render, session', paidSessionId);
-    return true;
+    return { refunded: true, credits: false };
   } catch (e) {
     console.error('refund on failure errored (will retry on next poll):', e.message);
-    return false;
+    return none;
   }
 }
 
@@ -288,13 +332,15 @@ exports.handler = async (event) => {
 
         // Nothing survived: this is an ordinary total failure, refund the lot.
         if (!good.length) {
-          const refunded = await refundFailed(ctx, q.paid);
+          const r = await refundFailed(ctx, q.paid);
+          const why = explain(failed.status, { refunded: r.refunded, credits: r.credits });
           return json(200, {
             status: 'failed',
-            refunded: refunded,
-            message: refunded
-              ? 'Every creative failed to render. Your payment has been refunded automatically.'
-              : 'Every creative failed to render. No charge stands for a failed render.',
+            reason: why.kind,
+            retryable: why.retryable,
+            refunded: r.refunded,
+            headline: 'Not one of the ' + jobs.length + ' creatives rendered',
+            message: why.message,
           });
         }
 
@@ -321,15 +367,29 @@ exports.handler = async (event) => {
       }
     }
 
-    if (failed) {
+    /*
+     * A whole-order failure, which is only what a NON independent render is.
+     *
+     * The `!isIndependentPack` guard is the point. Without it an unsettled pack
+     * fell straight through this branch the moment its first creative died: the
+     * block above returns only once every job has stopped moving, so a pack with
+     * one failure and nineteen still rendering refunded the entire order and
+     * reported 'failed', throwing away the nineteen that were on their way. The
+     * comment above already promised that nothing is decided until every job has
+     * settled; this is the line that makes it true. An unsettled pack now falls
+     * to the in-progress tail and keeps reporting progress.
+     */
+    if (failed && !isIndependentPack(jobs)) {
       const ctx = await ownedRows(q, event);
-      const refunded = await refundFailed(ctx, q.paid);
+      const r = await refundFailed(ctx, q.paid);
+      const why = explain(failed.status, { refunded: r.refunded, credits: r.credits });
       return json(200, {
         status: 'failed',
-        refunded: refunded,
-        message: refunded
-          ? 'Segment render failed (' + failed.status + '). Your payment has been refunded automatically.'
-          : 'Segment render failed (' + failed.status + '). No charge stands for a failed render.',
+        reason: why.kind,
+        retryable: why.retryable,
+        refunded: r.refunded,
+        headline: why.headline,
+        message: why.message,
       });
     }
 

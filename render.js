@@ -48,7 +48,13 @@
     if (el) el.textContent = Math.round(p) + '%';
   }
 
-  function reveal(order, result) {
+  /* `status` is the whole render-status body, not just its result. A pack that
+   * delivers 19 of 20 comes back completed WITH a partial block and a message
+   * naming the refund (render-status.js:308), and that message used to be
+   * dropped on the floor: nothing in here read s.message or s.partial, so the
+   * customer saw "20 creatives" over a set of 19 and a silent balance change.
+   * Optional, because the sample path reveals a result with no status. */
+  function reveal(order, result, status) {
     clearProductGhost();
     var frame = $('#stage-frame');
     frame.classList.add('done');
@@ -144,6 +150,20 @@
       subMsg = 'Made with the ' + (order.style ? styleLabel(order) + ' style' : order.title) + '. Download it and post.';
     }
     $('#render-sub').textContent = subMsg;
+
+    /* A short pack is not a quiet event. The server already worked out how many
+     * arrived, how many did not and what came back; say it in the note box
+     * rather than under the headline, so it reads as the correction it is and
+     * does not fight the delivery copy above it. */
+    if (status && status.partial) {
+      var p = status.partial;
+      var note = $('#render-note');
+      note.textContent = status.message ||
+        (p.delivered + ' of ' + p.of + ' creatives arrived. You were not charged for the rest.');
+      note.hidden = false;
+      $('#render-title').textContent = 'Your content is ready, minus ' +
+        (p.failed === 1 ? 'one' : p.failed) + ' that did not render';
+    }
   }
 
   /* The style's display name, preferring the one the studio already stored.
@@ -403,17 +423,86 @@
     }, 200);
   }
 
-  /* Live: poll the backend until every segment job resolves. paidSession
-   * rides along so the backend can write the finished result to the buyer's
-   * library, and refund automatically if the render dies. */
+  /*
+   * Live: poll the backend until every segment job resolves.
+   *
+   * The poll is not read-only. render-status is where the library row gets
+   * marked complete and where a dead render gets refunded, and it can only do
+   * either for a render it can identify. A card order is identified by
+   * ?paid=<Stripe session>; a credit order has no session, so the handle is
+   * ?creation=<id> plus the bearer token that proves the row is the caller's
+   * (render-status.js:82 loads the row and compares user_id against the JWT).
+   *
+   * Sending neither, which is what this did, makes ownedRows return a bare
+   * { db }: refundFailed returns false, refundLostCreatives returns 0, and
+   * recordCompleted never fires, so a credit render was never refunded when it
+   * died and stayed 'rendering' in the library forever even when it succeeded.
+   *
+   * The token is read on every tick rather than captured once, because a long
+   * render outlives the access token that started it.
+   */
+
+  /* Two ceilings, because a poll can end in two different ways and only one of
+   * them is about the render.
+   *
+   * POLL_DEADLINE_MS is wall clock, not a tick count, because the honest
+   * duration varies by two orders of magnitude: a 20 image pack settles in
+   * minutes, a 32 segment video does not. Forty-five minutes is past anything
+   * we have measured and still finite.
+   *
+   * POLL_ERROR_LIMIT counts CONSECUTIVE unreadable answers. A 502 from the
+   * status endpoint returns an HTML body, so r.json() rejects and the old code
+   * retried forever on a three second timer, spinning on the last percentage
+   * with nothing on screen ever changing. One blip is not an outage, so the
+   * counter resets on the first readable answer and the delay backs off. */
+  var POLL_DEADLINE_MS = 45 * 60 * 1000;
+  var POLL_ERROR_LIMIT = 8;
+
   function pollLive(order, jobsCsv, paidSession) {
     var pct = 4;
+    var started = Date.now();
+    var errors = 0;
     var qs = '?jobs=' + encodeURIComponent(jobsCsv) +
-      (paidSession ? '&paid=' + encodeURIComponent(paidSession) : '');
+      (paidSession ? '&paid=' + encodeURIComponent(paidSession) : '') +
+      (order.creation ? '&creation=' + encodeURIComponent(order.creation) : '');
+
+    /* Losing the progress feed is not the render failing, and saying "we could
+     * not finish this render" when the jobs are still running would be a lie
+     * that also invites a second charge. The work continues server-side and
+     * render-status writes the result to the library either way. */
+    function lostFeed() {
+      setStep(2);
+      $('#render-kicker').textContent = 'Still rendering';
+      $('#render-title').textContent = 'This is taking longer than the live view can wait';
+      $('#render-sub').textContent = 'Your render is still running on our side. Nothing is lost and nothing else is charged.';
+      var note = $('#render-note');
+      note.hidden = false;
+      note.textContent = 'It lands in your library the moment it finishes. Refresh this page to rejoin the live view, or open your account and it will be there.';
+    }
+
+    function retry(delay) {
+      if (Date.now() - started > POLL_DEADLINE_MS) { lostFeed(); return; }
+      setTimeout(tick, delay);
+    }
+
+    function onUnreadable() {
+      errors += 1;
+      if (errors >= POLL_ERROR_LIMIT) { lostFeed(); return; }
+      retry(Math.min(15000, 3000 + errors * 2000));
+    }
+
     function tick() {
-      fetch(STATUS_URL + qs)
+      var headers = {};
+      var token = window.HexaAuth && window.HexaAuth.accessToken && window.HexaAuth.accessToken();
+      if (token) headers.Authorization = 'Bearer ' + token;
+      fetch(STATUS_URL + qs, { headers: headers })
         .then(function (r) { return r.json(); })
         .then(function (s) {
+          /* An answer with no status is an error body, not progress. Without
+           * this branch it fell straight through to the retry below and the
+           * page span forever on whatever percentage it had reached. */
+          if (!s || !s.status) { onUnreadable(); return; }
+          errors = 0;
           if (s.step) setStep(STEPS.indexOf(s.step));
           if (typeof s.pct === 'number') { pct = s.pct; setPct(pct); }
           else { pct = Math.min(94, pct + 3); setPct(pct); }
@@ -423,11 +512,12 @@
             $('#render-sub').textContent = 'Rendering scene ' + Math.min(s.segmentsDone + 1, s.segmentsTotal) +
               ' of ' + s.segmentsTotal + ' of your ' + filmName + '.';
           }
-          if (s.status === 'completed' && s.result) { setPct(100); reveal(order, s.result); return; }
-          if (s.status === 'failed') { failState(s.message); return; }
-          setTimeout(tick, 3000);
+          if (s.status === 'completed' && s.result) { setPct(100); reveal(order, s.result, s); return; }
+          if (s.status === 'failed') { failState(s.message, s); return; }
+          retry(3000);
         })
-        .catch(function () { setTimeout(tick, 4000); });
+        // A 502 answers with an HTML body, so r.json() rejects and lands here.
+        .catch(function () { onUnreadable(); });
     }
     tick();
   }
@@ -600,12 +690,29 @@
     note.textContent = 'Your order is saved. Close this page and come back any time. Questions? Reply to your receipt and we take care of it.';
   }
 
-  function failState(msg) {
-    $('#render-kicker').textContent = 'Render interrupted';
-    $('#render-title').textContent = 'We could not finish this render';
+  /*
+   * A dead render, said the way it actually happened.
+   *
+   * `retryable` comes from the server (lib/failure.js) and decides the advice,
+   * because the two cases want opposite instructions. A tripped safety filter
+   * is deterministic: the same brief refuses again, so "run it again" spends
+   * the refund we just issued and lands the customer in the same place. An
+   * engine fault is the opposite, and another go is the right answer.
+   *
+   * Defaults to retryable, since every caller that passes nothing is a local
+   * failure to start the render, where trying again is sound.
+   */
+  function failState(msg, status) {
+    var declined = status && status.retryable === false;
+    $('#render-kicker').textContent = declined ? 'Not rendered' : 'Render interrupted';
+    // The server sends the headline it classified, so the title and the
+    // paragraph beneath it cannot end up saying the same sentence twice.
+    $('#render-title').textContent = (status && status.headline) || 'We could not finish this render';
     $('#render-sub').textContent = msg || 'Something interrupted this render. You are never charged for work we do not deliver.';
     $('#render-note').hidden = false;
-    $('#render-note').textContent = 'Run it again from the studio, or reply to your confirmation email and we will make it right.';
+    $('#render-note').textContent = declined
+      ? 'Adjust the brief or the product photo in the studio and run it again. Reply to your confirmation email if you want a hand with the wording.'
+      : 'Run it again from the studio, or reply to your confirmation email and we will make it right.';
   }
 
   /* Preview the delivered ad pack without buying one.

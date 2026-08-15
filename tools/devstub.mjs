@@ -187,14 +187,16 @@ const server = http.createServer(async (req, res) => {
 
   if (p.startsWith('/__stub')) {
     const want = p.split('/')[2];
-    if (want && ['full', 'anon', 'building'].includes(want)) MODE = want;
+    if (want && ['full', 'anon', 'building', 'partial', 'feeddown'].includes(want)) MODE = want;
     return send(res, 200,
       `<!doctype html><meta charset=utf-8><title>stub: ${MODE}</title>` +
       `<body style="font:16px system-ui;background:#0a0608;color:#fff;padding:40px">` +
       `<h1>Stub mode: <b style="color:#ff4d6d">${MODE}</b></h1>` +
       `<p><a style="color:#ff7a8e" href="/__stub/full">full</a> (signed-in: angles + competitor ads)<br>` +
       `<a style="color:#ff7a8e" href="/__stub/anon">anon</a> (free read: angles, no competitor legs)<br>` +
-      `<a style="color:#ff7a8e" href="/__stub/building">building</a> (never finishes, watch the progress UI)</p>` +
+      `<a style="color:#ff7a8e" href="/__stub/building">building</a> (never finishes, watch the progress UI)<br>` +
+      `<a style="color:#ff7a8e" href="/__stub/partial">partial</a> (a pack that delivers 19 of 20, with the refund note)<br>` +
+      `<a style="color:#ff7a8e" href="/__stub/feeddown">feeddown</a> (render-status 502s: the poll must give up, not spin)</p>` +
       `<p><a style="color:#ff7a8e" href="/">back to the site</a></p>`,
       'text/html; charset=utf-8');
   }
@@ -244,6 +246,27 @@ const server = http.createServer(async (req, res) => {
   if (p.includes('/render-status')) {
     if (MODE === 'building') {
       return json(res, { status: 'in_progress', step: 'generate', pct: 62, segmentsTotal: 2, segmentsDone: 1 });
+    }
+    /* The progress feed is down while the render itself may be fine. Netlify
+     * answers a function timeout with an HTML body, not JSON, which is exactly
+     * why the page's r.json() rejects rather than returning an error object. */
+    if (MODE === 'feeddown') {
+      return send(res, 502, '<html><body>502 Bad Gateway</body></html>', 'text/html; charset=utf-8');
+    }
+    /* A pack where some creatives died. Shape copied from render-status.js:304:
+     * still `completed` with a full result, plus `partial` and the message that
+     * names the refund. The delivered set is genuinely short of `of`, because
+     * that is the case the delivery copy has to survive. */
+    if (MODE === 'partial') {
+      const urls = Array.from({ length: 19 }, () => '/assets/film/seg-01.jpg');
+      return json(res, {
+        status: 'completed',
+        step: 'finish',
+        pct: 100,
+        partial: { delivered: 19, of: 20, failed: 1, creditsReturned: 45 },
+        message: '1 creative failed to render and 45 credits were returned to your balance.',
+        result: { url: urls[0], urls, type: 'image', thumbnail: null },
+      });
     }
     return json(res, {
       status: 'completed',

@@ -48,6 +48,7 @@ const { createRequire } = await import('node:module');
 const require = createRequire(import.meta.url);
 const hf = require(join(ROOT, 'netlify/functions/lib/hf.js'));
 const { planOrder } = require(join(ROOT, 'netlify/functions/render-create.js'));
+const { DEAD } = require(join(ROOT, 'netlify/functions/lib/failure.js'));
 
 /* ── args ── */
 const args = process.argv.slice(2);
@@ -71,7 +72,7 @@ async function waitForJob(id, label) {
   for (;;) {
     const job = await hf.getJob(id);
     if (job.status === 'completed') return job;
-    if (['failed', 'canceled', 'cancelled', 'nsfw', 'error'].includes(String(job.status))) {
+    if (DEAD.includes(String(job.status))) {
       throw new Error(label + ' ' + job.status);
     }
     process.stdout.write(`\r${label}: ${job.status} (${Math.round((Date.now() - started) / 1000)}s) `);
