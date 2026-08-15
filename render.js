@@ -15,6 +15,7 @@
   var STATUS_URL = '/.netlify/functions/render-status';
   var CREATE_URL = '/.netlify/functions/render-create';
   var REVISE_URL = '/.netlify/functions/render-revise';
+  var RECOVER_URL = '/.netlify/functions/order-recover';
   var DELIVERY_WINDOW = 'within 24 hours';
 
   var STEPS = ['research', 'brief', 'generate', 'finish'];
@@ -744,25 +745,76 @@
       .catch(function () { failState('Could not load the preview.'); });
   }
 
+  /* No order in the browser, and no payment to recover one from. */
+  function noOrderState() {
+    $('#render-kicker').textContent = 'Hexa Studio';
+    $('#render-title').textContent = 'No order in progress';
+    $('#render-sub').textContent = 'Start a creation in the studio and it appears here.';
+    $('#render-steps').hidden = true;
+    $('#render-actions').hidden = false;
+    $('#render-actions').classList.add('no-download');
+  }
+
+  /*
+   * Arriving from Stripe with nothing in localStorage.
+   *
+   * This used to be a dead end: the no-order branch ran before the ?paid=
+   * branch, so a paying customer whose storage was empty read "No order in
+   * progress. Start a creation in the studio." with their card already charged.
+   * A different browser finishing the payment, private mode, a cleared site or
+   * an in-app browser handing off to Safari all land there.
+   *
+   * order-recover hands back the order the server itself wrote at checkout, so
+   * the page carries on as though nothing was lost. It is also the more trusted
+   * copy: server-written, never round-tripped through the client.
+   */
+  function recoverPaidOrder(sessionId) {
+    $('#render-kicker').textContent = 'Payment received';
+    $('#render-title').textContent = 'Finding your order';
+    $('#render-sub').textContent = 'One moment while we pick your order back up.';
+    fetch(RECOVER_URL + '?paid=' + encodeURIComponent(sessionId))
+      .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d); }); })
+      .then(function (d) {
+        if (!d.order || !d.order.product) return Promise.reject(d);
+        try { localStorage.setItem('hexa-studio-order', JSON.stringify(d.order)); } catch (e) {}
+        startOrder(d.order);
+      })
+      .catch(function (d) {
+        console.error('order recovery failed', d);
+        /* Still never a dead end. The payment is real whatever happened here,
+         * so this says so and points at the two places the order will appear
+         * without asking anyone to pay again. */
+        $('#render-kicker').textContent = 'Payment received';
+        $('#render-title').textContent = 'Your order is safe';
+        $('#render-sub').textContent = 'We could not pick your order back up in this browser, but the payment went through and the order is on our side.';
+        $('#render-steps').hidden = true;
+        var note = $('#render-note');
+        note.hidden = false;
+        note.textContent = 'It lands in your library and in your inbox. Sign in to your account to watch it, or reply to your receipt and we will pick it up from there. Do not pay again.';
+      });
+  }
+
   function boot() {
     var y = $('#y'); if (y) y.textContent = String(new Date().getFullYear());
 
-    if (new URLSearchParams(window.location.search).get('preview') === 'adpack') {
+    var bootParams = new URLSearchParams(window.location.search);
+    if (bootParams.get('preview') === 'adpack') {
       previewAdPack();
       return;
     }
 
     var order = readOrder();
     if (!order) {
-      $('#render-kicker').textContent = 'Hexa Studio';
-      $('#render-title').textContent = 'No order in progress';
-      $('#render-sub').textContent = 'Start a creation in the studio and it appears here.';
-      $('#render-steps').hidden = true;
-      $('#render-actions').hidden = false;
-      $('#render-actions').classList.add('no-download');
+      // The paid check comes FIRST now. Ordering was the whole bug.
+      var lostPaid = bootParams.get('paid');
+      if (lostPaid) { recoverPaidOrder(lostPaid); return; }
+      noOrderState();
       return;
     }
+    startOrder(order);
+  }
 
+  function startOrder(order) {
     // shape the stage to the chosen aspect ratio
     var aspect = (order.selections && order.selections.aspect) || '9:16';
     $('#render-stage').setAttribute('data-aspect', aspect);

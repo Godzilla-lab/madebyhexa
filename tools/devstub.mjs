@@ -161,7 +161,7 @@ function send(res, code, body, type = 'application/json; charset=utf-8') {
   res.end(buf);
 }
 
-const json = (res, obj) => send(res, 200, JSON.stringify(obj));
+const json = (res, obj, status = 200) => send(res, status, JSON.stringify(obj));
 
 async function serveStatic(res, urlPath) {
   // Clean URLs, matching how Netlify serves this site: /validate -> validate.html
@@ -243,6 +243,24 @@ const server = http.createServer(async (req, res) => {
    * `building` holds it mid-render on purpose, the same way report-status does,
    * so the progress UI can be watched. The step must be one of render.js's
    * STEPS or setStep gets an index of -1 and lights nothing. */
+  /* Coming back from Stripe with nothing in localStorage. The real function
+   * rebuilds this from the orders row create-checkout wrote, so the fixture
+   * returns the same shape: product and selections exactly as priced.
+   * ?paid=cs_test_missing stands in for a session with no order behind it. */
+  if (p.includes('/order-recover')) {
+    if (url.searchParams.get('paid') === 'cs_test_missing') {
+      return json(res, { error: 'no order for that session' }, 404);
+    }
+    return json(res, { order: {
+      product: 'mode:ugc',
+      style: 'golden-hour-ugc',
+      title: 'Golden hour UGC',
+      price: 23,
+      recovered: true,
+      selections: { aspect: '9:16', duration: 30, styleName: 'Golden hour UGC', productName: 'Blender' },
+    } });
+  }
+
   if (p.includes('/render-status')) {
     if (MODE === 'building') {
       return json(res, { status: 'in_progress', step: 'generate', pct: 62, segmentsTotal: 2, segmentsDone: 1 });

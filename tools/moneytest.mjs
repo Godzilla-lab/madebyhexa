@@ -81,14 +81,27 @@ function makeDb(seed) {
 
 /* Install fakes ahead of the handler, so it requires ours rather than the
  * real modules. */
-function install({ jobs, db, user }) {
+function install({ jobs, db, user, stripeSession }) {
   for (const k of Object.keys(require.cache)) {
-    if (k.includes('/netlify/functions/')) delete require.cache[k];
+    if (k.includes('/netlify/functions/') || k.includes('/node_modules/stripe/')) delete require.cache[k];
   }
   const stub = (rel, exports) => {
     const p = require.resolve(join(ROOT, rel));
     require.cache[p] = { id: p, filename: p, loaded: true, exports };
   };
+  if (stripeSession !== undefined) {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_fake';
+    const p = require.resolve('stripe');
+    require.cache[p] = {
+      id: p, filename: p, loaded: true,
+      exports: () => ({
+        checkout: { sessions: { retrieve: () => stripeSession
+          ? Promise.resolve(stripeSession)
+          : Promise.reject(new Error('No such checkout.session')) } },
+        refunds: { create: () => Promise.resolve({ id: 're_1' }) },
+      }),
+    };
+  }
   stub('netlify/functions/lib/hf.js', {
     configured: () => true,
     getJob: (id) => Promise.resolve(jobs[id]),
@@ -97,7 +110,10 @@ function install({ jobs, db, user }) {
   stub('netlify/functions/lib/auth.js', { getUser: () => Promise.resolve(user), bearer: () => 'tok' });
   stub('netlify/functions/lib/ratelimit.js', { allow: () => Promise.resolve(true), ipOf: () => '1.1.1.1' });
   stub('netlify/functions/lib/blobs-context.js', { connect: () => {} });
-  return require(join(ROOT, 'netlify/functions/render-status.js'));
+  return {
+    status: require(join(ROOT, 'netlify/functions/render-status.js')),
+    recover: require(join(ROOT, 'netlify/functions/order-recover.js')),
+  };
 }
 
 const USER = { userId: 'user-1' };
@@ -110,7 +126,8 @@ function seedCreditOrder(spendDelta = -80) {
   };
 }
 
-const call = (mod, q) => mod.handler({ queryStringParameters: q, headers: { authorization: 'Bearer tok' } });
+const call = (mod, q) => mod.status.handler({ queryStringParameters: q, headers: { authorization: 'Bearer tok' } });
+const recover = (mod, q) => mod.recover.handler({ httpMethod: 'GET', queryStringParameters: q, headers: {} });
 const body = (res) => JSON.parse(res.body);
 
 console.log('\n  Money path\n');
@@ -198,6 +215,49 @@ console.log('\n  Money path\n');
   await call(mod, { jobs: 'job-1', creation: 'creation-1' });
   check('a stranger cannot drive a refund on your order', db.rpcCalls.length === 0, JSON.stringify(db.rpcCalls));
   check('  and cannot mark your library row failed', db.tables.creations[0].status === 'rendering', db.tables.creations[0].status);
+}
+
+/* ── 7. A paid arrival with no localStorage recovers its order ───── */
+{
+  const seed = {
+    orders: [{
+      id: 'order-9', user_id: 'user-1', status: 'pending',
+      stripe_session_id: 'cs_test_abc1234567890', amount_cents: 2300,
+      product: 'mode:ugc',
+      selections: { aspect: '9:16', duration: 30, style: 'golden-hour-ugc', styleName: 'Golden hour UGC', productName: 'Blender' },
+    }],
+  };
+  const db = makeDb(seed);
+  // user: null is the point. The browser that lost its order lost its auth
+  // session with it, so requiring a token would refuse exactly this case.
+  const mod = install({ jobs: {}, db, user: null, stripeSession: { payment_status: 'paid' } });
+  const res = await recover(mod, { paid: 'cs_test_abc1234567890' });
+  const b = body(res);
+  check('a paid session rebuilds its order with nobody signed in',
+    res.statusCode === 200 && b.order && b.order.product === 'mode:ugc', res.statusCode + ' ' + res.body);
+  check('  with the selections the server priced',
+    b.order.selections.duration === 30 && b.order.selections.style === 'golden-hour-ugc',
+    JSON.stringify(b.order.selections));
+  check('  even while the order row is still pending, since the webhook may lag',
+    db.tables.orders[0].status === 'pending', db.tables.orders[0].status);
+}
+
+/* ── 8. Recovery is not a way to read other people's orders ─────── */
+{
+  const db = makeDb({ orders: [{ id: 'o', stripe_session_id: 'cs_test_real123456', product: 'mode:ugc', selections: {} }] });
+  const mod = install({ jobs: {}, db, user: null, stripeSession: { payment_status: 'paid' } });
+  check('an unknown session recovers nothing',
+    (await recover(mod, { paid: 'cs_test_someoneelse00' })).statusCode === 404);
+  check('a malformed session is refused before any lookup',
+    (await recover(mod, { paid: '../../etc/passwd' })).statusCode === 400);
+}
+
+/* ── 9. An abandoned checkout is not a paid order ────────────────── */
+{
+  const db = makeDb({ orders: [{ id: 'o', stripe_session_id: 'cs_test_unpaid123456', product: 'mode:ugc', selections: {} }] });
+  const mod = install({ jobs: {}, db, user: null, stripeSession: { payment_status: 'unpaid' } });
+  const res = await recover(mod, { paid: 'cs_test_unpaid123456' });
+  check('an unpaid checkout recovers nothing', res.statusCode === 402, res.statusCode + ' ' + res.body);
 }
 
 console.log(`\n  ${fail === 0 ? C.g : C.r}${pass}/${pass + fail} passed${C.x}\n`);
