@@ -36,3 +36,11 @@ WINNING-ADS.md
 # Loose test renders
 Order.mp4
 Order_16s.mp4
+
+# Validation engine working data. The corpus is harvested public content and
+# can grow large; reports are regenerable. Code in research/ IS tracked.
+research/corpus.db
+research/corpus.db-wal
+research/corpus.db-shm
+research/out/
+.uitest/

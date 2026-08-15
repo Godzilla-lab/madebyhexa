@@ -218,10 +218,13 @@ function getWebProduct(id) {
   return api('GET', '/developer/v1alpha/marketing-studio/products/' + encodeURIComponent(id));
 }
 
-/* Turn any public https image into a media UUID usable as a job reference. */
-function uploadImageFromUrl(url) {
-  return api('POST', '/developer/v2alpha/media?type=image', { url: url });
-}
+/* There is deliberately no uploadImageFromUrl here. POSTing { url } to the
+ * media endpoint looks like a URL import and is not one: the endpoint only ever
+ * PRESIGNS, the url in the body is ignored for images exactly as it is for
+ * video, and the media id it returns has no bytes behind it. Passing that id as
+ * an image_reference 500s the generation. Measured live 2026-08-13, after it
+ * silently un-grounded every ad pack and photoshoot. Use uploadImageBytes, or
+ * better, the web product's own media_input_id. */
 
 /* A finished render's CDN URL becomes a media input for post-render jobs
  * (voice_change, dubbing, video_upscale). The media endpoint only PRESIGNS
@@ -250,7 +253,7 @@ function photoshootEnhance(body) {
 }
 
 /* Presigned media upload from raw bytes. This is the flow avatar references
- * require: URL-import media (uploadImageFromUrl) are NOT accepted there. */
+ * require, and the only correct way to turn a URL into usable image media. */
 async function uploadImageBytes(buf, contentType) {
   const media = await api('POST', '/developer/v2alpha/media?type=image', {});
   const put = await fetch(media.upload_url, {
@@ -271,6 +274,6 @@ function createAvatars(items) {
 
 module.exports = {
   api, createJob, getJob, getBalance, configured, apiKey,
-  createWebProduct, getWebProduct, uploadImageFromUrl, uploadVideoFromUrl,
+  createWebProduct, getWebProduct, uploadVideoFromUrl,
   photoshootEnhance, uploadImageBytes, createAvatars,
 };

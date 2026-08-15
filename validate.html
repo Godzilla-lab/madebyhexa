@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Hexa Research · What your market actually says about your product</title>
+  <meta name="description" content="Paste your product link. We read what real buyers say, which competitor ads have been running longest, and whether your category is won by video or statics. Every claim carries a receipt." />
+  <meta name="theme-color" content="#0a0608" />
+
+  <meta property="og:title" content="Hexa Research · What your market actually says about your product" />
+  <meta property="og:description" content="Paste your product link and see what real buyers say, which competitor ads are proven winners, and the angles to run." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://madebyhexa.co/validate" />
+  <meta property="og:image" content="https://madebyhexa.co/assets/brand/og-card.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Hexa Research · What your market actually says about your product" />
+  <meta name="twitter:description" content="Paste your product link and see what real buyers say, which competitor ads are proven winners, and the angles to run." />
+  <meta name="twitter:image" content="https://madebyhexa.co/assets/brand/og-card.jpg" />
+
+  <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
+  <link rel="apple-touch-icon" href="assets/brand/hexa-logo.avif" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@300..900&display=swap" rel="stylesheet" />
+
+
+<link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="studio.css" />
+  <link rel="stylesheet" href="render.css" />
+  <link rel="stylesheet" href="validate.css" />
+  <script src="pixels.js"></script>
+</head>
+<body class="validate" data-track="view-content">
+  <div class="bg-grid" aria-hidden="true"></div>
+
+
+  <header class="nav">
+    <a class="brand" href="/" aria-label="Hexa AI home">
+      <img class="brand-logo" src="assets/brand/hexa-logo.avif" alt="Hexa AI" width="32" height="32" decoding="async" />
+      <span class="brand-name">Hexa<span class="brand-dot">·</span>AI</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/#styles">Styles</a>
+      <a href="/#modes">Modes</a>
+      <a href="/validate" aria-current="page">Research</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/login.html" id="nav-account">Sign in</a>
+      <a href="/#composer" class="nav-cta">Create</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ── Entry ─────────────────────────────────────────────── -->
+    <section class="vd-hero" id="top">
+      <h1>We figure out what sells your product</h1>
+      <p>
+        Paste your product link. We find out what customers care about, what they worry
+        about, what competitors are already saying, and what nobody is saying yet. Then we
+        tell you what to advertise.
+      </p>
+
+      <form class="vd-form" id="vd-form" autocomplete="off">
+        <label class="sr-only" for="vd-url">Your product link</label>
+        <input id="vd-url" name="url" type="url" inputmode="url" required
+               placeholder="https://yourstore.com/products/..." />
+        <button type="submit" id="vd-go">Read my market</button>
+      </form>
+      <p class="vd-note">Free. No account needed to see the first findings.</p>
+    </section>
+
+    <!-- ── Progress, reusing the existing render-steps component ─ -->
+    <section class="vd-report" id="vd-progress" hidden aria-live="polite">
+      <p class="vd-working">We're figuring out what sells this product.</p>
+      <ol class="render-steps" id="vd-steps"></ol>
+      <p class="vd-working-note">This usually takes 1 to 3 minutes. You can leave this page open.</p>
+    </section>
+
+    <!-- ── The report ────────────────────────────────────────── -->
+    <div class="vd-report" id="vd-out" hidden></div>
+  </main>
+
+  <footer class="site-foot">
+    <p>
+      <a href="/">Hexa AI</a> · <a href="/terms.html">Terms</a> ·
+      <a href="/privacy.html">Privacy</a> · <a href="/refund.html">Refunds</a>
+    </p>
+    <p class="foot-fine">
+      Research is synthesised from public discussion and public ad libraries. Every quote
+      links to its source so you can check it yourself.
+    </p>
+  </footer>
+
+  <script src="/vendor/supabase.js"></script>
+  <script src="auth.js"></script>
+  <script src="nav-auth.js"></script>
+  <script src="validate.js"></script>
+</body>
+</html>

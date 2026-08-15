@@ -1,5 +1,7 @@
 'use strict';
 
+const { allow } = require('./lib/ratelimit');
+
 /*
  * Server-side conversion tracking for BOTH TikTok (Events API v1.3) and
  * Meta (Conversions API / Graph API). One same-origin call from the browser,
@@ -37,6 +39,11 @@ function sha256(s) {
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method not allowed' };
+
+  // Analytics beacon: unauthenticated by nature, so it is the easiest thing
+  // on the site to flood. Forwarding junk to TikTok and Meta poisons the
+  // pixel data we make ad decisions on.
+  if (!(await allow('track', event, 1000))) return json(200, { ok: false, reason: 'rate_limited' });
 
   const ttToken = process.env.TIKTOK_ACCESS_TOKEN;
   const metaToken = process.env.META_ACCESS_TOKEN;

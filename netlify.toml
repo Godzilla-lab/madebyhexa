@@ -2,6 +2,16 @@
   publish = "."
   functions = "netlify/functions"
 
+  [build.environment]
+    # Pinned, not left to Netlify's rolling default.
+    #
+    # The research CLI stores its corpus in node:sqlite, which only exists from
+    # Node 22, and the functions use fetch, structuredClone and top-level await
+    # throughout. An unpinned runtime means Netlify can move us onto a version
+    # where a cold start fails on a builtin that is simply not there, and the
+    # first sign of it would be a background worker that never reports.
+    NODE_VERSION = "22"
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"

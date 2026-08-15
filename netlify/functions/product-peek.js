@@ -15,6 +15,8 @@
 'use strict';
 
 const dns = require('dns').promises;
+const unlocker = require('./lib/unlocker');
+const { allow } = require('./lib/ratelimit');
 
 const DEADLINE_MS = 5000;
 const SHOPIFY_MS = 2000;
@@ -30,6 +32,12 @@ const cache = new Map(); // url -> { ts, data }
  * small cached webp, same-origin. Hosts must match netlify.toml
  * [images].remote_images. */
 const CDN_IMAGE_HOSTS = /^https:\/\/(d2ol7oe51mr4n9|d8j0ntlcm91z4)\.cloudfront\.net\//i;
+
+/* One Blobs key per URL for the unlocked read, shared by the peek, the poll
+ * and the background worker. A page is unlocked once for everybody. */
+function unlockKey(href) {
+  return 'unlock:' + href;
+}
 
 function cdnImage(u) {
   if (!u || !CDN_IMAGE_HOSTS.test(u)) return u;
@@ -607,6 +615,61 @@ function slugGuess(target) {
   return { title, image: null, siteName, price: null, currency: null };
 }
 
+/* ── Bright Data leg ──────────────────────────────────────────────
+ * Reading the cache is cheap and safe from anywhere; writing it and paying
+ * for the unlock happens in product-unlock-background, which has minutes to
+ * work with instead of this function's ten seconds. */
+async function readUnlocked(href) {
+  try {
+    const { getStore } = require('@netlify/blobs');
+    const rec = await getStore('peeks').get(unlockKey(href), { type: 'json' });
+    return rec && rec.image ? rec : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/*
+ * Kick off the unlock worker.
+ *
+ * This IS awaited, and it has to be. "Fire and forget" is not a thing in a
+ * Lambda: the container is frozen the moment the handler returns, so an
+ * unawaited fetch is simply never sent. Measured on a live draft 2026-08-13,
+ * with the token present, the secret present and the URL correct, the worker
+ * still only ever ran when invoked by hand. Awaiting costs almost nothing,
+ * because a background function answers 202 immediately and does its real work
+ * after we are gone. render-status awaits its stitcher invoke for exactly the
+ * same reason.
+ */
+async function startUnlock(href, event) {
+  if (!unlocker.configured() || !process.env.WEBHOOK_SECRET) return;
+  /*
+   * Self-invoke on the host that served THIS request, taken from the request
+   * itself rather than from the environment.
+   *
+   * The env route does not survive contact with reality: process.env.URL is
+   * always the production address, and DEPLOY_URL is a build variable that is
+   * not reliably present in the function runtime. A draft that fell back to URL
+   * posted its work at the live site, where a brand new function does not exist
+   * yet, got a 404, and swallowed it. Measured on a live draft 2026-08-13: the
+   * background worker only ever ran when invoked by hand.
+   *
+   * The host header is the one thing that is always correct for the deploy
+   * actually handling the request.
+   */
+  const h = event && event.headers ? event.headers : {};
+  const host = h['x-forwarded-host'] || h['X-Forwarded-Host'] || h.host || h.Host;
+  const base = host
+    ? 'https://' + String(host).replace(/\/$/, '')
+    : (process.env.DEPLOY_URL || process.env.URL || '').replace(/\/$/, '');
+  if (!base) return;
+  await fetch(base + '/.netlify/functions/product-unlock-background', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-unlock-key': process.env.WEBHOOK_SECRET },
+    body: JSON.stringify({ url: href }),
+  }).catch(function (e) { console.log('[product-peek] unlock invoke failed:', e.message); });
+}
+
 /* ── Handler ──────────────────────────────────────────────────── */
 
 exports.handler = async (event) => {
@@ -617,11 +680,72 @@ exports.handler = async (event) => {
   // direct fetch (bot-protected DTC stores). The initial peek returns a
   // webProductId; the client polls here until the scrape finishes and its
   // re-hosted product image is ready. GET ?webProduct=<id>
+  /* Guarded self-check. Answers "is the Bright Data leg actually armed in this
+   * runtime", which is otherwise invisible: startUnlock is fire-and-forget by
+   * design, so every way it can fail fails silently. Requires the shared
+   * secret, so it tells the public nothing. */
+  if (event.queryStringParameters && event.queryStringParameters.diag) {
+    const given = (event.headers && (event.headers['x-unlock-key'] || event.headers['X-Unlock-Key'])) || '';
+    if (!process.env.WEBHOOK_SECRET || given !== process.env.WEBHOOK_SECRET) return json(404, { ok: false });
+    const h = event.headers || {};
+    return json(200, {
+      unlockerConfigured: unlocker.configured(),
+      hasWebhookSecret: !!process.env.WEBHOOK_SECRET,
+      hasBrightToken: !!process.env.BRIGHTDATA_API_TOKEN,
+      hasBrightZone: !!process.env.BRIGHTDATA_UNLOCKER_ZONE,
+      envUrl: process.env.URL || null,
+      envDeployUrl: process.env.DEPLOY_URL || null,
+      hostHeader: h['x-forwarded-host'] || h.host || null,
+    }, 'no-store');
+  }
+
   const wpId = event.queryStringParameters && event.queryStringParameters.webProduct;
+
+  /*
+   * Two very different costs behind one endpoint, so two very different limits.
+   *
+   * A paste (?url=) starts an engine scrape and can invoke the Bright Data
+   * unlocker at $0.0015 a call, so an unlimited peek is a way to spend our
+   * money from a browser with no account. A poll (?webProduct=) is one cheap
+   * status read, but the studio polls it every couple of seconds for up to
+   * three minutes, so a single honest customer legitimately makes ~90 calls.
+   * One shared bucket would either bankrupt us or cut off a paying user
+   * mid-render; these numbers are set so neither happens.
+   */
+  const limited = wpId
+    ? !(await allow('peek-poll', event, 3000))
+    : !(await allow('peek', event, 300));
+  if (limited) {
+    return json(429, { ok: false, error: 'Too many requests. Give it a minute and try again.' }, 'no-store');
+  }
+
   if (wpId) {
+    /*
+     * NEVER cacheable. This is a polling endpoint: the client asks the same URL
+     * over and over precisely because the answer is expected to change. The
+     * shared json() helper defaults to a five minute public cache, which meant
+     * the browser and the CDN pinned the FIRST answer, always "not ready yet",
+     * and re-served it for five minutes. The photo could not arrive however
+     * fast we fetched it, which is exactly the "it only works after a while"
+     * behaviour: it worked when the cache finally expired. Measured on a live
+     * draft 2026-08-13, cache-control: public,max-age=300 on a poll response.
+     */
+    const NO_CACHE = 'no-store, max-age=0';
+
+    // Bright Data usually beats the engine to it. The unlocked read lands in
+    // 5 to 10 seconds where the engine scrape takes 10 to 60 and frequently
+    // fails outright, so whatever the background worker has already cached is
+    // checked before asking the engine anything. GET ?webProduct=<id>&url=<href>
+    const pollUrl = (event.queryStringParameters && event.queryStringParameters.url) || '';
+    if (pollUrl) {
+      const un = await readUnlocked(pollUrl);
+      if (un && un.image) {
+        return json(200, { ok: true, ready: true, failed: false, image: un.image, title: un.title || null }, NO_CACHE);
+      }
+    }
     try {
       const hf = require('./lib/hf');
-      if (!hf.configured()) return json(200, { ok: false, ready: true });
+      if (!hf.configured()) return json(200, { ok: false, ready: true }, NO_CACHE);
       const wp = await hf.getWebProduct(wpId);
       const media = wp && Array.isArray(wp.medias) && wp.medias[0];
       const image = media && /^https:\/\//i.test(media.url || '') ? cdnImage(media.url) : null;
@@ -632,9 +756,9 @@ exports.handler = async (event) => {
       if (title && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(title.trim())) title = null;
       // failed: the scrape finished with nothing. Tell the client plainly so
       // it can ask for a fresh attempt instead of waiting forever.
-      return json(200, { ok: !!image, ready: done, failed: done && !image, image, title: title ? title.slice(0, 90) : null });
+      return json(200, { ok: !!image, ready: done, failed: done && !image, image, title: title ? title.slice(0, 90) : null }, NO_CACHE);
     } catch (e) {
-      return json(200, { ok: false, ready: false });
+      return json(200, { ok: false, ready: false }, NO_CACHE);
     }
   }
 
@@ -764,6 +888,41 @@ exports.handler = async (event) => {
     }
   }
 
+  /*
+   * 2a-bis) The store refused us. This is the common case, not the edge one:
+   * about a third of real DTC storefronts will not answer a datacenter fetch,
+   * and their Shopify JSON is walled with them, so there is nothing free left
+   * to try. Bright Data reads the page as a residential visitor and gets the
+   * real metadata.
+   *
+   * It is NOT raced inline here. The unlocker needs 5 to 10 seconds and this
+   * function dies at 10, so an inline attempt short enough to be safe is also
+   * short enough to lose almost every time, and losing still costs a call. So
+   * the work is handed to the background worker and the paste returns now; the
+   * client is already polling and picks the photo up seconds later.
+   *
+   * A read that already happened is free and instant, so that is checked first.
+   * Cached per URL, which means a product page is unlocked once for every
+   * customer who ever pastes it, not once per visitor.
+   */
+  if (!social && !data.image && unlocker.configured()) {
+    const cachedUnlock = await readUnlocked(target.href);
+    if (cachedUnlock && cachedUnlock.image) {
+      data = {
+        ok: true,
+        url: raw,
+        title: (data.ok && data.title && !data.guessed) ? data.title : (cachedUnlock.title || data.title || null),
+        image: cachedUnlock.image,
+        siteName: (data.ok && data.siteName) || cachedUnlock.siteName || null,
+        price: (data.ok && data.price) || cachedUnlock.price || null,
+        currency: (data.ok && data.currency) || cachedUnlock.currency || null,
+      };
+      delete data.guessed;
+    } else {
+      await startUnlock(target.href, event);
+    }
+  }
+
   // 2b) guarded page, no photo yet: the Internet Archive's copy of the same
   // page usually carries the metadata the live page refused to give us.
   // Runs for any host; social links are excluded (a post is not a product).
@@ -865,3 +1024,15 @@ exports.handler = async (event) => {
   }
   return json(200, data, complete ? undefined : 'public, max-age=15');
 };
+
+/* Shared with product-unlock-background, which reads a blocked page through
+ * Bright Data and needs the exact same extraction and validation this handler
+ * uses. Exported rather than duplicated: two copies of "what counts as a
+ * product image" would drift, and the divergence would only show up on the
+ * stores we already struggle with. */
+exports.extract = extract;
+exports.metaContent = metaContent;
+exports.validateImage = validateImage;
+exports.cdnImage = cdnImage;
+exports.guardUrl = guardUrl;
+exports.unlockKey = unlockKey;

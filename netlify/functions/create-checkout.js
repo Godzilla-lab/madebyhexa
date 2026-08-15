@@ -62,6 +62,9 @@ const TIERS = {
 // Studio pricing oracle: catalog/pricing.json via lib/pricing.js. studio.js
 // mirrors the same math client-side for display; this copy is authoritative.
 const { priceStudioOrder } = require('./lib/pricing');
+/* Credit packs come from the same catalogue the item prices do, so the amount
+ * charged and the credits granted can never drift apart. */
+const CREDIT_PACKS = require('../../catalog/pricing.json').credit_packs || [];
 const { getUser } = require('./lib/auth');
 const sb = require('./lib/supabase');
 const { allow } = require('./lib/ratelimit');
@@ -129,10 +132,12 @@ exports.handler = async (event) => {
 
   let tier;
   let studioOrder = null;
+  let creditPack = '';
   try {
     const body = JSON.parse(event.body || '{}');
     tier = String(body.tier || '').toLowerCase();
     if (body.order) studioOrder = body.order;
+    creditPack = String(body.creditPack || '');
   } catch (_) {
     return json(400, { error: 'Bad request' });
   }
@@ -146,6 +151,80 @@ exports.handler = async (event) => {
   ).replace(/\/$/, '');
 
   const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+  /*
+   * ── Credit top-up path ──
+   *
+   * The pack id is the ONLY thing taken from the browser. Both the price and
+   * the credit amount are looked up server-side from catalog/pricing.json,
+   * because a request that could name its own amount is a request that can buy
+   * a million credits for a dollar. Same reason priceStudioOrder reprices every
+   * studio order rather than trusting the number the page sent.
+   *
+   * The credits are NOT granted here. They are granted by the Stripe webhook on
+   * checkout.session.completed, keyed to the session id, because this function
+   * runs before any money has moved and an abandoned checkout must not top up a
+   * balance.
+   */
+  if (creditPack) {
+    const pack = CREDIT_PACKS.find((p) => p.id === creditPack);
+    if (!pack) return json(400, { error: 'Unknown credit pack' });
+
+    const user = await getUser(event);
+    if (!user) return json(401, { error: 'Please sign in to buy credits.' });
+    if (!(await allow('checkout', event, 20))) {
+      return json(429, { error: 'Too many checkout attempts. Please try again in a bit.' });
+    }
+
+    let customerId = null;
+    try {
+      customerId = await stripeCustomerFor(stripe, user);
+    } catch (e) {
+      console.error('checkout: could not resolve Stripe customer:', e.message);
+    }
+
+    try {
+      const session = await createSessionResilient(stripe, {
+        mode: 'payment',
+        submit_type: 'pay',
+        allow_promotion_codes: true,
+        billing_address_collection: 'auto',
+        ...(customerId ? { customer: customerId, customer_update: { address: 'auto', name: 'auto' } } : {}),
+        invoice_creation: { enabled: true },
+        automatic_tax: { enabled: true },
+        consent_collection: { terms_of_service: 'required' },
+        custom_text: { terms_of_service_acceptance: { message: WITHDRAWAL_WAIVER } },
+        line_items: [{
+          quantity: 1,
+          price_data: {
+            currency: 'usd',
+            unit_amount: pack.usd * 100,
+            product_data: {
+              name: pack.credits.toLocaleString() + ' Hexa credits',
+              description: pack.bonus_pct
+                ? 'Top-up, including ' + pack.bonus_pct + '% extra credits. Credits never expire.'
+                : 'Top-up. Credits never expire.',
+              tax_code: 'txcd_10000000',
+            },
+          },
+        }],
+        /*
+         * The webhook reads both of these back. user_id says whose balance to
+         * add to, and credits says how many, so the grant never has to re-derive
+         * the pack from a price that may have changed between purchase and
+         * delivery.
+         */
+        metadata: { kind: 'credits', pack: pack.id, credits: String(pack.credits), user_id: user.userId },
+        client_reference_id: user.userId,
+        success_url: `${origin}/account.html?topup=${pack.credits}`,
+        cancel_url: `${origin}/account.html`,
+      });
+      return json(200, { url: session.url });
+    } catch (e) {
+      console.error('checkout: credit pack session failed:', e.message);
+      return json(502, { error: 'Could not start checkout. Please try again.' });
+    }
+  }
 
   // ── Studio order path ──
   if (studioOrder) {

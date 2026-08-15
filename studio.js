@@ -20,38 +20,45 @@
   var PEEK_HOLD_MS = 1100;  // how long the identified product holds the stage
   var GUESS_HOLD_MS = 60000; // max stage time while the photo is fetched: seeing the product IS the payoff, so we wait for it (with a skip link)
 
+  /* Where /validate leaves a chosen angle for us, and how long it stays valid.
+   * Must match the writer in validate.js. */
+  var ANGLE_KEY = 'hexa-angle';
+  var ANGLE_TTL_MS = 60 * 60 * 1000;
+
   /* ── Video modes (rendered as tiles) ── */
   var MODE_CONFIG = {
-    ugc:            { price: 19, eta: '~5 min', steps: ['link', 'avatar', 'hook', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Creator-style ad' },
-    tv_spot:        { price: 29, eta: '~7 min', steps: ['link', 'duration', 'aspect', 'notes'], kicker: 'Broadcast-grade spot' },
-    product_review: { price: 19, eta: '~5 min', steps: ['link', 'avatar', 'hook', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Honest-feeling review' },
-    unboxing:       { price: 19, eta: '~5 min', steps: ['link', 'avatar', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'First-touch unboxing' },
-    tutorial:       { price: 19, eta: '~5 min', steps: ['link', 'avatar', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'How-to walkthrough' },
-    ugc_try_on:     { price: 19, eta: '~5 min', steps: ['link', 'avatar', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Casual try-on' },
-    pro_try_on:     { price: 29, eta: '~7 min', steps: ['link', 'avatar', 'duration', 'aspect', 'notes'], kicker: 'Editorial try-on' },
-    hyper_motion:   { price: 12, eta: '~3 min', steps: ['link', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Impossible camera moves' },
-    wild_card:      { price: 12, eta: '~3 min', steps: ['link', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Something unexpected' },
+    ugc:            { price: 15, eta: '~5 min', steps: ['link', 'avatar', 'hook', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Creator-style ad' },
+    tv_spot:        { price: 25, eta: '~7 min', steps: ['link', 'duration', 'aspect', 'notes'], kicker: 'Broadcast-grade spot' },
+    product_review: { price: 15, eta: '~5 min', steps: ['link', 'avatar', 'hook', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Honest-feeling review' },
+    unboxing:       { price: 15, eta: '~5 min', steps: ['link', 'avatar', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'First-touch unboxing' },
+    tutorial:       { price: 15, eta: '~5 min', steps: ['link', 'avatar', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'How-to walkthrough' },
+    ugc_try_on:     { price: 15, eta: '~5 min', steps: ['link', 'avatar', 'setting', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Casual try-on' },
+    pro_try_on:     { price: 25, eta: '~7 min', steps: ['link', 'avatar', 'duration', 'aspect', 'notes'], kicker: 'Editorial try-on' },
+    hyper_motion:   { price: 9, eta: '~3 min', steps: ['link', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Impossible camera moves' },
+    wild_card:      { price: 9, eta: '~3 min', steps: ['link', 'duration', 'quality', 'aspect', 'notes'], kicker: 'Something unexpected' },
   };
 
   /* One engine output caps at 15s. Longer runs render as chained 15s
    * segments (one storyboard, same avatar and scene) stitched into one film.
    * Nobody else in this lane sells that. */
   var SEGMENT_SECONDS = 15;
-  var EXTRA_SEGMENT_PRICE = 12;
+  var EXTRA_SEGMENT_PRICE = 8;
   var DURATIONS = [
     { sec: 15, name: '15 seconds' },
     { sec: 30, name: '30 seconds' },
-    { sec: 45, name: '45 seconds' },
-    { sec: 60, name: '60 seconds' },
-    { sec: 90, name: '90 seconds' },
-    { sec: 120, name: '2 minutes' },
   ];
 
   /* Quality: 720p included on standard modes, 1080p priced per segment
    * (rendering cost scales with every 15s). Premium products ship 1080p
    * included; they carry it in their base price. Mirrored in lib/pricing.js. */
-  var QUALITY_1080_PER_SEGMENT = 4;
+  var QUALITY_1080_PER_SEGMENT = 3;
   var PREMIUM_1080 = { 'mode:tv_spot': 1, 'mode:pro_try_on': 1, cinematic: 1 };
+
+  /* The ad pack ships twenty creatives; picking formats by hand is a way to
+   * choose WHICH twenty, not to buy fewer. Past twenty each extra creative is
+   * one more render. Mirrors ADPACK_INCLUDED_FORMATS / extra_format_usd. */
+  var ADPACK_INCLUDED_FORMATS = 20;
+  var EXTRA_FORMAT_PRICE = 1;
   var QUALITIES = [
     { id: '720p', name: '720p HD' },
     { id: '1080p', name: '1080p Ultra' },
@@ -59,11 +66,11 @@
 
   /* ── Non-video products (More tiles) ── */
   var PRODUCTS = {
-    photoshoot: { title: 'Product Photoshoot', kicker: 'Ten images, one pass', price: 15, eta: '~2 min', steps: ['link', 'mode', 'aspect', 'notes'] },
-    adpack:     { title: 'DTC Ad Pack', kicker: 'Proven static formats', price: 19, eta: '~2 min', steps: ['link', 'formats', 'notes'] },
-    soul:       { title: 'Soul Character', kicker: 'Train once, reuse forever', price: 29, eta: '~1 hr', steps: ['soulname', 'soulphotos'] },
-    cinematic:  { title: 'Cinematic Spot', kicker: 'Director-grade look', price: 29, eta: '~7 min', steps: ['link', 'camera', 'grade', 'light', 'duration', 'aspect', 'notes'] },
-    auto:       { title: 'Auto Mode', kicker: 'We pick the winning format', price: 19, eta: '~5 min', steps: ['link', 'duration', 'quality', 'aspect', 'notes'] },
+    photoshoot: { title: 'Product Photoshoot', kicker: 'Ten images, one pass', price: 9, eta: '~2 min', steps: ['link', 'mode', 'aspect', 'notes'] },
+    adpack:     { title: 'DTC Ad Pack', kicker: 'Twenty static ads, twenty angles', price: 12, eta: '~2 min', steps: ['link', 'formats', 'notes'] },
+    soul:       { title: 'Soul Character', kicker: 'Train once, reuse forever', price: 22, eta: '~1 hr', steps: ['soulname', 'soulphotos'] },
+    cinematic:  { title: 'Cinematic Spot', kicker: 'Director-grade look', price: 25, eta: '~7 min', steps: ['link', 'camera', 'grade', 'light', 'duration', 'aspect', 'notes'] },
+    auto:       { title: 'Auto Mode', kicker: 'We pick the winning format', price: 15, eta: '~5 min', steps: ['link', 'duration', 'quality', 'aspect', 'notes'] },
   };
 
   /* Real backend photoshoot modes (each ships its own prompt enhancement). */
@@ -93,6 +100,10 @@
     peek: null,     // latest product-peek result { ok, url, title, image, ... }
     peekJob: null,  // in-flight peek { link, promise }
     prefs: {},      // composer-chosen settings { duration, aspectId, quality }
+    angleBrief: '', // creative direction carried over from a research report
+    heroPhotos: [], // photos added in the hero, before any product exists
+    creditBalance: null, // null = unknown or signed out, never treated as zero
+    payWith: 'card',     // 'credits' when the balance covers the order
   };
 
   /* ── Utilities ── */
@@ -434,12 +445,20 @@
     // Simple stores scrape in seconds, but heavy SPA pages (Indiegogo,
     // Kickstarter) take the engine minutes. Poll with a growing interval
     // for ~3 minutes total; the upgrade applies whenever it lands.
+    // Measured 2026-08-13: the Bright Data read lands in 5 to 10 seconds, the
+    // engine scrape in about 21 when it works at all. Neither returns partial
+    // results, so the only thing polling cadence buys is not sitting on a
+    // finished photo. Early polls are tight for Bright Data, then they spread
+    // out for the slow engine tail.
     var tries = 0;
     var MAX_TRIES = 45;
     (function tick() {
       if (tries++ >= MAX_TRIES) return;
-      var delay = Math.min(2500 + tries * 400, 8000);
-      fetch(PEEK_URL + '?webProduct=' + encodeURIComponent(pk.webProductId))
+      var delay = Math.min(1500 + tries * 500, 8000);
+      // The url rides along so the poll can check the Bright Data read, which
+      // usually beats the engine scrape by a wide margin.
+      fetch(PEEK_URL + '?webProduct=' + encodeURIComponent(pk.webProductId) +
+            (pk.url ? '&url=' + encodeURIComponent(pk.url) : ''))
         .then(function (r) { return r.json(); })
         .then(function (d) {
           if (d && d.image) {
@@ -1229,7 +1248,7 @@
 
     formats: function (body, n) {
       var step = el('section', 'config-step');
-      step.appendChild(el('h3', null, '<span class="step-n">' + n + '</span>Pick your formats <span style="text-transform:none;letter-spacing:0;font-weight:500;">(up to 10)</span>'));
+      step.appendChild(el('h3', null, '<span class="step-n">' + n + '</span>Pick your formats <span style="text-transform:none;letter-spacing:0;font-weight:500;">(twenty included)</span>'));
       var wrap = el('div', 'picker picker-media');
       var chipRow = el('div', 'picker picker-chips');
       state.sel.formats = [];
@@ -1239,7 +1258,9 @@
         if (i >= 0) {
           state.sel.formats.splice(i, 1);
           node.classList.remove('sel');
-        } else if (state.sel.formats.length < 10) {
+        } else {
+          // No hard cap below the catalog size: twenty are included and every
+          // one past that is a real extra render, priced as one.
           state.sel.formats.push({ id: f.id, name: f.name });
           node.classList.add('sel');
         }
@@ -1268,7 +1289,7 @@
       });
       step.appendChild(wrap);
       if (chipRow.children.length) step.appendChild(chipRow);
-      step.appendChild(el('p', 'picker-note', 'First five formats included · +$2 each after that.'));
+      step.appendChild(el('p', 'picker-note', 'Twenty creatives included · +$1 each after that.'));
       body.appendChild(step);
     },
 
@@ -1436,6 +1457,19 @@
     return (i.from ? 'From $' : '$') + i.base;
   }
 
+  /*
+   * The same price as credits, which is what the studio actually charges.
+   *
+   * 500 credits to the dollar is chosen so the numbers read large: a $12 ad
+   * pack is 6,000 credits and the 2,500 a new account is given is a real
+   * allowance rather than loose change. The dollar figure stays alongside it in
+   * small type, because a visitor who has never seen our credits cannot judge
+   * whether 7,000 is a lot without one reference point.
+   */
+  function creditPrice(productId) {
+    return creditsForTotal(priceInfo(productId).base).toLocaleString();
+  }
+
   /* ── Product resolution ── */
   function productDef(productId) {
     if (productId.indexOf('mode:') === 0) {
@@ -1452,8 +1486,11 @@
   function currentPrice() {
     var p = productDef(state.product);
     var total = p.price;
-    if (state.product === 'adpack' && state.sel.formats && state.sel.formats.length > 5) {
-      total += (state.sel.formats.length - 5) * 2;
+    // Mirrors ADPACK_INCLUDED_FORMATS / extra_format_usd in the server pricer.
+    // The server is the authority, so any drift here shows the buyer one number
+    // and charges another; keep the two in step.
+    if (state.product === 'adpack' && state.sel.formats && state.sel.formats.length > ADPACK_INCLUDED_FORMATS) {
+      total += (state.sel.formats.length - ADPACK_INCLUDED_FORMATS) * EXTRA_FORMAT_PRICE;
     }
     if (state.sel.duration && state.sel.duration > SEGMENT_SECONDS) {
       total += (Math.ceil(state.sel.duration / SEGMENT_SECONDS) - 1) * EXTRA_SEGMENT_PRICE;
@@ -1509,6 +1546,41 @@
     return null;
   }
 
+  /*
+   * Dollars to credits, matching CREDITS_PER_CENT in netlify/functions/lib/pricing.js.
+   *
+   * Deliberately a big number: 500 credits to the dollar means a $12 ad pack
+   * reads as 6,000 credits, and the 2,500 a new account is given reads as a
+   * real allowance rather than as pocket change. The server reprices every
+   * order from catalog/pricing.json regardless of what this says, so a wrong
+   * number here is a display bug and never a way to underpay.
+   */
+  var CREDITS_PER_DOLLAR = 500;
+  function creditsForTotal(dollars) {
+    return Math.round(dollars * CREDITS_PER_DOLLAR);
+  }
+
+  /*
+   * The balance, read once per page and refreshed after a spend.
+   *
+   * my_credit_balance() is SECURITY INVOKER and sums only the caller's own
+   * ledger rows, so this is safe to call straight from the browser with the
+   * anon key: there is no argument to tamper with and no other account's rows
+   * to reach.
+   */
+  function loadCreditBalance() {
+    if (!window.HexaAuth || !window.HexaAuth.client) return Promise.resolve(null);
+    return window.HexaAuth.ready()
+      .then(function () {
+        if (!window.HexaAuth.user()) { state.creditBalance = null; return null; }
+        return window.HexaAuth.client.rpc('my_credit_balance').then(function (r) {
+          state.creditBalance = r && r.error ? null : Number(r.data || 0);
+          return state.creditBalance;
+        });
+      })
+      .catch(function () { state.creditBalance = null; return null; });
+  }
+
   function updatePrice() {
     var total = currentPrice();
     $('#config-price').textContent = '$' + total;
@@ -1521,15 +1593,53 @@
     var btn = $('#config-submit');
     var hint = $('#config-hint');
 
+    var altBtn = $('#config-pay-card');
+    if (altBtn) altBtn.hidden = true;
+
     if (state.view === 'ticket') {
       btn.disabled = false;
+
+      /*
+       * Credits lead when the balance covers it.
+       *
+       * Every new account is given 2,500 credits, and until now there was no
+       * way to spend them: the only button here went to Stripe, so the welcome
+       * grant was a number on a page. Someone who can already afford the order
+       * from their balance should be one press from having it, with the card as
+       * the fallback rather than the toll gate.
+       */
+      var credits = creditsForTotal(total);
+      var balance = state.creditBalance;
+      if (STUDIO_LIVE && balance != null && balance >= credits) {
+        state.payWith = 'credits';
+        btn.textContent = 'Use ' + credits.toLocaleString() + ' credits';
+        if (altBtn) {
+          altBtn.hidden = false;
+          altBtn.textContent = 'Pay $' + total + ' by card instead';
+        }
+        if (hint) {
+          hint.hidden = false;
+          hint.classList.add('config-hint-ok');
+          hint.textContent = 'You have ' + balance.toLocaleString() + ' credits. Anything we fail to deliver comes straight back to your balance.';
+        }
+        return;
+      }
+
+      state.payWith = 'card';
       btn.textContent = STUDIO_LIVE ? 'Pay $' + total + ' securely' : 'Place order · $' + total;
       if (hint) {
         hint.hidden = false;
         hint.classList.add('config-hint-ok');
-        hint.textContent = STUDIO_LIVE
-          ? 'Secure Stripe checkout. You are never charged for work we do not deliver.'
-          : 'Delivered on this page and to your email.';
+        if (STUDIO_LIVE && balance != null && balance > 0) {
+          // Naming the shortfall beats a silent card button: they can see the
+          // balance is real and how far it goes.
+          hint.textContent = 'This one needs ' + credits.toLocaleString() + ' credits and you have '
+            + balance.toLocaleString() + '. Secure Stripe checkout, and you are never charged for work we do not deliver.';
+        } else {
+          hint.textContent = STUDIO_LIVE
+            ? 'Secure Stripe checkout. You are never charged for work we do not deliver.'
+            : 'Delivered on this page and to your email.';
+        }
       }
       return;
     }
@@ -1754,8 +1864,9 @@
     if (isVideo && s.quality === '1080p' && !PREMIUM_1080[state.product]) {
       line('1080p Ultra, ' + segs + ' ' + (segs === 1 ? 'segment' : 'segments') + ' at $' + QUALITY_1080_PER_SEGMENT, '$' + (segs * QUALITY_1080_PER_SEGMENT));
     }
-    if (state.product === 'adpack' && s.formats && s.formats.length > 5) {
-      line('Extra formats, ' + (s.formats.length - 5) + ' at $2', '$' + ((s.formats.length - 5) * 2));
+    if (state.product === 'adpack' && s.formats && s.formats.length > ADPACK_INCLUDED_FORMATS) {
+      var extraFmts = s.formats.length - ADPACK_INCLUDED_FORMATS;
+      line('Extra formats, ' + extraFmts + ' at $' + EXTRA_FORMAT_PRICE, '$' + (extraFmts * EXTRA_FORMAT_PRICE));
     }
     line('Total', '$' + currentPrice(), 'ticket-line-total');
     wrap.appendChild(priceBox);
@@ -1806,6 +1917,25 @@
     $('#config-overlay').classList.remove('chooser');
     if (!state.sel.link && state.composerLink) state.sel.link = state.composerLink;
 
+    /*
+     * A brief that came from a research report survives the format choice.
+     *
+     * The angle used to be applied only by the one openConfig call the handoff
+     * made itself, so a merchant who arrived from a report and then picked a
+     * different goal got a blank creative direction and had to retype the hook
+     * we had just proved. Held on state instead, and consumed by whichever
+     * product they land on.
+     */
+    if (state.angleBrief && p.steps.indexOf('notes') >= 0 && !state.sel.directions) {
+      state.sel.directions = state.angleBrief.slice(0, 1200);
+    }
+
+    /* Photos chosen in the hero, before there was a product to attach them to.
+     * Same reason the brief is held on state: openConfig resets state.sel. */
+    if (state.heroPhotos.length && !(state.sel.photos || []).length) {
+      state.sel.photos = state.heroPhotos.slice();
+    }
+
     // composer-chosen settings lead; they were picked deliberately
     if (state.prefs.duration && p.steps.indexOf('duration') >= 0) state.sel.duration = state.prefs.duration;
     if (state.prefs.quality && p.steps.indexOf('quality') >= 0) state.sel.quality = state.prefs.quality;
@@ -1848,10 +1978,44 @@
    * we build exactly that. When the peek identified their product, the whole
    * wall carries it: chip in the header, image inset on every tile. */
 
+  /*
+   * Styles, grouped by what people will think of the ad rather than by which
+   * engine family made it.
+   *
+   * "Creator videos / Premium spots / Photo sets" is our org chart. A merchant
+   * choosing between them has to already know that UGC reads as authentic and
+   * that a TV spot reads as expensive, which is the exact knowledge they came
+   * here without. The tiles underneath are unchanged; only the question they
+   * answer is.
+   */
   var CHOOSER_GROUPS = [
-    { name: 'Creator videos', products: ['mode:ugc', 'mode:product_review', 'mode:unboxing', 'mode:tutorial', 'mode:ugc_try_on'] },
-    { name: 'Premium spots', products: ['mode:tv_spot', 'cinematic', 'mode:pro_try_on', 'mode:hyper_motion', 'mode:wild_card'] },
-    { name: 'Photo sets', products: ['photoshoot', 'adpack'] },
+    { name: 'Feels authentic', sub: 'Reads like a real customer filmed it.',
+      products: ['mode:ugc', 'mode:unboxing', 'mode:ugc_try_on'] },
+    { name: 'Looks expensive', sub: 'Reads like a brand with a budget.',
+      products: ['cinematic', 'mode:tv_spot', 'mode:pro_try_on'] },
+    { name: 'Looks viral', sub: 'Built to survive the first second of a scroll.',
+      products: ['mode:hyper_motion', 'mode:wild_card'] },
+    { name: 'Feels trustworthy', sub: 'Reads like a review rather than an ad.',
+      products: ['mode:product_review', 'mode:tutorial'] },
+    { name: 'Looks like a product commercial', sub: 'The product itself, shot properly.',
+      products: ['photoshoot', 'adpack'] },
+  ];
+
+  /*
+   * The first question, in outcomes.
+   *
+   * Asking "pick a format" asks the merchant to translate a business goal into
+   * our vocabulary before they can buy anything. Asking what they want the ad
+   * to DO is a question anyone selling something can answer, and each answer
+   * maps to exactly one product we already build.
+   */
+  var GOALS = [
+    { ico: '🤷', name: 'Let Hexa choose', sub: 'We pick the format, the look and the script from what the research found.', product: 'auto', lead: true },
+    { ico: '🔥', name: 'Make people stop scrolling', sub: 'Fast, impossible camera moves that break a scroll.', product: 'mode:hyper_motion' },
+    { ico: '👤', name: 'Make it feel like a real customer', sub: 'A creator holding your product, talking to camera.', product: 'mode:ugc' },
+    { ico: '🎬', name: 'Make it look premium', sub: 'Director-grade camera, lighting and colour.', product: 'cinematic' },
+    { ico: '📦', name: 'Show the product', sub: 'Your product in real hands, opened and shown off.', product: 'mode:unboxing' },
+    { ico: '🧪', name: 'Show how it works', sub: 'A clear walkthrough of using it, start to finish.', product: 'mode:tutorial' },
   ];
 
   /* The live preview clip a preset would render with: its scene, else its hook. */
@@ -1890,19 +2054,19 @@
       if (!pk.image) {
         return base + ' Add a photo of it on the next step and it goes straight into frame.';
       }
-      return base + ' Pick one and we make it with your product in frame.';
+      return base + ' Pick what you want it to do and we make it with your product in frame.';
     }
     if (pk && pk.social) {
       return 'Here is what we can make. ' + pk.social + ' keeps its pages to itself, so add a product photo on the next step and we build the film around the real thing.';
     }
     return state.composerLink
-      ? 'Here is what we can make for your product. Pick one and we build exactly that.'
-      : 'Choose a format first. You add photos or a description on the next step.';
+      ? 'Tell us what you want it to do and we build exactly that around your product.'
+      : 'Tell us what you want the ad to do. You add photos or a description on the next step.';
   }
 
   function openChooser(peek) {
     $('#config-kicker').textContent = 'Step 1 of 2';
-    $('#config-title').textContent = 'What should we make?';
+    $('#config-title').textContent = 'Your ad';
     var overlay = $('#config-overlay');
     overlay.classList.add('chooser');
     var pk = peek && peek.ok ? peek : null;
@@ -1911,37 +2075,39 @@
     var body = $('#config-body');
     body.innerHTML = '';
     var head = el('div', 'chooser-head');
-    head.appendChild(el('h3', 'chooser-headline', 'Pick the format.'));
-    head.appendChild(el('p', 'chooser-intro', chooserIntroText(pk)));
+    /* Arriving from a report, what to say is settled and only the making is
+     * open, so the question changes to match what is actually still undecided. */
+    var fromRead = !!state.angleBrief;
+    head.appendChild(el('h3', 'chooser-headline',
+      fromRead ? 'How should we make it?' : 'What do you want the ad to do?'));
+    head.appendChild(el('p', 'chooser-intro',
+      fromRead
+        ? 'Your angle and opening line are already loaded, so whatever you pick here gets built around them.'
+        : chooserIntroText(pk)));
     body.appendChild(head);
 
-    var grid = el('div', 'chooser-grid');
-
-    // "Auto" card first, full width, for people who want us to choose.
-    // A strip of real formats behind it so "we pick" shows, not tells.
-    var auto = el('button', 'style-tile chooser-auto chooser-auto-hero');
-    auto.type = 'button';
-    var collage = el('div', 'chooser-auto-collage');
-    ((state.data || {}).modes || []).slice(0, 4).forEach(function (m) {
-      if (!m.poster) return;
-      var im = el('img');
-      im.src = m.poster;
-      im.alt = '';
-      im.loading = 'lazy';
-      collage.appendChild(im);
+    /* Goals first. Every one of these opens a product we already build; the
+     * mapping is ours to know and the merchant's to never think about. */
+    var goals = el('div', 'goal-grid');
+    GOALS.forEach(function (g) {
+      var t = el('button', 'goal-tile' + (g.lead ? ' goal-tile-lead' : ''));
+      t.type = 'button';
+      t.appendChild(el('span', 'goal-ico', g.ico));
+      var meta = el('span', 'goal-meta');
+      if (g.lead) meta.appendChild(el('span', 'goal-badge', 'Recommended'));
+      meta.appendChild(el('span', 'goal-name', g.name));
+      meta.appendChild(el('span', 'goal-sub', g.sub));
+      t.appendChild(meta);
+      t.appendChild(el('span', 'goal-price', formatPrice(g.product)));
+      t.addEventListener('click', function () {
+        if (g.product.indexOf('mode:') === 0) openMode(g.product.slice(5));
+        else openConfig(g.product);
+      });
+      goals.appendChild(t);
     });
-    auto.appendChild(collage);
-    auto.insertAdjacentHTML('beforeend',
-      '<div class="style-shade"></div>' +
-      '<span class="mode-price">' + formatPrice('auto') + '</span>' +
-      '<div class="style-meta">' +
-      '<span class="style-badge-auto">Recommended</span>' +
-      '<span class="style-name">Auto</span>' +
-      '<span class="style-tag">Not sure? We pick the format that sells your product best.</span>' +
-      '</div>');
-    if (pk && pk.image) auto.appendChild(productInset(pk));
-    auto.addEventListener('click', function () { openConfig('auto'); });
-    grid.appendChild(auto);
+    body.appendChild(goals);
+
+    var grid = el('div', 'chooser-grid');
 
     // The free taste: a 5 second grounded clip, one per account. Only offered
     // when a real link is in play; an ungrounded sample sells nothing.
@@ -1968,21 +2134,36 @@
         return group.products.indexOf(p.product) >= 0;
       });
       members.forEach(function (p) { used[p.id] = true; });
-      renderChooserGroup(grid, group.name, members, pk);
+      renderChooserGroup(grid, group.name, members, pk, group.sub);
     });
     // presets outside the group map still show, ungrouped
     var rest = state.presets.filter(function (p) { return !used[p.id]; });
     renderChooserGroup(grid, rest.length && Object.keys(used).length ? 'More styles' : null, rest, pk);
 
-    body.appendChild(grid);
+    /* The library, folded away. It is the best thing in the product for
+     * somebody who knows what they want, and the worst possible first screen
+     * for somebody who does not: twelve tiles is twelve decisions before any
+     * ad exists. */
+    var lib = document.createElement('details');
+    lib.className = 'chooser-lib';
+    var libSum = document.createElement('summary');
+    libSum.textContent = 'Or browse every style';
+    lib.appendChild(libSum);
+    lib.appendChild(grid);
+    body.appendChild(lib);
+
     overlay.hidden = false;
     document.body.style.overflow = 'hidden';
     body.scrollTop = 0;
   }
 
-  function renderChooserGroup(grid, name, presets, pk) {
+  function renderChooserGroup(grid, name, presets, pk, sub) {
     if (!presets.length) return;
-    if (name) grid.appendChild(el('p', 'chooser-group', name));
+    if (name) {
+      var h = el('p', 'chooser-group', name);
+      if (sub) h.appendChild(el('span', 'chooser-group-sub', sub));
+      grid.appendChild(h);
+    }
     presets.forEach(function (p, i) {
       var t = el('button', 'style-tile');
       t.type = 'button';
@@ -2029,11 +2210,27 @@
   }
 
   /* ── The post-link takeover: read the page, identify the product, dock ── */
+  /*
+   * Where a recognised product goes next.
+   *
+   * The composer used to run link → photo → style picker, which put the
+   * question "what should this look like" in front of the question "what
+   * should this say". The read answers the second one, so it now sits between
+   * them: /validate takes the same link, does the research, and ends on the
+   * angle with a button that makes the ad. Anyone who already knows what they
+   * want still has the skip, and every other entry (style tiles, mode rails,
+   * the quiz) still opens the studio directly.
+   */
+  function goToRead(link) {
+    window.location.href = '/validate?url=' + encodeURIComponent(link);
+  }
+
   function openReveal(link) {
     if (REDUCED_MOTION) {
-      var pr = startPeek(link);
-      openChooser(peekFor(link));
-      pr.then(enhanceChooserWithPeek);
+      // There is no stage to play, so the read is simply the next step. No
+      // peek is started: the navigation would abort it, and the report reads
+      // the product page itself anyway.
+      goToRead(link);
       return;
     }
 
@@ -2049,6 +2246,9 @@
     var progEl = $('#peek-progress');
     var noteEl = $('#peek-note');
     var skipEl = $('#peek-skip');
+    var nextEl = $('#peek-next');
+    var nextGo = $('#peek-next-go');
+    var nextSkip = $('#peek-next-skip');
 
     // reset the stage: no photo yet means no frame at all. The card reads as
     // a typographic slate until a real image earns the space.
@@ -2062,6 +2262,7 @@
     noteEl.hidden = true;
     skipEl.hidden = true;
     skipEl.onclick = null;
+    if (nextEl) { nextEl.hidden = true; nextGo.onclick = null; nextSkip.onclick = null; }
     progEl.hidden = false;
     eyebrow.textContent = 'Hexa Studio';
     var hostname = '';
@@ -2079,9 +2280,9 @@
     var docked = false;
     var identified = false;
 
-    function dock(pk) {
-      if (docked) return;
-      docked = true;
+    /* The stage has two exits now. */
+
+    function exitToStudio(pk) {
       clearRevealTimers();
       card.classList.add('peek-out');
       revealTimers.push(setTimeout(function () {
@@ -2091,6 +2292,37 @@
         stage.hidden = true;
         openChooser(pk);
       }, 380));
+    }
+
+    /*
+     * The product is known, so the next thing to work out is what to say about
+     * it. This is a question rather than a countdown: a merchant who has never
+     * run an ad wants it decided for them, and one who runs ads every week
+     * wants the controls. Guessing which is which, or auto-advancing past the
+     * choice, gets one of them wrong every time.
+     */
+    function exitToRead(pk) {
+      clearRevealTimers();
+      progEl.hidden = true;
+      noteEl.hidden = true;
+      skipEl.hidden = true;
+      if (!nextEl) { goToRead(link); return; }
+      nextEl.hidden = false;
+      nextGo.onclick = function () { goToRead(link); };
+      nextSkip.onclick = function () {
+        nextEl.hidden = true;
+        exitToStudio(pk);
+      };
+    }
+
+    function dock(pk) {
+      if (docked) return;
+      docked = true;
+      // A page we could not read, or a social post, gives the read nothing to
+      // work with. Those go straight to the studio, where photos and a typed
+      // description still get an ad made.
+      if (!pk || !pk.ok || pk.social) { exitToStudio(pk); return; }
+      exitToRead(pk);
     }
 
     function identify(pk, withImage) {
@@ -2370,6 +2602,17 @@
         window.location.href = '/login.html?next=' + encodeURIComponent('/?resume=1');
         return;
       }
+      /*
+       * Credits go straight to the render screen, which calls render-create
+       * with the session token and no Stripe id; the server charges the ledger
+       * there, refuses cleanly if the balance moved in the meantime, and
+       * refunds per creative anything that then fails to render.
+       */
+      if (state.payWith === 'credits') {
+        window.location.href = 'render.html?credits=1';
+        return;
+      }
+
       // Server reprices the order from catalog/pricing.json; on success Stripe
       // sends them to render.html?paid=..., which reads the order saved above.
       startCheckout(order);
@@ -2438,6 +2681,282 @@
       if (n && c[1]) n.textContent = String(c[1]).padStart(2, '0') + ' ' + c[2];
     });
 
+    /*
+     * The two ways in.
+     *
+     * Connecting the store leads because it is the only path where the
+     * merchant never copies anything: their catalogue arrives, they tap a
+     * product, and the read starts. Pasting a link is the fallback and stays
+     * one click away, because most first-time visitors have not connected
+     * anything and a store connect is a big ask for someone still deciding.
+     */
+    (function initEntrySwitch() {
+      var SHOP = 2;
+      var tabs = [
+        { btn: $('#entry-tab-link'), pane: $('#entry-link'), focus: '#composer-link' },
+        { btn: $('#entry-tab-photos'), pane: $('#entry-photos'), focus: null },
+        { btn: $('#entry-tab-shopify'), pane: $('#entry-shopify'), focus: '#shop-domain' },
+      ];
+      if (tabs.some(function (t) { return !t.btn || !t.pane; })) return;
+
+      function show(i, focus) {
+        tabs.forEach(function (t, k) {
+          var on = k === i;
+          t.btn.classList.toggle('is-on', on);
+          t.btn.setAttribute('aria-selected', on ? 'true' : 'false');
+          t.pane.hidden = !on;
+        });
+        if (focus && tabs[i].focus) {
+          var target = $(tabs[i].focus);
+          if (target) target.focus();
+        }
+      }
+      tabs.forEach(function (t, i) {
+        t.btn.addEventListener('click', function () { show(i, true); });
+      });
+
+      /*
+       * Photos, for people who have a product but no page for it yet.
+       *
+       * Collected into state.heroPhotos rather than state.sel, because
+       * openConfig resets state.sel on every open and these were chosen before
+       * any product existed to attach them to. Same shrinkImage path the drawer
+       * uses, so what arrives downstream is byte-identical to a drawer upload.
+       */
+      var drop = $('#hero-drop');
+      var fileInput = $('#hero-photos');
+      var thumbs = $('#hero-thumbs');
+      var photosGo = $('#hero-photos-go');
+
+      function renderHeroThumbs() {
+        thumbs.textContent = '';
+        state.heroPhotos.forEach(function (src, i) {
+          var w = el('div', 'photo-thumb');
+          var img = el('img');
+          img.src = src;
+          img.alt = '';
+          var x = el('button', 'photo-x');
+          x.type = 'button';
+          x.setAttribute('aria-label', 'Remove photo ' + (i + 1));
+          x.innerHTML = '&times;';
+          x.addEventListener('click', function (e) {
+            e.preventDefault();
+            state.heroPhotos.splice(i, 1);
+            renderHeroThumbs();
+          });
+          w.appendChild(img);
+          w.appendChild(x);
+          thumbs.appendChild(w);
+        });
+        if (drop) drop.classList.toggle('is-full', state.heroPhotos.length >= 3);
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', function () {
+          var room = 3 - state.heroPhotos.length;
+          Array.prototype.slice.call(fileInput.files || []).slice(0, room).forEach(function (f) {
+            shrinkImage(f, 1024, function (dataUrl) {
+              if (dataUrl && state.heroPhotos.length < 3) {
+                state.heroPhotos.push(dataUrl);
+                renderHeroThumbs();
+              }
+            });
+          });
+          fileInput.value = '';
+        });
+      }
+
+      if (photosGo) {
+        photosGo.addEventListener('click', function () {
+          // No link to peek, so there is nothing to identify: straight to the
+          // question of what the ad should do.
+          state.composerLink = '';
+          openChooser();
+        });
+      }
+
+      /* Someone with a store already connected does not need the connect
+       * field; the catalogue picker lives in the link pane, so that stays the
+       * default for them too. The tab is only pre-opened for a signed-in
+       * merchant who has NOT connected one, where it is the better offer. */
+      if (window.HexaAuth) {
+        window.HexaAuth.onChange(function (user) {
+          if (!user) return;
+          window.HexaAuth.client.from('my_store_connections')
+            .select('store')
+            .limit(1)
+            .then(function (r) {
+              var connected = r && !r.error && r.data && r.data.length;
+              if (!connected) show(SHOP, false);
+            });
+        });
+      }
+
+      var form = $('#shop-form');
+      var field = $('#shop-domain');
+      var note = $('#shop-note');
+      var noteText = note ? note.textContent : '';
+      if (!form || !field) return;
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        /* Merchants paste all of it: the admin URL, the https, the trailing
+         * slash, sometimes their custom domain. Everything but the shop name
+         * is stripped here, because shopify-install rejects anything that is
+         * not exactly <name>.myshopify.com and a rejection at that point looks
+         * to the merchant like we are broken. */
+        var raw = (field.value || '').trim().toLowerCase()
+          .replace(/^https?:\/\//, '')
+          .replace(/^admin\.shopify\.com\/store\//, '')
+          .replace(/\/.*$/, '')
+          .replace(/\.myshopify\.com$/, '');
+        if (!/^[a-z0-9][a-z0-9-]*$/.test(raw)) {
+          if (note) {
+            note.textContent = 'That does not look like a store address yet. It is the name in your admin URL, before .myshopify.com';
+            note.classList.add('is-err');
+          }
+          field.focus();
+          return;
+        }
+        if (note) { note.textContent = noteText; note.classList.remove('is-err'); }
+        window.location.href = '/.netlify/functions/shopify-install?shop='
+          + encodeURIComponent(raw + '.myshopify.com');
+      });
+    })();
+
+    /*
+     * Guess the angle.
+     *
+     * The one part of this page that does not argue, it demonstrates. A real
+     * product, three real themes, and the two wrong answers are the ones
+     * competitors actually advertise. Most people pick a crowded lane, and
+     * feeling that happen is worth more than any headline claiming it would.
+     *
+     * Frozen data, deliberately: it has to be instant, it has to cost nothing
+     * per visitor, and every number in it has to be one we actually measured.
+     * There is no "62% of people pick wrong" line and there will not be one
+     * until picks are really counted, because inventing it would poison the
+     * only section whose whole argument is that we do not guess.
+     */
+    (function initGuess() {
+      var stage = $('#guess-stage');
+      if (!stage) return;
+      var rounds = [];
+      var at = 0;
+
+      fetch('/catalog/guess-angles.json')
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          rounds = (d && d.rounds) || [];
+          if (rounds.length) draw();
+          else stage.closest('.guess').hidden = true;
+        })
+        .catch(function () {
+          // No data, no section. A broken quiz is worse than no quiz.
+          var sec = stage.closest('.guess');
+          if (sec) sec.hidden = true;
+        });
+
+      function draw() {
+        var r = rounds[at % rounds.length];
+        stage.textContent = '';
+
+        var head = el('div', 'guess-product');
+        head.appendChild(el('span', 'guess-product-label', 'The product'));
+        head.appendChild(el('span', 'guess-product-name', r.product));
+        head.appendChild(el('span', 'guess-product-price', r.price));
+        stage.appendChild(head);
+
+        var group = el('div', 'guess-options');
+        group.setAttribute('role', 'radiogroup');
+        group.setAttribute('aria-label', 'Which would you run?');
+
+        r.options.forEach(function (o, i) {
+          var b = el('button', 'guess-option');
+          b.type = 'button';
+          b.setAttribute('role', 'radio');
+          b.setAttribute('aria-checked', 'false');
+          b.appendChild(el('span', 'guess-option-mark'));
+          b.appendChild(el('span', 'guess-option-claim', o.claim));
+          b.addEventListener('click', function () { reveal(r, i); });
+          group.appendChild(b);
+        });
+        stage.appendChild(group);
+        stage.appendChild(el('p', 'guess-hint', 'Pick one. Nothing is submitted anywhere.'));
+      }
+
+      function reveal(r, picked) {
+        var winner = r.options.reduce(function (best, o, i) {
+          return o.people > r.options[best].people ? i : best;
+        }, 0);
+        var right = picked === winner;
+
+        stage.textContent = '';
+
+        var head = el('div', 'guess-product');
+        head.appendChild(el('span', 'guess-product-label', right ? 'You got it' : 'What the evidence says'));
+        head.appendChild(el('span', 'guess-product-name', r.product));
+        head.appendChild(el('span', 'guess-product-price', r.price));
+        stage.appendChild(head);
+
+        var list = el('div', 'guess-options is-revealed');
+        r.options.forEach(function (o, i) {
+          var row = el('div', 'guess-result' + (i === winner ? ' is-winner' : '') + (i === picked ? ' is-picked' : ''));
+
+          var top = el('div', 'guess-result-top');
+          top.appendChild(el('span', 'guess-result-claim', o.claim));
+          var tag = el('span', 'guess-tag', i === picked ? 'Your pick' : '');
+          if (i === picked) top.appendChild(tag);
+          row.appendChild(top);
+
+          var stats = el('div', 'guess-stats');
+          var people = el('span', 'guess-stat');
+          people.appendChild(el('b', null, String(o.people)));
+          people.appendChild(document.createTextNode(o.people === 1 ? ' customer raised it' : ' customers raised it'));
+          stats.appendChild(people);
+          var ads = el('span', 'guess-stat');
+          ads.appendChild(el('b', null, String(o.ads)));
+          ads.appendChild(document.createTextNode(o.ads === 1 ? ' competitor ad says it' : ' competitor ads say it'));
+          stats.appendChild(ads);
+          row.appendChild(stats);
+
+          row.appendChild(el('p', 'guess-note', o.note));
+
+          (o.quotes || []).forEach(function (q) {
+            var card = el('div', 'ev-card');
+            card.appendChild(el('blockquote', null, q.text));
+            var meta = el('div', 'ev-meta');
+            meta.appendChild(el('span', 'ev-src', 'r/' + q.sub));
+            meta.appendChild(el('span', 'ev-score', q.score + ' points'));
+            card.appendChild(meta);
+            row.appendChild(card);
+          });
+
+          list.appendChild(row);
+        });
+        stage.appendChild(list);
+
+        var close = el('div', 'guess-close');
+        close.appendChild(el('p', 'guess-close-line', right
+          ? 'You picked the one the evidence backs. Now do it for a product where you do not already know the answer.'
+          : 'That is the lane most brands are already in. We read ' + r.read.comments +
+            ' customer comments and ' + r.read.ads + ' competitor ads before answering.'));
+
+        var again = el('button', 'guess-again', 'Try another product');
+        again.type = 'button';
+        again.addEventListener('click', function () { at += 1; draw(); });
+
+        var go = el('a', 'btn btn-primary', 'Read my market, free');
+        go.href = '/validate';
+
+        var row2 = el('div', 'guess-close-actions');
+        row2.appendChild(go);
+        row2.appendChild(again);
+        close.appendChild(row2);
+        stage.appendChild(close);
+      }
+    })();
+
     // composer
     var linkInput = $('#composer-link');
     // Prefetch the peek the moment a full URL is in the bar, however it got
@@ -2471,43 +2990,6 @@
       openReveal(link);
     });
 
-    // The free-clip rubric under the bar: everybody's way in, no sign-in at
-    // the door. With a link in the bar it goes straight to the sample stage
-    // (giving the peek a short head start so the stage knows the product);
-    // without one it points the hand at the bar instead of dead-ending.
-    var freeBtn = $('#composer-free');
-    if (freeBtn) {
-      freeBtn.addEventListener('click', function () {
-        var link = looksLikeUrl(linkInput.value.trim());
-        if (!link) {
-          linkInput.focus();
-          var copy = freeBtn.querySelector('.composer-free-copy');
-          if (copy) {
-            copy.innerHTML = '<strong>Paste your product link above</strong><span class="composer-free-sub">This button does the rest.</span>';
-            setTimeout(function () {
-              copy.innerHTML = '<strong>Watch yours move first, free.</strong><span class="composer-free-sub">A 5 second clip of your product, rendered while you watch. No card, no sign-up.</span>';
-            }, 3500);
-          }
-          return;
-        }
-        state.composerLink = link;
-        freeBtn.disabled = true;
-        Promise.race([
-          startPeek(link),
-          new Promise(function (r) { setTimeout(r, 1500); }),
-        ]).then(function () { startFreeSample(link); });
-      });
-    }
-
-    // the closer's free line: walk them back up to the bar and let the
-    // free button take over (it nudges for a link when the bar is empty)
-    var closerFree = $('#closer-free');
-    if (closerFree && freeBtn) {
-      closerFree.addEventListener('click', function () {
-        document.getElementById('composer').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(function () { freeBtn.click(); }, 650);
-      });
-    }
 
     // one-click demo products: fill the bar and run the real flow.
     // Hovering ghost-types the URL into the bar first, so the "paste a link"
@@ -2545,6 +3027,104 @@
       });
     });
 
+    /*
+     * The connected store's catalogue, if there is one.
+     *
+     * Strictly additive: the whole picker stays hidden unless a connection
+     * exists, so nothing about the paste-a-link path changes for the people who
+     * sell on Amazon, Etsy, WooCommerce or their own site. Picking a product
+     * fills the same bar and runs the same peek, so everything downstream is
+     * identical whether the URL was typed or chosen.
+     */
+    function initStorePicker() {
+      var box = $('#composer-store');
+      if (!box || !window.HexaAuth) return;
+      var toggle = $('#composer-store-toggle');
+      var grid = $('#composer-store-grid');
+      var loaded = false;
+
+      window.HexaAuth.onChange(function (user) {
+        if (!user) { box.hidden = true; return; }
+        window.HexaAuth.client.from('my_store_connections')
+          .select('platform,store,store_name')
+          .limit(1)
+          .then(function (r) {
+            var conn = r && !r.error && r.data && r.data[0];
+            box.hidden = !conn;
+            if (conn) {
+              $('#composer-store-name').textContent = conn.store_name || conn.store;
+            }
+          });
+      });
+
+      toggle.addEventListener('click', function () {
+        if (!grid.hidden) { grid.hidden = true; return; }
+        grid.hidden = false;
+        if (loaded) return;
+
+        grid.textContent = '';
+        var loading = document.createElement('p');
+        loading.className = 'composer-store-note';
+        loading.textContent = 'Reading your catalogue…';
+        grid.appendChild(loading);
+
+        fetch('/.netlify/functions/shopify-products', {
+          headers: { Authorization: 'Bearer ' + window.HexaAuth.accessToken() },
+        })
+          .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d); }); })
+          .then(function (d) {
+            loaded = true;
+            grid.textContent = '';
+            var items = d.products || [];
+            if (!items.length) {
+              var none = document.createElement('p');
+              none.className = 'composer-store-note';
+              none.textContent = 'No active products found in that store.';
+              grid.appendChild(none);
+              return;
+            }
+            items.forEach(function (p) {
+              var card = document.createElement('button');
+              card.type = 'button';
+              card.className = 'composer-store-card';
+              if (p.image) {
+                var img = document.createElement('img');
+                img.src = p.image;
+                img.alt = '';
+                img.loading = 'lazy';
+                card.appendChild(img);
+              }
+              var name = document.createElement('span');
+              name.className = 'cs-name';
+              name.textContent = p.title;
+              card.appendChild(name);
+              if (p.price) {
+                var price = document.createElement('span');
+                price.className = 'cs-price';
+                price.textContent = p.price;
+                card.appendChild(price);
+              }
+              card.addEventListener('click', function () {
+                // Same bar, same peek, same everything downstream.
+                linkInput.value = p.url;
+                state.composerLink = p.url;
+                grid.hidden = true;
+                startPeek(p.url).then(function () { updateComposerProduct(); });
+                updateComposerProduct();
+              });
+              grid.appendChild(card);
+            });
+          })
+          .catch(function (d) {
+            grid.textContent = '';
+            var err = document.createElement('p');
+            err.className = 'composer-store-note';
+            err.textContent = (d && d.error) || 'Could not read your catalogue just now.';
+            grid.appendChild(err);
+          });
+      });
+    }
+
     // the read product, attached in the bar the moment the peek lands
     function updateComposerProduct() {
       var chipEl = $('#composer-product');
@@ -2563,6 +3143,7 @@
       $('#composer-product-name').textContent = pk.title || pk.siteName || '';
     }
     linkInput.addEventListener('input', updateComposerProduct);
+    initStorePicker();
 
     // composer quick settings: length / format / quality, set before the drawer
     var tools = $('#composer-tools');
@@ -2660,6 +3241,12 @@
       var id = n.getAttribute('data-price-base');
       try { n.textContent = priceInfo(id).base; } catch (e) {}
     });
+    // Credits lead on the pricing cards; the dollar figure sits under them in
+    // small type via [data-price], filled above.
+    $all('[data-price-credits]').forEach(function (n) {
+      var id = n.getAttribute('data-price-credits');
+      try { n.textContent = creditPrice(id); } catch (e) {}
+    });
     $all('[data-price-from]').forEach(function (n) {
       var id = n.getAttribute('data-price-from');
       try { n.textContent = priceInfo(id).from ? 'From' : ''; } catch (e) {}
@@ -2669,6 +3256,25 @@
     });
     $all('[data-price-extra-n]').forEach(function (n) {
       n.textContent = '$' + EXTRA_SEGMENT_PRICE;
+    });
+
+    /*
+     * The price range, computed rather than typed.
+     *
+     * The FAQ used to state "$12 to $29" in prose. Both ends were wrong (the
+     * real spread is the cheapest short-form to the dearest premium spot) and
+     * so was the extension price next to it, because prose does not get updated
+     * when MODE_CONFIG does. Anything on this page that quotes money now reads
+     * it from the same place the cards do.
+     */
+    $all('[data-price-lo], [data-price-hi]').forEach(function (n) {
+      var all = Object.keys(MODE_CONFIG).map(function (m) { return priceInfo('mode:' + m).base; })
+        .concat(Object.keys(PRODUCTS)
+          .filter(function (k) { return k !== 'auto' && k !== 'soul'; })
+          .map(function (k) { return priceInfo(k).base; }));
+      var lo = Math.min.apply(null, all);
+      var hi = Math.max.apply(null, all);
+      n.textContent = '$' + (n.hasAttribute('data-price-lo') ? lo : hi);
     });
 
     // closer
@@ -2691,6 +3297,23 @@
       else nudgeToMissing();
     });
 
+    var payCard = $('#config-pay-card');
+    if (payCard) {
+      payCard.addEventListener('click', function () {
+        state.payWith = 'card';
+        submitOrder();
+      });
+    }
+
+    /*
+     * The balance decides which button the review step shows, so it is fetched
+     * on load and again whenever the session changes. onChange fires once the
+     * session is known and on every sign-in or sign-out, which covers the case
+     * that matters: someone who signs in from the gate and comes back to an
+     * order they already built.
+     */
+    if (window.HexaAuth) window.HexaAuth.onChange(function () { loadCreditBalance(); });
+
     // pricing band cards open the matching configurator
     $all('[data-open]').forEach(function (card) {
       card.addEventListener('click', function () {
@@ -2709,6 +3332,67 @@
       if (open === 'choose') openChooser();
       else if (open.indexOf('mode:') === 0 || PRODUCTS[open]) openConfig(open);
       else if (MODE_CONFIG[open]) openMode(open);
+    }
+
+    /*
+     * Arriving from a research report.
+     *
+     * /validate writes the chosen angle to localStorage and sends the visitor
+     * here. This is the seam the whole product hangs on: the research is only
+     * worth anything if the thing it proved is what actually gets made, so the
+     * angle arrives with its link, its format and its hook, and the creative
+     * direction is filled in with the line the evidence supports rather than
+     * left blank for the customer to re-derive.
+     *
+     * Read once and deleted immediately: it is a handoff, not a setting, and a
+     * stale angle silently steering a later unrelated order would be worse than
+     * no bridge at all.
+     */
+    var handoff = null;
+    try {
+      handoff = JSON.parse(localStorage.getItem(ANGLE_KEY) || 'null');
+      localStorage.removeItem(ANGLE_KEY);
+    } catch (e) { handoff = null; }
+
+    if (handoff && handoff.v === 1 && Date.now() - (handoff.ts || 0) < ANGLE_TTL_MS) {
+      var angleLink = looksLikeUrl(handoff.url || '');
+      var angleProduct = handoff.product === 'adpack' ? 'adpack' : 'mode:ugc';
+
+      // The hook is what a video says out loud; the headline is what a static
+      // ad puts on the image. Sending the wrong one is how a proven angle turns
+      // into a generic ad.
+      var direction = angleProduct === 'adpack'
+        ? (handoff.headline || handoff.claim || '')
+        : (handoff.hook || handoff.claim || '');
+      if (direction && handoff.persona) direction += '\nWho it is for: ' + handoff.persona;
+      // Held on state so it survives whichever goal they pick next, instead of
+      // only reaching the single product this handoff happened to name.
+      state.angleBrief = direction || '';
+
+      /*
+       * The research decided what to say. How to make it is still a question,
+       * and the goal grid is where it gets asked, with "let Hexa choose" the
+       * default. Jumping straight into one product was us answering it on the
+       * merchant's behalf twice in a row.
+       */
+      var openWithAngle = function () {
+        openChooser(angleLink ? peekFor(angleLink) : null);
+      };
+
+      if (angleLink) {
+        state.composerLink = angleLink;
+        linkInput.value = angleLink;
+        updateComposerProduct();
+        // Peeked first so the drawer opens with the product identity already
+        // attached, exactly as it would had the link been pasted by hand.
+        // Both handlers on the same .then, so the drawer opens exactly once
+        // whether the peek lands or falls over.
+        startPeek(angleLink)
+          .then(function () { updateComposerProduct(); })
+          .then(openWithAngle, openWithAngle);
+      } else {
+        openWithAngle();
+      }
     }
   }
 

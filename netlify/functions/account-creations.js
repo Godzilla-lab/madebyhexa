@@ -10,6 +10,7 @@
  */
 
 const { getUser } = require('./lib/auth');
+const { allow } = require('./lib/ratelimit');
 const { admin, configured } = require('./lib/supabase');
 
 function json(statusCode, body) {
@@ -23,6 +24,11 @@ function json(statusCode, body) {
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') return json(405, { error: 'GET only' });
   if (!configured()) return json(503, { error: 'accounts not configured' });
+
+  // Library listing: a real user refreshes it, a scraper walks it.
+  if (!(await allow('account-creations', event, 600))) {
+    return json(429, { error: 'Too many requests. Give it a minute.' });
+  }
 
   const u = await getUser(event);
   if (!u) return json(401, { error: 'sign in required' });

@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Hexa Studio · AI video of your product, so real no one can tell</title>
-  <meta name="description" content="Paste your product link and get hyper-real AI video: same actor, same scene, one storyboard, up to 2 minutes as one continuous film. Choose the creator, hook, length and quality. Pay per film." />
+  <title>Hexa Studio · Turn your products into ads</title>
+  <meta name="description" content="Paste a product link from any store, or connect Shopify. Hexa researches your product, figures out what customers care about, and creates the ad around it. No prompting, no video editing, no marketing expertise required." />
   <meta name="theme-color" content="#0a0608" />
 
-  <meta property="og:title" content="Hexa Studio · AI video of your product, so real no one can tell" />
-  <meta property="og:description" content="Paste your product link and get hyper-real AI video, up to 2 minutes as one continuous film. Pay per film." />
+  <meta property="og:title" content="Hexa Studio · Turn your products into ads" />
+  <meta property="og:description" content="Hexa researches your product, figures out what customers care about, and creates a high-quality ad around it." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://madebyhexa.co/" />
   <meta property="og:image" content="https://madebyhexa.co/assets/brand/og-card.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Hexa Studio · AI video of your product, so real no one can tell" />
-  <meta name="twitter:description" content="Paste your product link and get hyper-real AI video, up to 2 minutes as one continuous film. Pay per film." />
+  <meta name="twitter:title" content="Hexa Studio · Turn your products into ads" />
+  <meta name="twitter:description" content="Hexa researches your product, figures out what customers care about, and creates a high-quality ad around it." />
   <meta name="twitter:image" content="https://madebyhexa.co/assets/brand/og-card.jpg" />
 
   <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
@@ -28,13 +28,31 @@
   <link rel="dns-prefetch" href="https://d8j0ntlcm91z4.cloudfront.net" />
   <link rel="preconnect" href="https://v1.pinimg.com" crossorigin />
   <link rel="dns-prefetch" href="https://v1.pinimg.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@300..900&display=swap" rel="stylesheet" />
   <link rel="preload" as="image" href="assets/film/hero-poster.jpg" />
 
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="studio.css" />
   <link rel="stylesheet" href="quiz.css" />
+  <!-- The report components (.vd-call, .ev-card, .fmt-card) are defined once,
+       in validate.css. The sample read on this page uses the real ones rather
+       than a lookalike, so what the home page promises and what /validate
+       delivers cannot drift apart. -->
+  <link rel="stylesheet" href="validate.css" />
   <script src="pixels.js"></script>
+
+  <!-- The reveal system hides elements until JS un-hides them, so the hiding
+       must only ever apply when JS is genuinely running. Setting this class
+       inline, before first paint, means a blocked or failed script leaves the
+       page fully visible instead of permanently blank. -->
+  <script>document.documentElement.className += ' js';</script>
+
+  <script src="/vendor/supabase.js" defer></script>
+  <script src="auth.js" defer></script>
+  <script src="nav-auth.js" defer></script>
+  <script src="studio.js" defer></script>
+  <script src="quiz.js" defer></script>
+  <script src="script.js" defer></script>
 </head>
 <body class="home" data-track="view-content">
   <div class="bg-grid" aria-hidden="true"></div>
@@ -47,9 +65,10 @@
       <span class="brand-name">Hexa<span class="brand-dot">·</span>AI</span>
     </a>
     <nav class="nav-links">
+      <a href="#how">How it works</a>
       <a href="#styles">Styles</a>
-      <a href="#modes">Modes</a>
       <a href="#reel">Work</a>
+      <a href="/validate">Research</a>
       <a href="#pricing">Pricing</a>
       <a href="/login.html" id="nav-account">Sign in</a>
       <a href="#composer" class="nav-cta">Create</a>
@@ -63,16 +82,70 @@
       <section class="composer-hero" id="composer">
         <div class="c-hero-grid">
           <div class="c-hero-copy">
-            <p class="c-kicker">Hexa Studio · Continuous AI film</p>
-            <h1 class="c-display c-display-xl">AI video of your product,<span class="hl-line">so real no one can tell.</span></h1>
-            <p class="c-sub c-lead">We read your product page, <strong>understand the product</strong>, write the storyboard, and render <strong>one continuous film</strong>, up to two minutes.</p>
-            <ul class="c-hero-ticks" aria-label="What one continuous film means">
-              <li>Same actor</li>
-              <li>Same scene</li>
-              <li>One storyboard</li>
-              <li>One file</li>
-            </ul>
+            <p class="c-kicker">Hexa Studio · For anyone selling a product</p>
+            <h1 class="c-display c-display-xl">Turn your products<span class="hl-line">into ads.</span></h1>
+            <p class="c-sub c-lead">Hexa researches your product, figures out what customers care about, and creates a high-quality ad around it. Shopify, Amazon, Etsy, your own site, or just photos.</p>
+            <p class="c-hero-micro">No prompting. No video editing. No marketing expertise required.</p>
 
+            <!-- The instruction, not the pitch. The h1 says what we do; this
+                 asks the one question a merchant who has never run an ad can
+                 answer without knowing any of our vocabulary. -->
+            <p class="entry-ask" id="entry-ask">What are you selling?</p>
+
+            <!-- Three ways in, all first class. The link works for anyone
+                 selling anything anywhere, so it leads. Photos are for people
+                 with no page yet, and used to be a text link at the bottom,
+                 which is not an option, it is an apology. Shopify is the
+                 shortcut that skips the copy and paste. -->
+            <div class="entry-switch" role="tablist" aria-label="How to start">
+              <button type="button" class="entry-tab is-on" id="entry-tab-link" role="tab" aria-selected="true" aria-controls="entry-link">
+                <span class="entry-tab-full">Product link</span><span class="entry-tab-short">Link</span>
+              </button>
+              <button type="button" class="entry-tab" id="entry-tab-photos" role="tab" aria-selected="false" aria-controls="entry-photos">
+                <span class="entry-tab-full">Product photos</span><span class="entry-tab-short">Photos</span>
+              </button>
+              <button type="button" class="entry-tab" id="entry-tab-shopify" role="tab" aria-selected="false" aria-controls="entry-shopify">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M15.3 4.2c-.2-.1-.5 0-.6.1l-.7.9c-.3-.7-.9-1.3-1.8-1.3h-.2c-.4-.6-1-.9-1.6-.8-1.6.1-2.9 1.7-3.5 3.6l-1.4.4c-.5.2-.5.2-.6.7L4 19.4l8.5 1.6 4.6-1.1s-1.7-11.6-1.8-11.7c0-.1-.1-.2-.2-.2l-1.5-.1.7-1c.2-.2.2-.5-.1-.7zm-3.1 1.2-1.9.5c.3-1.1.9-1.7 1.5-1.9.2.4.3.9.4 1.4zm-1-2.1c-.6.2-1.3.9-1.7 2.4l-1.5.4c.5-1.5 1.5-2.6 2.6-2.7.2 0 .4 0 .6-.1z"/></svg>
+                <span class="entry-tab-full">Shopify store</span><span class="entry-tab-short">Shopify</span>
+              </button>
+            </div>
+
+            <!-- Photos: same drop component and the same shrinkImage path the
+                 config drawer already uses, so what is collected here is the
+                 exact shape the order expects. -->
+            <div class="entry-pane" id="entry-photos" role="tabpanel" aria-labelledby="entry-tab-photos" hidden>
+              <label class="photo-drop hero-drop" id="hero-drop">
+                <span class="photo-drop-cta">Add product photos</span>
+                <span class="photo-drop-hint">Up to 3. Phone shots are fine, we handle the rest.</span>
+                <input type="file" id="hero-photos" accept="image/*" multiple hidden />
+              </label>
+              <div class="photo-thumbs" id="hero-thumbs"></div>
+              <button type="button" class="shop-go hero-photos-go" id="hero-photos-go">Create my ad →</button>
+              <p class="shop-note">No product page needed. We read the product from your photos.</p>
+            </div>
+
+            <!-- Store connect. Shopify's OAuth needs the shop hostname before
+                 it can send anyone to a consent screen, so this is the one
+                 field there is no way around. -->
+            <div class="entry-pane" id="entry-shopify" role="tabpanel" aria-labelledby="entry-tab-shopify" hidden>
+              <form class="shop-form" id="shop-form" autocomplete="off">
+                <label class="sr-only" for="shop-domain">Your Shopify store address</label>
+                <div class="shop-bar">
+                  <input type="text" id="shop-domain" placeholder="your-store" autocomplete="off" spellcheck="false" />
+                  <span class="shop-suffix">.myshopify.com</span>
+                </div>
+                <button type="submit" class="shop-go" id="shop-go">Connect store</button>
+              </form>
+              <p class="shop-note" id="shop-note">We read your product catalogue and nothing else. Pick a product, we do the rest.</p>
+              <div class="shop-steps" aria-label="What happens after you connect">
+                <span>Your catalogue loads</span>
+                <span>Pick a product</span>
+                <span>We research it</span>
+                <span>You get the ad</span>
+              </div>
+            </div>
+
+            <div class="entry-pane" id="entry-link" role="tabpanel" aria-labelledby="entry-tab-link">
             <div class="composer" id="composer-box">
               <div class="composer-bar">
                 <svg class="composer-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -81,35 +154,45 @@
                   <img id="composer-product-img" alt="" />
                   <span class="composer-product-name" id="composer-product-name"></span>
                 </span>
-                <button type="button" class="composer-go" id="composer-go">Create</button>
+                <button type="button" class="composer-go" id="composer-go">Create my ad <span aria-hidden="true">&rarr;</span></button>
               </div>
               <div class="composer-tools" id="composer-tools" aria-label="Order settings"><!-- studio.js --></div>
 
-              <button type="button" class="composer-free" id="composer-free">
+              <!-- Not a second door any more. Create runs the read first, so
+                   this says what that click actually does instead of offering
+                   the research as an alternative to it. Reading a market costs
+                   us about five cents and tells the visitor something true
+                   about their own product, which is why it replaced the free 5
+                   second clip: that clip cost $4.16 a head and handed everyone
+                   a video regardless of what the research had just measured. -->
+              <div class="composer-free">
                 <span class="composer-free-badge">Free</span>
-                <span class="composer-free-copy"><strong>Watch yours move first, free.</strong><span class="composer-free-sub">A 5 second clip of your product, rendered while you watch. No card, no sign-up.</span></span>
-                <span class="composer-free-arrow" aria-hidden="true">→</span>
-              </button>
+                <span class="composer-free-copy"><strong>We read your market before we make anything.</strong><span class="composer-free-sub">We identify your product, read what your buyers say and which competitor ads are proven, then tell you what to say. Only then do we make it.</span></span>
+              </div>
 
-              <p class="composer-hint">Paste your product link and watch it happen. Other tools stop at a 15 second clip.
-                <button type="button" class="composer-nolink" id="composer-nolink">No product link? Start with photos or a description</button>
-              </p>
+              <p class="composer-hint">The read is free, needs no account, and it decides what the ad should say.</p>
               <div class="composer-try" aria-label="Try an example product">
                 <span class="composer-try-label">Try one:</span>
                 <button type="button" class="composer-try-chip" data-try="https://www.allbirds.com/products/mens-wool-runners">Allbirds Wool Runners</button>
                 <button type="button" class="composer-try-chip" data-try="https://www.glossier.com/products/cloud-paint">Glossier Cloud Paint</button>
               </div>
-            </div>
 
-            <button type="button" class="composer-quiz-entry" data-quiz-open>
-              <span class="cq-spark" aria-hidden="true">✨</span>
-              <span class="cq-text"><strong>Not sure where to start?</strong> Watch yours come alive</span>
-              <svg class="cq-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </button>
+              <!-- Shown only when a store is connected. Pasting a link stays the
+                   way in for everyone else, including every platform we have no
+                   integration with. -->
+              <div class="composer-store" id="composer-store" hidden>
+                <button type="button" class="composer-store-toggle" id="composer-store-toggle">
+                  Pick from <span id="composer-store-name">your store</span>
+                </button>
+                <div class="composer-store-grid" id="composer-store-grid" hidden></div>
+              </div>
+            </div>
+            </div><!-- /#entry-link -->
+
 
             <ul class="c-hero-badges" aria-label="Why brands choose Hexa">
               <li class="c-badge">Renders in minutes</li>
-              <li class="c-badge c-badge-accent">No credits · no reject fees</li>
+              <li class="c-badge c-badge-accent">No subscription · no reject fees</li>
             </ul>
           </div>
 
@@ -119,9 +202,9 @@
               <span class="c-monitor-tc" id="hero-tc" aria-hidden="true">00:00.0 / 00:15</span>
               <div class="c-monitor-ruler" aria-hidden="true">
                 <i class="lit"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-                <span class="c-monitor-ruler-cap">2:00</span>
+                <span class="c-monitor-ruler-cap">0:30</span>
               </div>
-              <figcaption class="c-monitor-cap">Seg 01 of 08 · full films run to 2:00</figcaption>
+              <figcaption class="c-monitor-cap">One continuous film · up to 0:30</figcaption>
               <div class="c-monitor-pdp" id="monitor-pdp" hidden aria-label="The product page this film was made from">
                 <div class="pdp-bar" aria-hidden="true"><i></i><i></i><i></i><span>bellarosa.shop/products/spaghetti-naturale</span></div>
                 <div class="pdp-body" aria-hidden="true">
@@ -139,16 +222,170 @@
       </section>
     </div>
 
-    <!-- ───── Guided start: the quiz, front and center ───── -->
-    <section class="quiz-band" id="quiz-start">
+    <!-- ───── The chain: what actually happens to a link ─────
+         This sits directly under the hero because it is the product. The old
+         four-step band ("add product, pick a mode, choose the look, get the
+         file") described the tool we were before the research existed, and it
+         lived two thirds down the page where nobody arriving cold ever read
+         it. Each step carries what it outputs, so the section reads as a
+         pipeline rather than as four verbs. -->
+    <section class="chain" id="how">
       <div class="c-wrap">
-        <div class="quiz-band-inner" data-reveal>
-          <div class="quiz-band-copy">
-            <p class="c-kicker">Guided start</p>
-            <h2 class="c-display c-display-m">Not sure yet?<br />Start with one tap.</h2>
-            <p class="c-sub">Tap what you sell. We set the scene, the vibe and the format, then your product comes alive. Three quick questions, nothing to sign up for.</p>
+        <div class="c-head" data-reveal>
+          <p class="c-kicker">How it works</p>
+          <h2 class="c-display c-display-l">The ad is the last step.<span class="hl-line">Not the first.</span></h2>
+          <p class="c-sub">Every other tool starts at "describe your video", which just moves the guess from you to a prompt box. We start at your product page and write nothing until we know what your market already responds to. One link, six passes, a couple of minutes.</p>
+        </div>
+
+        <ol class="chain-list">
+          <li class="chain-step" data-reveal>
+            <span class="chain-num">01</span>
+            <h3>We read your product</h3>
+            <p>Paste the link and we take the page apart: what it is, what it costs, what it already claims, and which images it is selling on today.</p>
+            <span class="chain-out">Your product, in plain terms</span>
+          </li>
+          <li class="chain-step" data-reveal data-reveal-delay="60">
+            <span class="chain-num">02</span>
+            <h3>We read your buyers</h3>
+            <p>Then the communities where your category actually gets discussed. Thousands of real comments, written by people who had no idea a brand was listening.</p>
+            <span class="chain-out">What people say unprompted</span>
+          </li>
+          <li class="chain-step" data-reveal data-reveal-delay="120">
+            <span class="chain-num">03</span>
+            <h3>We read your competitors</h3>
+            <p>Every ad running in your category in the public ad library, with the date each one went live. An ad still running after six months is proven. One that lasted four days was somebody's guess.</p>
+            <span class="chain-out">What is proven, not what is loud</span>
+          </li>
+          <li class="chain-step" data-reveal data-reveal-delay="180">
+            <span class="chain-num">04</span>
+            <h3>We call the format</h3>
+            <p>Video or statics, decided by which one is surviving longest in your category. If your market is won by still images we will tell you so, even though the video is the thing we sell.</p>
+            <span class="chain-out">The format your category rewards</span>
+          </li>
+          <li class="chain-step" data-reveal data-reveal-delay="240">
+            <span class="chain-num">05</span>
+            <h3>We find the angle</h3>
+            <p>The complaint your buyers keep raising that no competitor ad is answering. Ranked by how many separate people raised it, and every one arrives with its receipts attached.</p>
+            <span class="chain-out">What to say, and why</span>
+          </li>
+          <li class="chain-step chain-step-last" data-reveal data-reveal-delay="300">
+            <span class="chain-num">06</span>
+            <h3>We make the ad</h3>
+            <p>Same link, same evidence, no brief for you to write. The opening line comes straight out of the research, so the ad argues something your market has already said it cares about.</p>
+            <span class="chain-out">The file, ready to run</span>
+          </li>
+        </ol>
+
+        <div class="chain-cta" data-reveal>
+          <a class="btn btn-primary btn-lg" href="/validate">Read my market, free</a>
+          <span class="chain-cta-note">Steps one to five cost you nothing and need no account. The first ad is free too.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───── Guess the angle ─────
+         Every other line on this page ASSERTS that you are guessing. This is
+         the only one that lets you find out. The two wrong answers are the
+         themes competitors actually advertise, which is the real finding: the
+         confident, well-funded consensus is usually the thing customers care
+         least about. Data is frozen from real reads in catalog/guess-angles.json;
+         nothing in it is invented, and no "x% of people picked wrong" line
+         appears until we have actually counted picks. -->
+    <section class="guess" id="guess">
+      <div class="c-wrap">
+        <div class="c-head c-head-center" data-reveal>
+          <p class="c-kicker">Your turn</p>
+          <h2 class="c-display c-display-l">You already know<span class="hl-line">what to say. Probably.</span></h2>
+          <p class="c-sub">Here is a real product and three things you could say about it. One is what its customers actually keep raising. Pick the one you would put budget behind.</p>
+        </div>
+        <div class="guess-stage" id="guess-stage" aria-live="polite"><!-- studio.js --></div>
+      </div>
+    </section>
+
+    <!-- ───── The read: the report, shown rather than described ─────
+         The home page used to promise research and then never show any. This
+         is a worked example built from the components /validate actually
+         draws with, so a visitor knows the shape of what they are about to
+         get before they hand over a link. -->
+    <section class="read" id="read">
+      <div class="c-wrap">
+        <div class="c-head" data-reveal>
+          <p class="c-kicker">The read</p>
+          <h2 class="c-display c-display-l">Every claim<span class="hl-line">carries a receipt.</span></h2>
+          <p class="c-sub">Nothing in a read is our opinion. Each finding shows how many separate people raised it, every quote links back to the thread it came from, and a claim whose receipts do not survive never reaches the page at all.</p>
+        </div>
+
+        <div class="read-paper" data-reveal>
+          <div class="read-chrome" aria-hidden="true">
+            <i></i><i></i><i></i>
+            <span>madebyhexa.co/validate</span>
+            <em>Example read · sustainable footwear</em>
           </div>
-          <div class="quiz-band-tiles" data-quiz-inline role="group" aria-label="What are you selling?"><!-- quiz.js renders the category tiles --></div>
+
+          <div class="read-body">
+            <section class="vd-section vd-call">
+              <p class="vd-call-kicker">If we were advertising this product, we'd start here</p>
+              <h3 class="vd-call-claim">Sell the cost per wear, not the material</h3>
+              <p class="vd-call-why">Nine separate people raised this, and no competitor ad we read is saying it. Your category runs statics.</p>
+              <div class="vd-call-line">
+                <b>Open with</b>
+                <q>I stopped asking what shoes cost. I started counting how many times I wear them.</q>
+              </div>
+            </section>
+
+            <div class="read-split">
+              <section class="vd-section">
+                <h3 class="read-sub">What customers are saying</h3>
+                <div class="vd-finding">
+                  <h4>1. Durability is the sustainability argument that lands</h4>
+                  <p class="vd-corrob"><strong>9</strong> people raised this independently across 3 communities</p>
+                  <div class="ev-card">
+                    <blockquote>Cost per wear has changed how I shop. Rather have one piece I reach for constantly than five things that only look good for the first month.</blockquote>
+                    <div class="ev-meta"><span class="ev-src">r/SustainableFashion</span><span class="ev-score">24 points</span></div>
+                  </div>
+                  <div class="ev-card">
+                    <blockquote>Fabric, fit, how well it's made. I've had 50 euro sandals last 12 years and 300 euro boots fail after 2 years.</blockquote>
+                    <div class="ev-meta"><span class="ev-src">r/SustainableFashion</span><span class="ev-score">19 points</span></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="vd-section">
+                <h3 class="read-sub">Should you run video or images?</h3>
+                <div class="fmt-card">
+                  <div class="fmt-head">
+                    <div class="fmt-verdict">Run <em>statics</em></div>
+                    <span class="fmt-conf">high confidence</span>
+                  </div>
+                  <p class="fmt-why">Only a fifth of the ads still running past 90 days in this category are video. Video is being tried here and it is not surviving.</p>
+                  <div class="fmt-split">
+                    <div class="fmt-split-row">
+                      <span class="fmt-split-label">Winners (90+ days)</span>
+                      <div class="fmt-split-track"><span style="width:21%"></span></div>
+                      <span class="fmt-split-val">21% video</span>
+                    </div>
+                    <div class="fmt-split-row is-muted">
+                      <span class="fmt-split-label">All ads</span>
+                      <div class="fmt-split-track"><span style="width:38%"></span></div>
+                      <span class="fmt-split-val">38% video</span>
+                    </div>
+                    <div class="fmt-split-row is-muted">
+                      <span class="fmt-split-label">Days of spend</span>
+                      <div class="fmt-split-track"><span style="width:19%"></span></div>
+                      <span class="fmt-split-val">19% video</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <p class="read-note" data-reveal>Quotes above are real and came out of the corpus for this category. In your own report every one of them is a live link straight to the original thread, so you can check the working before you spend a cent on media.</p>
+
+        <div class="read-cta" data-reveal>
+          <a class="btn btn-primary btn-lg" href="/validate">Read my market, free</a>
+          <span class="read-cta-note">No account needed for the first findings.</span>
         </div>
       </div>
     </section>
@@ -159,7 +396,7 @@
         <div class="c-head" data-reveal>
           <p class="c-kicker">Proof</p>
           <h2 class="c-display c-display-l">If you can tell,<br />we failed.</h2>
-          <p class="c-sub">Three clips, all rendered by Hexa. Audiences comment on the skin texture before anyone clocks the pipeline. Tap one to check your guess.</p>
+          <p class="c-sub">Three clips, all rendered by Hexa. Audiences comment on the skin texture before anyone suspects it was generated. Tap one to check your guess.</p>
         </div>
         <div class="c-proof-row">
           <button class="c-proof-tile c-vignette" type="button" data-reveal data-reveal-delay="60">
@@ -192,11 +429,14 @@
             <p class="c-kicker">Receipts</p>
             <h2 class="c-display c-display-m">What brands say</h2>
           </div>
-          <p class="rail-desc">Verified outcomes from real Hexa clients, on the platforms you run ads on.</p>
+          <p class="rail-desc">People who run ecommerce ads for a living, on what we make.</p>
         </div>
-        <div class="proof-bar" aria-label="Hexa AI in numbers">
-          <div class="proof-bar-item"><span class="proof-bar-num">10M+</span><span class="proof-bar-label">Views generated</span></div>
-          <div class="proof-bar-item"><span class="proof-bar-num">5 <em>min</em></span><span class="proof-bar-label">Link to delivery</span></div>
+        <!-- "10M+ views generated" was a creator-era number and meant nothing
+             to someone selling a product. These three are what a merchant
+             actually buys from us. -->
+        <div class="proof-bar" aria-label="What every order includes">
+          <div class="proof-bar-item"><span class="proof-bar-num">Free</span><span class="proof-bar-label">Market read, no account</span></div>
+          <div class="proof-bar-item"><span class="proof-bar-num">5 <em>min</em></span><span class="proof-bar-label">Link to finished ad</span></div>
           <div class="proof-bar-item"><span class="proof-bar-num">100%</span><span class="proof-bar-label">AI, looks real</span></div>
         </div>
         <div class="review-marquee" aria-label="What clients say">
@@ -211,40 +451,49 @@
         <div class="c-head" data-reveal>
           <p class="c-kicker">Runtime</p>
           <h2 class="c-display c-display-l">Everyone else sells clips.<span class="hl-line">We deliver the film.</span></h2>
-          <p class="c-sub">Other tools generate isolated clips. Hexa holds the same actor, camera, lighting and scene across every 15 second segment, then exports one continuous film, up to two minutes.</p>
+          <p class="c-sub">Other tools generate isolated clips that drift. Hexa holds the same actor, camera, lighting and scene for the whole run, then exports one continuous film, up to 30 seconds.</p>
         </div>
 
         <p class="c-runbars-axis">Native single-shot runtime · default settings</p>
-        <div class="c-runbars" role="img" aria-label="Native single-shot runtime compared: Veo 8 seconds, Sora 15 seconds, Kling 15 seconds. Hexa delivers one continuous film up to 2 minutes.">
-          <div class="c-runbar" data-reveal><span class="c-runbar-name">Veo 3.1</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 6.7%"></i></span><span class="c-runbar-time">0:08</span></div>
-          <div class="c-runbar" data-reveal data-reveal-delay="80"><span class="c-runbar-name">Sora 2</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 12.5%"></i></span><span class="c-runbar-time">0:15</span></div>
-          <div class="c-runbar" data-reveal data-reveal-delay="160"><span class="c-runbar-name">Kling</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 12.5%"></i></span><span class="c-runbar-time">0:15</span></div>
-          <div class="c-runbar c-runbar-hexa" data-reveal data-reveal-delay="260"><span class="c-runbar-name">Hexa</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 100%"></i></span><span class="c-runbar-time">Up to 2:00 · one continuous film</span></div>
+        <div class="c-runbars" role="img" aria-label="Native single-shot runtime compared: Veo 8 seconds, Sora 15 seconds, Kling 15 seconds. Hexa delivers one continuous film up to 30 seconds.">
+          <div class="c-runbar" data-reveal><span class="c-runbar-name">Veo 3.1</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 27%"></i></span><span class="c-runbar-time">0:08</span></div>
+          <div class="c-runbar" data-reveal data-reveal-delay="80"><span class="c-runbar-name">Sora 2</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 50%"></i></span><span class="c-runbar-time">0:15</span></div>
+          <div class="c-runbar" data-reveal data-reveal-delay="160"><span class="c-runbar-name">Kling</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 50%"></i></span><span class="c-runbar-time">0:15</span></div>
+          <div class="c-runbar c-runbar-hexa" data-reveal data-reveal-delay="260"><span class="c-runbar-name">Hexa</span><span class="c-runbar-track"><i class="c-runbar-fill" style="--w: 100%"></i></span><span class="c-runbar-time">Up to 0:30 · one continuous film</span></div>
         </div>
         <p class="c-runbars-note">Native single-shot runtime per tool at default settings, July 2026. Longer runs elsewhere lean on extend tricks that visibly drift. Hexa holds to the last second.</p>
 
         <div class="c-strip-zone" id="strip-zone">
           <div class="c-strip" id="film-strip">
-            <figure class="c-cell"><img src="assets/film/seg-01.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 01 · 0:00</figcaption></figure>
-            <figure class="c-cell"><img src="assets/film/seg-02.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 02 · 0:15</figcaption></figure>
-            <figure class="c-cell"><img src="assets/film/seg-03.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 03 · 0:30</figcaption></figure>
-            <figure class="c-cell"><img src="assets/film/seg-04.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 04 · 0:45</figcaption></figure>
-            <figure class="c-cell"><img src="assets/film/seg-05.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 05 · 1:00</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-01.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Frame 01 · 0:00</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-02.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Frame 02 · 0:07</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-03.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Frame 03 · 0:14</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-04.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Frame 04 · 0:20</figcaption></figure>
+            <figure class="c-cell"><img src="assets/film/seg-05.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Frame 05 · 0:26</figcaption></figure>
             <figure class="c-cell"><img src="assets/film/seg-06.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 06 · 1:15</figcaption></figure>
             <figure class="c-cell"><img src="assets/film/seg-07.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 07 · 1:30</figcaption></figure>
             <figure class="c-cell"><img src="assets/film/seg-08.jpg" alt="" loading="lazy" width="360" height="640" /><figcaption>Seg 08 · 1:45</figcaption></figure>
           </div>
-          <p class="c-strip-result"><span class="c-strip-arrow" aria-hidden="true">→</span><span class="c-badge c-badge-accent">hexa_order_final.mp4 · 2:00 · one file</span></p>
+          <p class="c-strip-result"><span class="c-strip-arrow" aria-hidden="true">→</span><span class="c-badge c-badge-accent">hexa_order_final.mp4 · 0:30 · one file</span></p>
         </div>
 
         <div class="c-runtime-cta" data-reveal>
-          <button class="btn btn-primary btn-lg" type="button" data-open="ugc">Make a longer one</button>
-          <span class="c-runtime-cta-note">Same actor, first frame to last. +$12 per extra 15 seconds.</span>
+          <button class="btn btn-primary btn-lg" type="button" data-open="ugc">Make a longer ad</button>
+          <span class="c-runtime-cta-note">Same actor, first frame to last. <span data-price-extra></span> per extra 15 seconds.</span>
         </div>
       </div>
     </section>
 
+    <!-- Everything from here to the reel is the execution layer. It used to be
+         the pitch, which is why the page read as a style picker; now it is
+         labelled as what it is, so it supports the read instead of competing
+         with it. -->
     <div class="studio studio-flush">
+      <section class="exec-lede" data-reveal>
+        <p class="c-kicker">The execution layer</p>
+        <p class="exec-lede-copy">The read decides what your ad says. Everything below decides how it looks. Pick any of it yourself, or leave it and the angle will pick for you.</p>
+      </section>
+
       <!-- ───── Hexa Styles ───── -->
       <section class="styles" id="styles">
         <div class="rail-head rail-head-c" data-reveal>
@@ -252,7 +501,7 @@
             <p class="c-kicker">Styles</p>
             <h2 class="c-display c-display-m">Hexa Styles</h2>
           </div>
-          <p class="rail-desc">Pick a look. The brief is already written. Just add your product.</p>
+          <p class="rail-desc">The looks the angle gets built in. Every brief here is already written and tested, so nothing about your ad comes down to a prompt you had to guess at.</p>
           <span class="c-head-meta" id="styles-count"></span>
         </div>
         <div class="style-grid" id="style-grid"><!-- studio.js --></div>
@@ -263,9 +512,9 @@
         <div class="rail-head rail-head-c" data-reveal>
           <div class="rail-head-main">
             <p class="c-kicker">Modes</p>
-            <h2 class="c-display c-display-m">Ten ways to sell it</h2>
+            <h2 class="c-display c-display-m">Ten ways to make the point</h2>
           </div>
-          <p class="rail-desc">Every mode ships any length, 15 seconds to a 2 minute film.</p>
+          <p class="rail-desc">One angle, ten shapes to run it in. The read suggests the one your category rewards; you can override it. Any mode ships any length, 15 seconds to a 2 minute film.</p>
           <span class="c-head-meta" id="modes-count"></span>
         </div>
         <div class="mode-rail" id="mode-rail"><!-- studio.js --></div>
@@ -293,7 +542,7 @@
             <p class="c-kicker">Openers</p>
             <h2 class="c-display c-display-m">Viral hooks</h2>
           </div>
-          <p class="rail-desc">Scripted openers that stop the scroll.</p>
+          <p class="rail-desc">Openers that stop the scroll. Your read writes yours out of what your buyers actually said; these are the shapes it writes in.</p>
           <span class="c-head-meta" id="hooks-count"></span>
         </div>
         <div class="hook-rail" id="hook-rail"><!-- studio.js --></div>
@@ -346,161 +595,107 @@
     </section>
 
 
-    <section id="results" class="results">
-      <div class="results-inner">
-        <div class="rail-head rail-head-c" data-reveal>
-          <div class="rail-head-main">
-            <p class="c-kicker">Case</p>
-            <h2 class="c-display c-display-m">Real creator. Real numbers. 30 days.</h2>
-          </div>
-          <p class="rail-desc">One month of content from the same pipeline that powers the studio. Anonymized client, verified metrics.</p>
-        </div>
-
-        <article class="case">
-          <div class="case-media">
-            <figure class="case-shot" data-label="Earnings dashboard">
-              <img src="assets/case-study/analytics.png" alt="Creator earnings dashboard, anonymized" loading="lazy" decoding="async" />
-              <figcaption><span class="shot-tag">Earnings dashboard</span><span class="shot-date">verified Jan 2026</span></figcaption>
-            </figure>
-          </div>
-
-          <div class="case-body">
-            <div class="case-metrics">
-              <div class="case-metric case-metric-hl">
-                <span class="metric-num"><span class="count" data-count="881">881</span><span class="metric-unit">K</span></span>
-                <span class="metric-label">Followers</span>
-                <span class="metric-source">via IG Insights</span>
-              </div>
-              <div class="case-metric">
-                <span class="metric-num"><span class="count" data-count="10">10</span><span class="metric-unit">M</span></span>
-                <span class="metric-label">Views</span>
-                <span class="metric-source">in 30 days</span>
-              </div>
-              <div class="case-metric">
-                <span class="metric-num"><span class="metric-unit metric-unit-pre">$</span><span class="count" data-count="4463" data-format="comma">4,463</span></span>
-                <span class="metric-label">Revenue</span>
-                <span class="metric-source">lifetime, $2,258 best month</span>
-              </div>
-            </div>
-
-            <blockquote class="case-quote">
-              <p>"I handed Hexa AI my content and stopped thinking about it. 881K followers and 10M views in 30 days, no shoots, no studio. By month two it basically ran itself."</p>
-              <footer class="case-attr">
-                <span class="case-avatar" aria-hidden="true">C</span>
-                <span class="case-attr-text">
-                  <span class="case-attr-name">Confidential creator <span class="case-verified" title="Verified by Hexa AI">✓</span></span>
-                  <span class="case-attr-role">Creator client · 881K followers</span>
-                </span>
-              </footer>
-            </blockquote>
-
-            <a class="btn btn-primary btn-lg" href="#composer">Make yours now</a>
-          </div>
-        </article>
-
-        <p class="results-disclaimer">Results shown are from one client over 30 days and are not typical. Individual results vary and are not guaranteed.</p>
-      </div>
-    </section>
-
-    <!-- ───── How it works ───── -->
-    <div class="studio studio-flush">
-      <section class="steps-band">
-        <ol class="steps">
-          <li><span class="step-num">1</span><h3>Add your product</h3><p>Paste a link or upload photos.</p></li>
-          <li><span class="step-num">2</span><h3>Pick a mode</h3><p>UGC, TV spot, unboxing, try-on, more.</p></li>
-          <li><span class="step-num">3</span><h3>Choose the look</h3><p>Avatar, hook, scene. Or let us pick.</p></li>
-          <li><span class="step-num">4</span><h3>Get the file</h3><p>Delivered ready to post and run.</p></li>
-        </ol>
-      </section>
-    </div>
-
-    <section id="engine" class="c-spec">
-      <div class="c-wrap">
-        <div class="c-head" data-reveal>
-          <p class="c-kicker">Under the hood</p>
-          <h2 class="c-display c-display-l">Custom pipeline.<br />Not off-the-shelf AI.</h2>
-          <p class="c-sub">Most AI content is hand-prompted consumer tools, shipped as-is. Every Hexa order runs through our own tuned pipeline, engineered so the output passes as a real shoot.</p>
-        </div>
-        <dl class="c-spec-sheet">
-          <div class="c-spec-row" data-reveal><dt>Pipeline</dt><dd>Every format runs its own tuned production workflow, so results come out consistent instead of one-off prompt luck.</dd></div>
-          <div class="c-spec-row" data-reveal data-reveal-delay="60"><dt>Models</dt><dd>Tuned on your brand, your product, and one consistent face, so the same person carries the whole film.</dd></div>
-          <div class="c-spec-row" data-reveal data-reveal-delay="120"><dt>Control</dt><dd>Every shot is directed on purpose: camera, lighting, expression, and pacing hold steady across the whole video.</dd></div>
-          <div class="c-spec-row" data-reveal data-reveal-delay="180"><dt>Runtime</dt><dd>Rendered in 15 second blocks and stitched into one seamless film, up to 2 minutes with no visible cuts.</dd></div>
-          <div class="c-spec-row" data-reveal data-reveal-delay="240"><dt>Vs shoots</dt><dd>A fraction of one shoot day. Minutes, not weeks. Unlimited iterations.</dd></div>
-        </dl>
-      </div>
-    </section>
-
     <section id="pricing" class="pricing">
       <div class="pricing-inner">
         <div class="c-head c-head-center" data-reveal>
           <p class="c-kicker">Pricing</p>
-          <h2 class="c-display c-display-l">One price. One file. Done.</h2>
-          <p class="c-sub">Every format has one clear price, shown before you pay. Buy the film you want, get the file, done.</p>
+          <h2 class="c-display c-display-l">One price. One ad. Done.</h2>
+          <p class="c-sub">Every format has one clear price, shown before you pay. Buy the ad you want, get the file, done.</p>
         </div>
 
+        <!-- "No credits" used to sit here, three inches above cards that
+             quote credit costs, next to an account page that sells credit
+             top-ups. Every remaining chip is something we actually honour. -->
+        <!-- Three chips, all true. "Pay per creative" is the model, and the
+             delivery promise is the one that actually removes risk, so it
+             carries the accent. -->
         <ul class="c-price-chips" aria-label="Pricing guarantees">
-          <li class="c-badge">Pay per film</li>
+          <li class="c-badge">Pay per creative</li>
           <li class="c-badge">No subscription</li>
-          <li class="c-badge">No credits</li>
-          <li class="c-badge">No reject fees</li>
-          <li class="c-badge c-badge-accent">Never charged if we don't deliver</li>
+          <li class="c-badge c-badge-accent">Only pay when we deliver</li>
         </ul>
 
+        <!-- The free way in, above the prices rather than beside them.
+             It is not a fourth price point to compare, it is the thing that
+             happens before anyone considers a price: the read costs nothing
+             and needs no account, and the first ad it produces is free too.
+             Full width because it is the first thing to read, not the cheapest
+             option in a row. -->
+        <div class="price-free" data-reveal>
+          <div class="price-free-main">
+            <span class="price-free-tag">Free · no credit card</span>
+            <h3 class="price-free-title">Start with the market read</h3>
+            <p class="price-free-sub">We find out what your customers care about and what to say about your product. Then we make the first ad from it. You pay nothing for either, and the read does not even need an account.</p>
+          </div>
+          <div class="price-free-side">
+            <ul class="price-free-list">
+              <li>The full market read</li>
+              <li>Your first ad, made from it</li>
+              <li>No card, no subscription</li>
+            </ul>
+            <a class="price-free-cta" href="/validate">Read my market, free</a>
+          </div>
+        </div>
+
+        <!-- Three cards, named by what the ad is FOR rather than by the engine
+             that renders it. A merchant picking between "hyper motion" and
+             "cinematic" has to already know our vocabulary; picking between
+             attention, conversion and premium is a decision they make about
+             their own business every day.
+
+             Product photoshoot came off this row: it is stills, not an ad, and
+             standing it next to three ad tiers made the row answer two
+             different questions at once. It still sells from the stills band
+             and from the goal chooser. -->
         <div class="pack-track">
           <button class="tier pack-card" type="button" data-open="hyper_motion">
-            <span class="tier-name">Short-form motion</span>
+            <span class="tier-name">Scroll-stopping ad</span>
             <div class="tier-price"><span class="pack-from" data-price-from="mode:hyper_motion"></span><span class="tier-price-cur">$</span><span data-price-base="mode:hyper_motion"></span></div>
-            <p class="tier-price-note">Per finished film</p>
-            <p class="tier-desc">Hyper Motion and Wild Card looks that stop the scroll.</p>
+            <p class="tier-price-note">15 seconds</p>
+            <p class="tier-desc">For attention.</p>
             <ul class="tier-features">
-              <li>One 15 second film</li>
-              <li>Hyper Motion and Wild Card styles</li>
-              <li>Delivered in about 5 minutes</li>
+              <li>Built around your product</li>
+              <li>Motion styles that break a scroll</li>
+              <li>Finished file, ready to run</li>
             </ul>
+            <p class="tier-price-credits">or <span data-price-credits="mode:hyper_motion"></span> credits from your balance</p>
             <span class="pack-cta">Create →</span>
           </button>
-          <button class="tier pack-card" type="button" data-open="photoshoot">
-            <span class="tier-name">Product photoshoot</span>
-            <div class="tier-price"><span class="pack-from" data-price-from="photoshoot"></span><span class="tier-price-cur">$</span><span data-price-base="photoshoot"></span></div>
-            <p class="tier-price-note">Flat rate, ten images</p>
-            <p class="tier-desc">Ten brand-quality images of your product.</p>
-            <ul class="tier-features">
-              <li>Ten finished images</li>
-              <li>One flat rate, no per-image fees</li>
-              <li>Delivered in about 2 minutes</li>
-            </ul>
-            <span class="pack-cta">Create →</span>
-          </button>
+
           <button class="tier tier-featured pack-card" type="button" data-open="ugc">
             <span class="tier-badge"><span class="tier-badge-dot"></span>Most popular</span>
-            <span class="tier-name">Creator video</span>
+            <span class="tier-name">Creator ad</span>
             <div class="tier-price"><span class="pack-from" data-price-from="mode:ugc"></span><span class="tier-price-cur">$</span><span data-price-base="mode:ugc"></span></div>
-            <p class="tier-price-note">Per finished film</p>
-            <p class="tier-desc">UGC, review, unboxing, tutorial and try-on, made to convert.</p>
+            <p class="tier-price-note">Up to 30 seconds</p>
+            <p class="tier-desc">For conversion.</p>
             <ul class="tier-features">
-              <li>UGC, review, unboxing, tutorial and try-on</li>
-              <li>Up to 2:00 as one continuous film</li>
-              <li>+<span data-price-extra-n></span> per extra 15 seconds</li>
-              <li>Delivered in about 5 minutes</li>
+              <li>UGC</li>
+              <li>Review</li>
+              <li>Unboxing</li>
+              <li>Tutorial</li>
+              <li>Try-on</li>
             </ul>
+            <p class="tier-price-credits">or <span data-price-credits="mode:ugc"></span> credits from your balance</p>
             <span class="pack-cta">Create →</span>
           </button>
+
           <button class="tier pack-card" type="button" data-open="cinematic">
-            <span class="tier-name">Premium spot</span>
+            <span class="tier-name">Premium ad</span>
             <div class="tier-price"><span class="pack-from" data-price-from="cinematic"></span><span class="tier-price-cur">$</span><span data-price-base="cinematic"></span></div>
-            <p class="tier-price-note">Per finished film</p>
-            <p class="tier-desc">TV Spot, Cinematic and Pro Try-On, at the highest fidelity.</p>
+            <p class="tier-price-note">15 seconds</p>
+            <p class="tier-desc">For premium brands.</p>
             <ul class="tier-features">
-              <li>One 15 second film</li>
-              <li>TV Spot, Cinematic and Pro Try-On looks</li>
-              <li>Delivered in about 7 minutes</li>
+              <li>Cinematic</li>
+              <li>TV commercial</li>
+              <li>Pro try-on</li>
+              <li>Highest fidelity</li>
             </ul>
+            <p class="tier-price-credits">or <span data-price-credits="cinematic"></span> credits from your balance</p>
             <span class="pack-cta">Create →</span>
           </button>
         </div>
 
-        <p class="price-band-note">Videos are 15 seconds base. Longer runs render as one continuous film, <strong data-price-extra></strong> per extra 15 seconds.</p>
+        <p class="price-band-note">Every price is for a 15 second ad. Longer runs render as one continuous film, <strong data-price-extra></strong> per extra 15 seconds, up to 30.</p>
 
         <p class="tiers-trust">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -514,12 +709,12 @@
         <div class="dfy-card" data-reveal>
           <div class="dfy-copy">
             <p class="c-kicker">Done for you</p>
-            <h2 class="c-display c-display-m">Need videos every week,<br />not just one?</h2>
-            <p class="c-sub">Some brands want a steady feed of films without running a tool. We handle it end to end: same faces across every video, new scenes every drop, and nobody on your team ever steps in front of a camera. You approve, we deliver.</p>
+            <h2 class="c-display c-display-m">Would rather not<br />do any of this?</h2>
+            <p class="c-sub">Some people want the ads without running the tool that makes them. Hand it over and we do the whole thing: we read your market every month, decide what to say, and deliver ads ready to run. You approve, nothing else.</p>
             <ul class="dfy-points">
-              <li>A fresh batch of films every month, for ads and feed</li>
-              <li>The same creators carry your whole feed, so it reads as one brand</li>
-              <li>Send your products once. We storyboard, render and deliver ready to post</li>
+              <li>We run the research, so the angles keep up with your market</li>
+              <li>The same creators carry every ad, so it reads as one brand</li>
+              <li>Send your products once. Nobody on your team touches a camera or a tool</li>
             </ul>
             <div class="dfy-cta-row">
               <a class="dfy-cta" href="https://cal.com/hexaiagency" target="_blank" rel="noopener">Book a call</a>
@@ -537,24 +732,32 @@
       </div>
       <div class="faq-list">
         <details class="faq-item">
-          <summary>What does one video cost?</summary>
-          <p class="faq-a">Every format has one clear price, from $12 for short-form motion to $29 for a premium spot. A 15-second video is the base; each extra 15 seconds adds $12. The exact total shows before you pay, always.</p>
+          <summary>What does one ad cost?</summary>
+          <p class="faq-a">Every format has one clear price, from <span data-price-lo></span> for a scroll-stopping ad to <span data-price-hi></span> for a premium one. A 15-second video is the base; each extra 15 seconds adds <span data-price-extra-n></span>. The exact total shows before you pay, always.</p>
         </details>
         <details class="faq-item">
           <summary>How real does it look?</summary>
-          <p class="faq-a">That is the whole point. Every order runs through our own tuned pipeline, so the output is built to pass as a real shoot instead of looking AI-generated.</p>
+          <p class="faq-a">That is the whole point. If an ad looks AI generated it does not ship, so what you get is built to pass as a real shoot.</p>
+        </details>
+        <details class="faq-item">
+          <summary>What is the read, and what does it cost?</summary>
+          <p class="faq-a">It is the research pass that decides what your ad should say: what real buyers in your category complain about, which competitor ads have run long enough to count as proven, and whether your category is won by video or by statics. It is free, and you do not need an account to see the first findings.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Where does the research come from?</summary>
+          <p class="faq-a">Public sources only. The community threads where your category gets argued about, and the public ad libraries where every advertiser's live ads and start dates are already on the record. Every quote on your report links to the thread it came from, so you can check any claim yourself.</p>
         </details>
         <details class="faq-item">
           <summary>Do I need to know how to prompt?</summary>
-          <p class="faq-a">No. Pick a format and a look; the brief is already written and tested. You add your product, everything else is handled.</p>
+          <p class="faq-a">No, and you do not need to know what to say either. The read hands the studio the angle and the opening line, so the brief is written before you touch anything.</p>
         </details>
         <details class="faq-item">
           <summary>How fast is delivery?</summary>
-          <p class="faq-a">Most orders finish in minutes and you can watch them build live on the order page. Longer films take a little more.</p>
+          <p class="faq-a">Most orders finish in minutes and you can watch them build live on the order page. Longer ads take a little more.</p>
         </details>
         <details class="faq-item">
           <summary>Can I get longer than 15 seconds?</summary>
-          <p class="faq-a">Yes, up to 2 minutes. Longer runs are delivered as one continuous film: same creator, same scene, one storyboard, so it cuts together like a single take.</p>
+          <p class="faq-a">Yes, up to 30 seconds as one continuous film: same creator, same scene, one storyboard, so it cuts together like a single take.</p>
         </details>
         <details class="faq-item">
           <summary>Do I own the content?</summary>
@@ -572,19 +775,45 @@
     </section>
 
     <!-- ───── Closer ───── -->
+    <!-- ───── Closer ─────
+         Was a headline and a button floating in 290px of empty space, with the
+         offer reduced to one underlined sentence and a 00:00 to 00:30 timecode
+         left over from when we sold films. The last thing on the page is the
+         last chance to say what is free, so it says it: three things, each one
+         true, and two of them need no account at all. -->
     <section class="c-closer">
       <div class="c-closer-bg" aria-hidden="true"></div>
       <div class="c-wrap c-closer-inner">
-        <h2 class="c-display c-display-l">Your product is ready.<span class="hl-line">Your film isn't. Yet.</span></h2>
+        <p class="c-kicker">Free to start</p>
+        <h2 class="c-display c-display-l">Your product is ready.<span class="hl-line">Your ad isn't. Yet.</span></h2>
+        <p class="c-closer-sub">Find out what your market actually wants, and watch your first ad get made from it, before you pay us anything.</p>
+
+        <ul class="closer-offer">
+          <li>
+            <span class="closer-offer-tag">Free</span>
+            <strong>The market read</strong>
+            <span>What your customers care about, which competitor ads are proven, and what nobody is saying yet. No account needed.</span>
+          </li>
+          <li>
+            <span class="closer-offer-tag">Free</span>
+            <strong>Your first ad</strong>
+            <span>Built from the angle the research found, not from a prompt you had to write. One per read.</span>
+          </li>
+          <li>
+            <span class="closer-offer-tag">2,500 credits</span>
+            <strong>When you create an account</strong>
+            <span>Enough for five static ad creatives, or two more market reads. Nothing expires.</span>
+          </li>
+        </ul>
+
         <button class="closer-cta" type="button" id="closer-cta">Start with your link</button>
-        <button class="closer-free" type="button" id="closer-free">Not sure yet? Watch a free 5 second clip of your product first</button>
-        <p class="c-closer-tc" aria-hidden="true">00:00 <span class="c-closer-arrow">→</span> 02:00</p>
+        <p class="closer-note">No card to start. No subscription. You are only charged for work we deliver.</p>
       </div>
     </section>
   </main>
 
   <div class="float-cta" id="float-cta">
-    <a class="float-cta-link" href="#composer">Start your film
+    <a class="float-cta-link" href="#composer">Create my ad
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </a>
     <button class="float-cta-close" type="button" aria-label="Dismiss">&times;</button>
@@ -618,6 +847,25 @@
         <div class="peek-progress" id="peek-progress" hidden aria-hidden="true"><span></span></div>
         <p class="peek-note" id="peek-note" hidden></p>
         <button type="button" class="peek-skip" id="peek-skip" hidden>Continue without the photo</button>
+
+        <!-- The beat that used to be missing. Identifying the product used to
+             hand straight to the style picker, which meant the studio asked
+             what the ad should look like before anything had worked out what
+             it should say. Now the same click asks the only question a
+             merchant is actually equipped to answer at this point, and both
+             answers are real: one path for people who want it decided, one for
+             people who already know their own market. -->
+        <div class="peek-next" id="peek-next" hidden>
+          <p class="peek-next-ask">Want us to figure out the best way to advertise it?</p>
+          <button type="button" class="peek-next-go" id="peek-next-go">
+            <strong>Yes, figure it out for me</strong>
+            <span>We research your customers and competitors, then tell you what to say. Free, about 2 minutes.</span>
+          </button>
+          <button type="button" class="peek-next-skip" id="peek-next-skip">
+            <strong>I'll choose myself</strong>
+            <span>Go straight to the studio and set the format, look and script by hand.</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -655,6 +903,10 @@
         <div class="config-act">
           <p class="config-hint" id="config-hint" hidden></p>
           <button class="config-submit" type="button" id="config-submit">Create</button>
+          <!-- The card fallback. Only ever shown on the review step, and only
+               to someone whose balance already covers the order, so it reads as
+               the alternative to spending credits rather than a second price. -->
+          <button class="config-alt" type="button" id="config-pay-card" hidden>Pay by card instead</button>
         </div>
       </footer>
     </section>
@@ -703,11 +955,5 @@
     </div>
   </dialog>
 
-  <script src="/vendor/supabase.js"></script>
-  <script src="auth.js"></script>
-  <script src="nav-auth.js"></script>
-  <script src="studio.js"></script>
-  <script src="quiz.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>

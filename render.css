@@ -377,6 +377,24 @@
 }
 .result-set-item:hover { transform: translateY(-2px); }
 .result-set-item.sel { border-color: var(--accent, #ff4d6d); }
+/* A creative mid re-roll: dimmed and breathing, so the set never looks broken
+ * while one tile is being replaced. */
+.result-set-item.busy img { opacity: 0.35; filter: saturate(0.4); }
+.result-set-item.busy::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.16) 50%, transparent 70%);
+  background-size: 240% 100%;
+  animation: result-tile-scan 1.4s linear infinite;
+}
+@keyframes result-tile-scan {
+  from { background-position: 140% 0; }
+  to   { background-position: -60% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .result-set-item.busy::after { animation: none; }
+}
 .result-seg-link {
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 11px;
@@ -390,6 +408,88 @@
   transition: color 0.25s, border-color 0.25s;
 }
 .result-seg-link:hover { color: #fff; border-color: rgba(255, 77, 109, 0.55); }
+
+/* ── Ad pack editor ───────────────────────────────────────────────
+ * Sits under the set, addressing whichever creative is selected. Deliberately
+ * quiet: the work is the images above, and this is the tool for correcting
+ * one of them, not a second product. */
+.ad-edit {
+  margin: 18px auto 0;
+  max-width: 720px;
+  padding: 16px 18px 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-card, 18px);
+  text-align: left;
+  animation: reveal 0.6s var(--ease);
+}
+.ad-edit[hidden] { display: none; }
+.ad-edit-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.ad-edit-head strong { color: var(--text); font-weight: 800; }
+.ad-edit-left { letter-spacing: 0.04em; text-transform: none; font-weight: 500; }
+.ad-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ad-edit-row input[type="text"] {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.ad-edit-row select { flex: 0 1 190px; }
+.ad-edit-row input[type="text"],
+.ad-edit-row select {
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.16));
+  border-radius: 12px;
+  transition: border-color 0.25s;
+}
+.ad-edit-row select { appearance: none; cursor: pointer; }
+.ad-edit-row option { background: #14101a; color: #fff; }
+.ad-edit-row input[type="text"]:focus,
+.ad-edit-row select:focus { border-color: rgba(255, 77, 109, 0.6); }
+.ad-edit-go {
+  flex: 0 0 auto;
+  padding: 11px 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent, #ff4d6d);
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), opacity 0.2s;
+}
+.ad-edit-go:hover:not(:disabled) { transform: translateY(-1px); }
+.ad-edit-go:disabled { opacity: 0.5; cursor: default; }
+.ad-edit-note {
+  margin: 11px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+}
+.ad-edit-note.warn { color: #ffb4c1; }
+@media (max-width: 560px) {
+  .ad-edit-row input[type="text"],
+  .ad-edit-row select,
+  .ad-edit-go { flex: 1 1 100%; }
+}
 
 /* ── Free-sample sign-in gate ─────────────────────────────────────
  * Appears after the signed-out staging run: the collect moment. One card,

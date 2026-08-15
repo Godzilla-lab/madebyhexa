@@ -1,5 +1,7 @@
 'use strict';
 
+const { allow } = require('./lib/ratelimit');
+
 /*
  * GDPR data export (Art. 15/20): everything Hexa stores about the signed-in
  * account, as one downloadable JSON file.
@@ -20,6 +22,16 @@ exports.handler = async (event) => {
   if (!sb.configured()) {
     return { statusCode: 503, body: JSON.stringify({ error: 'accounts not configured' }) };
   }
+  /*
+   * A full data export is the most expensive read on the site and the most
+   * sensitive: it assembles everything an account holds. Ten an hour is far
+   * more than anyone genuinely exercising their data rights needs, and it stops
+   * a stolen token being used to pull the same account repeatedly.
+   */
+  if (!(await allow('account-export', event, 30))) {
+    return { statusCode: 429, body: JSON.stringify({ error: 'Too many exports. Try again shortly.' }) };
+  }
+
   const user = await getUser(event);
   if (!user) {
     return { statusCode: 401, body: JSON.stringify({ error: 'sign in required' }) };

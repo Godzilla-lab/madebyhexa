@@ -11,6 +11,42 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), browsing-topics=()
   Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://connect.facebook.net https://analytics.tiktok.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://xsfxsnqmhaogfsgdjjeg.supabase.co wss://xsfxsnqmhaogfsgdjjeg.supabase.co https://connect.facebook.net https://www.facebook.com https://*.facebook.com https://analytics.tiktok.com https://*.tiktok.com; frame-src https://www.facebook.com https://*.tiktok.com; upgrade-insecure-requests
 
+# ── Caching ─────────────────────────────────────────────────────────────────
+# Netlify's default is "public, max-age=0, must-revalidate", which means a
+# returning visitor makes a conditional request for every stylesheet, script,
+# image and video on every single load. They come back 304 Not Modified, so
+# little data moves, but each one still costs a full round trip, and the page
+# cannot paint until the blocking ones answer. Measured on the live site
+# 2026-08-14: every asset carried max-age=0.
+#
+# Assets are immutable in practice: a changed image gets a new filename, and
+# CSS/JS change only on deploy. So they are cached hard, and the HTML that
+# points at them is not, which is what makes a deploy visible immediately.
+
+# Media never changes once published. A year, and the browser need not ask.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Code changes on deploy and is not fingerprinted, so it is cached for an hour
+# and revalidated after that. must-revalidate is deliberately absent: a stale
+# copy for a few minutes is a far better trade than a round trip per file.
+/*.css
+  Cache-Control: public, max-age=3600
+
+/*.js
+  Cache-Control: public, max-age=3600
+
+# The catalogue drives prices and styles, so it should follow a deploy quickly.
+/catalog/*
+  Cache-Control: public, max-age=600
+
+# HTML stays uncached so a deploy is live the moment it lands.
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
 # ── Keep funnel / sensitive pages out of search indexes ─────────────────────
 /intake.html
   X-Robots-Tag: noindex, nofollow

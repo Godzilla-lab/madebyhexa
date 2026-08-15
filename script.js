@@ -678,17 +678,37 @@
   // children. One IO for the whole page; unobserves after first entry.
   const revealEls = document.querySelectorAll('[data-reveal]');
   if (revealEls.length && 'IntersectionObserver' in window && !reduceMotion) {
-    const ro = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('in');
-        ro.unobserve(entry.target);
-      });
-    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    /*
+     * Anything already on screen when the script runs is shown AT ONCE, with no
+     * transition and no stagger. Staggering the first screen is what makes a
+     * page look like it is loading in pieces: the delays are read as slowness,
+     * not as polish, and they stack on top of however long the six scripts took
+     * to arrive. Choreography is for content the reader scrolls to, where the
+     * motion is a reward rather than a wait.
+     */
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const pending = [];
     revealEls.forEach((n) => {
-      if (n.dataset.revealDelay) n.style.setProperty('--d', n.dataset.revealDelay + 'ms');
-      ro.observe(n);
+      if (n.getBoundingClientRect().top < vh) {
+        n.classList.add('is-instant', 'in');
+      } else {
+        pending.push(n);
+      }
     });
+
+    if (pending.length) {
+      const ro = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('in');
+          ro.unobserve(entry.target);
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+      pending.forEach((n) => {
+        if (n.dataset.revealDelay) n.style.setProperty('--d', n.dataset.revealDelay + 'ms');
+        ro.observe(n);
+      });
+    }
   } else {
     revealEls.forEach((n) => n.classList.add('in'));
   }

@@ -11,11 +11,11 @@
 const PRICING = require('../../../catalog/pricing.json');
 
 const SEGMENT_SECONDS = 15;
-const EXTRA_SEGMENT_USD = 12;
-const ADPACK_INCLUDED_FORMATS = 5;
+const EXTRA_SEGMENT_USD = 8;
+const ADPACK_INCLUDED_FORMATS = 20;
 // 1080p rendering costs more credits on every segment; premium products carry
 // it in their base retail. Mirrors QUALITY_1080_PER_SEGMENT in studio.js.
-const QUALITY_1080_PER_SEGMENT_USD = 4;
+const QUALITY_1080_PER_SEGMENT_USD = 3;
 const PREMIUM_1080 = new Set(['tv_spot', 'pro_try_on', 'cinematic']);
 
 /*
@@ -114,4 +114,35 @@ function priceStudioOrder(order) {
   };
 }
 
-module.exports = { priceStudioOrder, SEGMENT_SECONDS, EXTRA_SEGMENT_USD, ADPACK_INCLUDED_FORMATS };
+/*
+ * Credits.
+ *
+ * 1 credit = $0.002, so a cent is five credits and the catalogue lands on round
+ * numbers: a 20 creative pack is 6,000, a photoshoot 4,500, a 15s film 7,000.
+ *
+ * The denomination is deliberately fine. Large counts read as more generous
+ * than the dollar figure they stand for, which is the whole reason to have a
+ * currency of your own. The price in dollars still has to sit next to the
+ * credit price wherever credits are sold: the conversion customers actually pay
+ * is credits to finished work, and hiding it is what turns a credit system into
+ * a grievance.
+ *
+ * Derived from priceStudioOrder rather than kept as a second price list, so the
+ * two can never drift apart.
+ */
+const CREDITS_PER_CENT = 5;
+
+function creditsForOrder(order) {
+  const priced = priceStudioOrder(order);
+  if (!priced || typeof priced.amountCents !== 'number') return null;
+  return priced.amountCents * CREDITS_PER_CENT;
+}
+
+module.exports = {
+  priceStudioOrder,
+  creditsForOrder,
+  CREDITS_PER_CENT,
+  SEGMENT_SECONDS,
+  EXTRA_SEGMENT_USD,
+  ADPACK_INCLUDED_FORMATS,
+};

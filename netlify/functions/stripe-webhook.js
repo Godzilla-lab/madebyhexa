@@ -99,6 +99,52 @@ exports.handler = async (event) => {
   const email = session.customer_details && session.customer_details.email;
   const isStudio = !!(session.metadata && session.metadata.studio_product);
 
+  /*
+   * ── Credit top-up ──
+   *
+   * This is the only place credits are ever created by a purchase. It runs
+   * here, in the webhook, rather than on the success page, because the success
+   * page is a URL the customer can revisit, bookmark or forge, and because a
+   * customer who closes the tab the instant they pay must still get what they
+   * bought.
+   *
+   * The amount comes from session metadata written at checkout, not from
+   * amount_total, so a discount code changing what they paid cannot change what
+   * they receive. Idempotency is the database's job: ref is the Stripe session
+   * id and a unique index on purchases makes a replayed delivery a no-op, which
+   * matters because Stripe retries until it sees a 2xx.
+   */
+  const creditsMeta = session.metadata && session.metadata.kind === 'credits'
+    ? Number(session.metadata.credits) : 0;
+  if (creditsMeta > 0) {
+    const userId = session.client_reference_id || (session.metadata && session.metadata.user_id) || null;
+    if (!userId) {
+      // Nothing to credit and nothing retrying will fix. Loud, and 200 so
+      // Stripe stops, because a retry storm hides the real problem.
+      console.error('stripe-webhook: credit purchase with no user_id, session', session.id);
+      return resp(200, { ok: false, error: 'no user on credit session' });
+    }
+    try {
+      const sb = require('./lib/supabase');
+      if (!sb.configured()) throw new Error('supabase not configured');
+      const { data: balance, error } = await sb.admin().rpc('credit_purchase', {
+        p_user: userId,
+        p_amount: creditsMeta,
+        p_ref: 'stripe:' + session.id,
+        p_note: (session.metadata.pack || 'top-up') + ' purchase',
+      });
+      if (error) throw new Error(error.message);
+      console.log('stripe-webhook: credited', creditsMeta, 'to', userId, 'balance now', balance);
+    } catch (e) {
+      // 500 so Stripe retries: they have paid and do not have their credits.
+      // This is the one failure here worth retrying, and the unique index makes
+      // a retry that lands twice harmless.
+      console.error('stripe-webhook: CREDIT GRANT FAILED for session', session.id, e.message);
+      return resp(500, 'credit grant failed');
+    }
+    return resp(200, { ok: true, credited: creditsMeta });
+  }
+
   // Make the order row exist and read 'paid' even if the buyer's tab never
   // reopened (checkout wrote it 'pending'; a lost insert is recreated here).
   // Never flips a refunded order back to paid, and never blocks the email.

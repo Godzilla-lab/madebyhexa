@@ -63,64 +63,61 @@ function compose(step, niceFn, userId) {
 const STEPS = [
   {
     key: 'welcome', day: 0, skipIfActive: false,
-    subject: (fn) => fn ? 'Welcome to Hexa, ' + fn + '. Here is the whole trick.' : 'Welcome to Hexa. Here is the whole trick.',
+    subject: (fn) => fn ? 'Welcome to Hexa, ' + fn + '. Start with what your buyers said.' : 'Welcome to Hexa. Start with what your buyers said.',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
-      "Mike here, I run Hexa. Thanks for making an account.\n\n" +
-      'The whole product is one move: paste your product link, and we turn the page into a finished film. A real-looking person holding, opening, using your product, ready to post. Films made this way have pulled 10 million views for the brands that run them.\n\n' +
-      'It takes about two minutes to see your first one:\n' + SITE + '/#composer\n\n' +
-      'One honest warning: the brands beating you on TikTok and Reels are not better at video. They just make more of it, because theirs costs lunch money. Now yours does too.\n\n' +
+      'Mike here, I run Hexa. Thanks for making an account.\n\n' +
+      'Most people making ads are guessing what to say. We do the opposite: paste your product link and we go and read what real buyers in your category actually say about it, which of your competitors\' ads have been running long enough to prove they work, and whether your market is won by video or by statics.\n\n' +
+      'Then you turn any of it into the ad, in the same place.\n\n' +
+      'Your account has 2,500 credits on it already, so you can do that without paying anything. Start here:\n' + SITE + '/validate\n\n' +
+      'Every claim in your report links to the comment it came from. If you think one is wrong, click it and check me. That is the whole point.\n\n' +
       'If anything confuses you, just reply. I read these.',
   },
   {
-    /* Sample claimers only (and only until they buy): they have already seen
-     * their product move, so the pitch is the difference between 5 and 15.
-     * Sits before why-video so it wins the day-1 slot for this group. */
-    key: 'sample-upsell', day: 1, skipIfActive: false, onlyIfSampledUnconverted: true,
-    subject: (fn) => fn ? fn + ', your 5 seconds want to be 15' : 'Your 5 seconds want to be 15',
+    key: 'first-report', day: 1, skipIfReported: true,
+    subject: (fn) => fn ? fn + ', want to see what your market is complaining about?' : 'Want to see what your market is complaining about?',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
-      'You made the free sample, so you have already seen it with your own eyes: your product, in a real person’s hands, looking filmed rather than generated. Most people never get past wondering if that is possible. You are already holding proof.\n\n' +
-      'Here is the thing about those 5 seconds: they are the most expensive part of the film, and you already own them. The hook, the casting, the scene, the product read, all done. The full film just lets it finish the sentence: 15 seconds up to 2 minutes, same actor and same scene the whole way, with the demo and the line that makes people click.\n\n' +
-      'It starts at $12. One coffee, against a product video your competitors pay an agency $500 and two weeks for. Every day the sample sits in your library is a day that film is not selling for you.\n\n' +
-      'Your product is already loaded, so it is one click:\n' + SITE + '/#styles\n\n' +
-      'And if the sample missed the mark for your product, reply and tell me what felt off. I read every one of these.',
+      'You have not run a report yet, so here is what actually comes back when you paste a link. It takes about a minute.\n\n' +
+      'What people say: the recurring complaints, in their words, with a link to every comment.\n' +
+      'What they wish existed: the gaps they keep asking for.\n' +
+      'The objections: the reasons they give for NOT buying. This is the section nobody else produces, and it is the one your ad has to beat.\n' +
+      'Who is advertising: your competitors\' ads, sorted by how long each has been running. Nobody keeps paying to run an ad that does not convert, so the top of that list is what your market has already proven.\n\n' +
+      'Use your best seller. It already converts, so it is the one worth understanding first:\n' + SITE + '/validate\n\n' +
+      'Free, and it does not touch your credits.',
   },
   {
-    key: 'why-video', day: 1, skipIfActive: true,
-    subject: (fn) => (fn ? fn + ', the' : 'The') + ' honest numbers on product video',
+    key: 'receipts', day: 3, skipIfActive: true,
+    subject: (fn) => (fn ? fn + ', why' : 'Why') + ' we make you check our work',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
-      'Before Hexa I sat on the other side of this, trying to sell products with photos, so let me share the numbers that changed my mind.\n\n' +
-      'Product pages with a video convert around 65% higher than pages without one. On the ad side it is even starker: video ads convert roughly three times better than static images, which is why the brands you compete with keep feeding the meter.\n\n' +
-      'And here is the part nobody says out loud: most brands know all this and still quit video. When researchers ask why, the answers are always the same two: too expensive and no time. A single traditional shoot day runs thousands before you have tested a single angle.\n\n' +
-      'That is the actual reason Hexa exists. Not to make video magic, just to make testing it cost lunch money instead of a shoot day.\n\n' +
-      'The math is simple and a little brutal: if video converts 3x and you are not running any, the brands in your category that are will happily keep taking the difference.\n\n' +
-      'See what the films look like first, if you want:\n' + SITE + '/#reel',
+      'A thing I want to be straight about, because the internet is now full of tools that will confidently write you an ad angle out of nothing.\n\n' +
+      'Hexa will not print a finding unless several different people raised it independently. If only two people said it, we show it as a weak signal and say so, because two loud comments are an anecdote, not a market. And every claim carries the actual quote and a link to where it was said.\n\n' +
+      'Same with the video or statics call. We do not have an opinion about it. We count how long your competitors\' ads have actually been running and let the ones that survived tell you. In one apparel category we read recently, 10 of the 11 ads still running after 90 days were video. That is a fact about that category, not a rule about yours, which is exactly why we measure yours instead of guessing.\n\n' +
+      'Run it on the product you are pushing this month:\n' + SITE + '/validate',
   },
   {
-    key: 'best-film', day: 3, skipIfActive: true,
-    subject: (fn) => (fn ? fn + ', how' : 'How') + ' to get a great film from one link',
+    key: 'angles-to-ads', day: 5, skipIfActive: true,
+    subject: (fn) => 'Your 2,500 credits' + (fn ? ', ' + fn : '') + ', and what they make',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
-      'Three things that make your Hexa film noticeably better:\n\n' +
-      '1. Paste the product page itself, not your homepage. We read the photos and the copy on that exact page.\n' +
-      '2. If your page hides its photos (some stores block robots), add one photo on the next step. Same quality either way.\n' +
-      '3. Not sure which format? Pick Auto. We choose what sells your kind of product best.\n\n' +
-      'Do it with your best seller. It already converts, which means it deserves the video treatment first, and the film pays for itself fastest there:\n' + SITE + '/#composer',
+      'Quick one about the credits sitting on your account.\n\n' +
+      'When your report finishes it ends in angles: a specific claim, aimed at a specific buyer, in their words, backed by the comments that support it. Each one comes with a video hook and a static headline already written.\n\n' +
+      'Next to each angle is a button that makes it. The hook goes straight into the brief, so what we proved is what gets made, and you are not retyping anything.\n\n' +
+      'A single ad creative is 500 credits, so the 2,500 you already have makes five of them for nothing. A full video is 7,000.\n\n' +
+      'And if a render fails, the credits go straight back to your balance automatically. You are never charged for work we do not deliver.\n\n' +
+      SITE + '/validate',
   },
   {
-    key: 'formats', day: 5, skipIfActive: false,
-    subject: (fn) => 'Which video format sells which product' + (fn ? ', ' + fn : ''),
+    key: 'best-brief', day: 7, skipIfActive: true,
+    subject: (fn) => (fn ? fn + ', three' : 'Three') + ' things that make your ads better',
     body: (fn) =>
       'Hey' + (fn ? ' ' + fn : '') + ',\n\n' +
-      'A cheat sheet we use with brands:\n\n' +
-      'UGC style: looks like a real customer filmed it. Best for trust and cold traffic.\n' +
-      'Unboxing: anticipation sells. Best for giftable and premium-feel products.\n' +
-      'Tutorial or demo: show the product working. Best for anything with a learning curve.\n' +
-      'TV spot: polished and cinematic. Best for brand ads and retargeting warm audiences.\n\n' +
-      'Every format is one click in the studio:\n' + SITE + '/#composer\n\n' +
-      'Make one for the product you are pushing this month. Testing a format costs less than the ad spend you would waste running the wrong one.',
+      'Three small things that make a noticeable difference:\n\n' +
+      '1. Paste the product page itself, not your homepage. We read the photos and the copy on that exact page, and a homepage tells us nothing specific.\n' +
+      '2. Run the report before the ad. It costs nothing and it decides the format for you, so you are not paying to find out that your category runs video.\n' +
+      '3. Take the angle with the most receipts first. They are ordered by weight of evidence, not by which one reads best, so the top one is the one your market has said most often.\n\n' +
+      SITE + '/validate',
   },
   {
     key: 'checkin', day: 14, skipIfActive: false,
@@ -189,15 +186,13 @@ exports.handler = async (event) => {
     for (const step of STEPS) {
       if (ageDays < step.day || ageDays > step.day + GRACE_DAYS) continue;
       if (await alreadySent(u.id, step.key)) continue;
-      if (step.onlyIfSampledUnconverted) {
-        // A sampler owns only 'Free sample' creations; anything else means
-        // they bought. Non-samplers consume the step silently so it never
-        // re-evaluates on later runs.
-        const { count: totalCr } = await db.from('creations')
+      /* Someone who has already run a report does not need to be told what a
+       * report is. Consumed rather than skipped, so it never re-evaluates on a
+       * later run. */
+      if (step.skipIfReported) {
+        const { count } = await db.from('reports')
           .select('id', { count: 'exact', head: true }).eq('user_id', u.id);
-        const { count: sampleCr } = await db.from('creations')
-          .select('id', { count: 'exact', head: true }).eq('user_id', u.id).ilike('title', 'Free sample%');
-        if (!sampleCr || (totalCr || 0) > sampleCr) { await markSent(u.id, step.key); continue; }
+        if ((count || 0) > 0) { await markSent(u.id, step.key); continue; }
       }
       if (step.skipIfActive) {
         if (active === null) {

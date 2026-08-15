@@ -1,25 +1,182 @@
 {
-  "_readme": "Hexa Studio pricing model. cost_credits = measured Higgsfield job cost. cost_usd = cost_credits * credit_rate_usd (Ultra plan basis). retail_usd = customer price. All retail is set to clear cost with a strong margin after Stripe fees (~2.9% + $0.30). Update retail here and in studio.js MODE_CONFIG/PRODUCTS together.",
-  "credit_rate_usd": 0.045,
-  "credit_rate_note": "Higgsfield Ultra: $129 / 3000 credits = $0.043/cr. Using $0.045 as a conservative operating cost so margins hold on Plus too.",
+  "_readme": "Hexa Studio pricing model. cost_credits = measured Higgsfield job cost. cost_usd = cost_credits * credit_rate_usd (Ultra plan basis). retail_usd = customer price. All retail is set to clear cost with a strong margin after Stripe fees (~2.9% + $0.30). Update retail here and in studio.js MODE_CONFIG/PRODUCTS together. Stripe needs no change: create-checkout sends unit_amount per session from this file, so there are no Price IDs to keep in sync.",
+  "credit_rate_usd": 0.052,
+  "credit_rate_note": "Measured live 2026-08-13. Top-up 500cr/$26 = $0.052/cr (what we are on now). PLUS annual $29/1000 = $0.029. ULTRA annual $70/3000 = $0.0233. Using the top-up rate as a conservative floor so margins hold before any upgrade.",
   "stripe_fee": "2.9% + $0.30 per charge",
   "items": {
-    "ugc":            { "engine": "marketing_studio_video 720p 15s",   "cost_credits": 80,  "cost_usd": 3.60, "retail_usd": 19, "margin_pct": 81, "eta": "~5 min" },
-    "product_review": { "engine": "marketing_studio_video 720p 15s",   "cost_credits": 80,  "cost_usd": 3.60, "retail_usd": 19, "margin_pct": 81, "eta": "~5 min" },
-    "unboxing":       { "engine": "marketing_studio_video 720p 15s",   "cost_credits": 80,  "cost_usd": 3.60, "retail_usd": 19, "margin_pct": 81, "eta": "~5 min" },
-    "tutorial":       { "engine": "marketing_studio_video 720p 15s",   "cost_credits": 80,  "cost_usd": 3.60, "retail_usd": 19, "margin_pct": 81, "eta": "~5 min" },
-    "ugc_try_on":     { "engine": "marketing_studio_video 720p 15s",   "cost_credits": 80,  "cost_usd": 3.60, "retail_usd": 19, "margin_pct": 81, "eta": "~5 min" },
-    "tv_spot":        { "engine": "cinematic_studio_video_3_5 1080p 15s", "cost_credits": 150, "cost_usd": 6.75, "retail_usd": 29, "margin_pct": 77, "eta": "~7 min" },
-    "cinematic":      { "engine": "cinematic_studio_video_3_5 1080p 15s", "cost_credits": 150, "cost_usd": 6.75, "retail_usd": 29, "margin_pct": 77, "eta": "~7 min" },
-    "pro_try_on":     { "engine": "marketing_studio_video 1080p 15s",  "cost_credits": 150, "cost_usd": 6.75, "retail_usd": 29, "margin_pct": 77, "eta": "~7 min" },
-    "hyper_motion":   { "engine": "seedance_2_0 720p 5s",             "cost_credits": 23,  "cost_usd": 1.01, "retail_usd": 12, "margin_pct": 92, "eta": "~3 min" },
-    "wild_card":      { "engine": "seedance_2_0 720p 5s",             "cost_credits": 23,  "cost_usd": 1.01, "retail_usd": 12, "margin_pct": 92, "eta": "~3 min" },
-    "auto":           { "engine": "picks best mode (default 720p 15s)", "cost_credits": 80,  "cost_usd": 3.60, "retail_usd": 19, "margin_pct": 81, "eta": "~5 min" },
-    "photoshoot":     { "engine": "product-photoshoot x10 images",    "cost_credits": 20,  "cost_usd": 0.90, "retail_usd": 15, "margin_pct": 94, "eta": "~2 min" },
-    "adpack":         { "engine": "dtc-ads per format (base 5)",      "cost_credits": 10,  "cost_usd": 0.45, "retail_usd": 19, "margin_pct": 97, "eta": "~2 min", "extra_format_usd": 2 },
-    "soul":           { "engine": "soul-id training (one-time)",      "cost_credits": 40,  "cost_usd": 1.80, "retail_usd": 29, "margin_pct": 94, "eta": "~1 hr training" },
-    "revoice":        { "engine": "voice_change per 15s clip",        "cost_credits": 2,   "cost_usd": 0.09, "retail_usd": 4,  "margin_pct": 97, "eta": "~2 min" },
-    "translate":      { "engine": "dubbing per 15s clip",             "cost_credits": 45,  "cost_usd": 2.03, "retail_usd": 9,  "margin_pct": 77, "eta": "~3 min" },
-    "upscale":        { "engine": "video_upscale per 15s clip",       "cost_credits": 2,   "cost_usd": 0.09, "retail_usd": 4,  "margin_pct": 97, "eta": "~2 min" }
-  }
+    "ugc": {
+      "engine": "marketing_studio_video 720p 15s",
+      "cost_credits": 80,
+      "cost_usd": 4.16,
+      "retail_usd": 15,
+      "margin_pct": 67,
+      "eta": "~5 min"
+    },
+    "product_review": {
+      "engine": "marketing_studio_video 720p 15s",
+      "cost_credits": 80,
+      "cost_usd": 4.16,
+      "retail_usd": 15,
+      "margin_pct": 67,
+      "eta": "~5 min"
+    },
+    "unboxing": {
+      "engine": "marketing_studio_video 720p 15s",
+      "cost_credits": 80,
+      "cost_usd": 4.16,
+      "retail_usd": 15,
+      "margin_pct": 67,
+      "eta": "~5 min"
+    },
+    "tutorial": {
+      "engine": "marketing_studio_video 720p 15s",
+      "cost_credits": 80,
+      "cost_usd": 4.16,
+      "retail_usd": 15,
+      "margin_pct": 67,
+      "eta": "~5 min"
+    },
+    "ugc_try_on": {
+      "engine": "marketing_studio_video 720p 15s",
+      "cost_credits": 80,
+      "cost_usd": 4.16,
+      "retail_usd": 15,
+      "margin_pct": 67,
+      "eta": "~5 min"
+    },
+    "tv_spot": {
+      "engine": "cinematic_studio_video_3_5 1080p 15s",
+      "cost_credits": 150,
+      "cost_usd": 7.8,
+      "retail_usd": 25,
+      "margin_pct": 65,
+      "eta": "~7 min"
+    },
+    "cinematic": {
+      "engine": "cinematic_studio_video_3_5 1080p 15s",
+      "cost_credits": 150,
+      "cost_usd": 7.8,
+      "retail_usd": 25,
+      "margin_pct": 65,
+      "eta": "~7 min"
+    },
+    "pro_try_on": {
+      "engine": "marketing_studio_video 1080p 15s",
+      "cost_credits": 150,
+      "cost_usd": 7.8,
+      "retail_usd": 25,
+      "margin_pct": 65,
+      "eta": "~7 min"
+    },
+    "hyper_motion": {
+      "engine": "seedance_2_0 720p 5s",
+      "cost_credits": 23,
+      "cost_usd": 1.2,
+      "retail_usd": 9,
+      "margin_pct": 80,
+      "eta": "~3 min"
+    },
+    "wild_card": {
+      "engine": "seedance_2_0 720p 5s",
+      "cost_credits": 23,
+      "cost_usd": 1.2,
+      "retail_usd": 9,
+      "margin_pct": 80,
+      "eta": "~3 min"
+    },
+    "auto": {
+      "engine": "picks best mode (default 720p 15s)",
+      "cost_credits": 80,
+      "cost_usd": 4.16,
+      "retail_usd": 15,
+      "margin_pct": 67,
+      "eta": "~5 min"
+    },
+    "photoshoot": {
+      "engine": "product-photoshoot x10 images",
+      "cost_credits": 20,
+      "cost_usd": 1.04,
+      "retail_usd": 9,
+      "margin_pct": 82,
+      "eta": "~2 min"
+    },
+    "adsingle": {
+      "engine": "dtc-ads x1 creative",
+      "cost_credits": 0.5,
+      "cost_usd": 0.03,
+      "retail_usd": 1,
+      "margin_pct": 97,
+      "eta": "~1 min"
+    },
+    "adpack": {
+      "_entry_note": "adsingle is the way in: one creative at $1, the cheapest thing on the menu and the only product a new account's 2,500 welcome credits can actually buy. It costs us 0.5 Higgsfield credits, about 2.6 cents, so it is also the highest margin item we sell. It exists to get a real ad, made from the customer's own product, in front of them before they are asked for money.",
+      "engine": "dtc-ads x20 creatives",
+      "cost_credits": 10,
+      "cost_usd": 0.52,
+      "retail_usd": 12,
+      "margin_pct": 95,
+      "eta": "~3 min",
+      "extra_format_usd": 1,
+      "_cost_note": "Measured live 2026-08-14: DTC Ads (ms_image) bills 0.5 credits an image at CREATE, not on completion, so a failed creative is still charged. 20 x 0.5 = 10. The old 40 assumed nano_banana_2 at 2.0 an image, which is what the code actually ran despite this line already saying dtc-ads."
+    },
+    "soul": {
+      "engine": "soul-id training (one-time)",
+      "cost_credits": 40,
+      "cost_usd": 2.08,
+      "retail_usd": 22,
+      "margin_pct": 86,
+      "eta": "~1 hr training"
+    },
+    "revoice": {
+      "engine": "voice_change per 15s clip",
+      "cost_credits": 2,
+      "cost_usd": 0.1,
+      "retail_usd": 3,
+      "margin_pct": 84,
+      "eta": "~2 min"
+    },
+    "translate": {
+      "engine": "dubbing per 15s clip",
+      "cost_credits": 45,
+      "cost_usd": 2.34,
+      "retail_usd": 7,
+      "margin_pct": 59,
+      "eta": "~3 min"
+    },
+    "upscale": {
+      "engine": "video_upscale per 15s clip",
+      "cost_credits": 2,
+      "cost_usd": 0.1,
+      "retail_usd": 3,
+      "margin_pct": 84,
+      "eta": "~2 min"
+    }
+  },
+  "credit_packs_note": "What a customer can buy. 500 credits = $1 at the base rate, which is the rate every item above is priced at. Larger packs give more credits per dollar, never a lower item price, so a discount can never push an item below cost: the worst case is the $100 pack at 600 credits/$, where a 7,000 credit film is paid for with $11.67 against a $4.16 cost, still a 64% margin. Stripe fees are a flat 2.9% + $0.30 per top-up rather than per item, which is the other reason to prefer bigger packs.",
+  "credit_packs": [
+    {
+      "id": "cr5",
+      "credits": 5000,
+      "usd": 10,
+      "bonus_pct": 0
+    },
+    {
+      "id": "cr14",
+      "credits": 13500,
+      "usd": 25,
+      "bonus_pct": 8
+    },
+    {
+      "id": "cr30",
+      "credits": 28000,
+      "usd": 50,
+      "bonus_pct": 12
+    },
+    {
+      "id": "cr60",
+      "credits": 60000,
+      "usd": 100,
+      "bonus_pct": 20
+    }
+  ]
 }

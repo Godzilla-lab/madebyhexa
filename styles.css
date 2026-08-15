@@ -45,6 +45,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   outline-offset: 2px;
 }
 
+/* ───── Screen-reader only ─────
+ * A label a screen reader announces and sighted users never see. Used where
+ * the visible design carries the meaning already (a placeholder, an icon) but
+ * the control still needs a real accessible name. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-feature-settings: 'cv11', 'ss01';
@@ -1738,6 +1755,10 @@ body.lb-open { overflow: hidden; }
   color: var(--accent-soft);
 }
 .tier-price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  white-space: nowrap;
   margin: 16px 0 2px;
   font-size: 46px;
   font-weight: 700;
@@ -1754,6 +1775,29 @@ body.lb-open { overflow: hidden; }
   margin-right: 1px;
 }
 .tier-price-sm { font-size: 26px; letter-spacing: -0.02em; }
+
+/* The unit that gets the size is the one a merchant can actually judge.
+ *
+ * This block used to run the other way: credits at 46px, dollars at 13px. It
+ * was defensible internally (credits are what the studio debits) and wrong for
+ * the person reading it. Nobody knows whether 7,000 credits is expensive.
+ * Everybody knows what $14 is. The credit figure still matters to someone
+ * spending a balance, so it stays, one line down and in small type.
+ */
+.tier-price-unit {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-mute);
+  margin-left: 6px;
+}
+.tier-price-credits {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
 .tier-price-note {
   font-size: 12.5px;
   color: var(--text-faint);

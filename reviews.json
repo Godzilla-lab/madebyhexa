@@ -1,20 +1,5 @@
 [
   {
-    "name": "Confidential creator",
-    "role": "Creator client",
-    "quote": "I handed Hexa AI my content and stopped thinking about it. Real reach without the shoots or the studio. By month two it basically ran itself.",
-    "stars": 5,
-    "verified": true
-  },
-  {
-    "name": "Sara Finance",
-    "role": "Finance & business creator",
-    "avatar": "assets/reviews/sara-finance.avif",
-    "quote": "I'd work with Hexa AI if you're somebody who gets ads made all the time.",
-    "stars": 5,
-    "verified": true
-  },
-  {
     "name": "Arie Scherson",
     "role": "Ecommerce mentor",
     "avatar": "assets/reviews/arie-scherson.avif",

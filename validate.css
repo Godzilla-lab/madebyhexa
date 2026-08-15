@@ -1,0 +1,721 @@
+/* ─────────────────────────────────────────────────────────────
+   Hexa Validate: the research surface.
+
+   Additive only. Every colour, radius, shadow and step of spacing here comes
+   from the tokens already defined in styles.css :root, so this reads as the
+   same product rather than a bolted-on tool. Three components are genuinely
+   new because nothing existing covers them:
+
+     .ev-card      an evidence card (a real quote plus where it came from)
+     .dur-bar      an ad run-duration bar, length and opacity, no new colour
+     .angle-card   an angle that terminates in a buyable action
+
+   Everything else leans on .proof-bar, .case-quote, .render-steps and
+   .stage-card, which already exist.
+   ───────────────────────────────────────────────────────────── */
+
+.validate main { padding-bottom: var(--s-10); }
+
+/* ───── Entry ───── */
+
+.vd-hero {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--s-9) var(--s-5) var(--s-7);
+  text-align: center;
+}
+.vd-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5.2vw, 54px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin: 0 0 var(--s-4);
+}
+.vd-hero p {
+  font-size: clamp(16px, 2vw, 19px);
+  line-height: 1.55;
+  color: var(--text-mute);
+  margin: 0 auto var(--s-6);
+  max-width: 56ch;
+}
+
+.vd-form {
+  display: flex;
+  gap: var(--s-2);
+  max-width: 620px;
+  margin: 0 auto;
+}
+.vd-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 15px 18px;
+  font: inherit;
+  font-size: 16px;              /* 16px stops iOS zooming the page on focus */
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.vd-form input::placeholder { color: var(--text-faint); }
+.vd-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.16);
+}
+.vd-form button {
+  padding: 15px 26px;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  background: var(--accent);
+  border: 0;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  box-shadow: var(--glow-accent);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.vd-form button:hover { transform: translateY(-1px); box-shadow: var(--glow-accent-strong); }
+.vd-form button:disabled { opacity: 0.55; cursor: default; transform: none; }
+
+.vd-note {
+  margin: var(--s-4) 0 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* ───── Report shell ───── */
+
+.vd-report {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 var(--s-5);
+}
+.vd-section { margin: 0 0 var(--s-8); }
+.vd-section > h2 {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3vw, 30px);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--s-2);
+}
+.vd-section > .vd-lede {
+  margin: 0 0 var(--s-5);
+  color: var(--text-mute);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* The corroboration count. This is the persuasion, so it is styled as a fact
+ * and not as a caption: a number nobody can wave away. */
+.vd-corrob {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 77, 109, 0.07);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-mute);
+}
+.vd-corrob strong { color: var(--accent); font-weight: 800; }
+
+/* ───── Evidence card ───── */
+
+.ev-card {
+  margin: 0 0 var(--s-3);
+  padding: 16px 18px;
+  border-radius: var(--tile-radius);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008));
+}
+.ev-card blockquote {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.ev-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.ev-meta a { color: var(--text-mute); text-decoration: none; border-bottom: 1px solid var(--border-strong); }
+.ev-meta a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.ev-score { font-variant-numeric: tabular-nums; }
+
+/* ───── The recommendation ─────
+ * The one part of this page that is an instruction rather than a finding, so
+ * it is the only block that gets the full accent treatment and it sits above
+ * everything that justifies it. A merchant who reads nothing else should still
+ * leave knowing what to do. */
+.vd-call {
+  padding: 26px 26px 24px;
+  border-radius: var(--tile-radius);
+  border: 1px solid rgba(255, 77, 109, 0.55);
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(255, 77, 109, 0.16), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  box-shadow: var(--shadow-2);
+}
+.vd-call-kicker {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+}
+.vd-call-claim {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.4vw, 32px);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+.vd-call-why { margin: 0 0 18px; font-size: 14.5px; line-height: 1.55; color: var(--text-mute); }
+.vd-call-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+}
+.vd-call-line b {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.vd-call-line q { font-size: 16px; line-height: 1.45; font-style: italic; }
+.vd-call-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: 20px; }
+.vd-call-actions button {
+  padding: 13px 22px;
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease);
+}
+.vd-call-actions button:hover { transform: translateY(-1px); }
+.vd-call-actions .is-primary { background: var(--accent); color: #fff; box-shadow: var(--glow-accent); }
+.vd-call-actions .is-ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
+.vd-call-actions button:disabled { opacity: 0.6; cursor: default; transform: none; }
+.vd-call-err { margin: 12px 0 0; font-size: 13.5px; color: #ff9d9d; }
+
+/* The header shrinks now that it is no longer the first thing that matters. */
+.vd-head > h2 { font-size: clamp(18px, 2.4vw, 22px); }
+
+/* ───── The gap: complaints against competitor coverage ───── */
+
+/* An open lane is the only thing on this page that is an instruction, so it is
+ * the only thing that gets the accent border. Covered lanes stay quiet: still
+ * worth reading, not worth acting on. */
+.gap-row {
+  padding: 16px 18px;
+  margin-bottom: var(--s-3);
+  border-radius: var(--tile-radius);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+.gap-row.is-open {
+  border-color: rgba(255, 77, 109, 0.5);
+  background: linear-gradient(180deg, rgba(255, 77, 109, 0.1), rgba(255, 77, 109, 0.03));
+}
+.gap-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: 10px;
+}
+.gap-tag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.gap-row.is-open .gap-tag {
+  border-color: transparent;
+  background: var(--accent);
+  color: #fff;
+}
+.gap-people { font-size: 12px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.gap-claim { margin: 0 0 12px; font-size: 15px; line-height: 1.5; color: var(--text); }
+.gap-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.gap-track span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--text-mute);
+}
+.gap-note { margin: 8px 0 0; font-size: 12px; color: var(--text-faint); }
+.gap-row.is-open .gap-note { color: var(--text-mute); }
+
+/* ───── Duration bar ───── */
+
+/* Length carries the value and opacity carries the confidence, so a 180-day ad
+ * reads instantly against a 4-day one without inventing a second colour. */
+.dur-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.dur-row:last-child { border-bottom: 0; }
+.dur-name {
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dur-sub { font-size: 12px; color: var(--text-faint); font-weight: 400; }
+.dur-bar {
+  position: relative;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.dur-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0.9;
+}
+/* An observed duration is arithmetic on a live ad, so it reads slightly softer
+ * than a reported one. The number is honest either way. */
+.dur-row[data-confidence="observed"] .dur-bar span { opacity: 0.6; }
+.dur-days {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dur-days em { font-style: normal; color: var(--text-faint); font-weight: 400; font-size: 12px; }
+
+/* ───── Format verdict ───── */
+
+.fmt-card {
+  padding: var(--s-5);
+  border-radius: var(--tile-radius);
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.012));
+  box-shadow: var(--shadow-2);
+}
+.fmt-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+.fmt-verdict {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 4vw, 38px);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.fmt-verdict em { font-style: normal; color: var(--accent); }
+.fmt-conf {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.fmt-why { margin: 0 0 var(--s-5); color: var(--text-mute); font-size: 15px; line-height: 1.55; }
+
+/* The split rows: winners first, because the winners are the argument. */
+.fmt-split { display: grid; gap: var(--s-3); }
+.fmt-split-row { display: grid; grid-template-columns: 130px 1fr auto; align-items: center; gap: var(--s-3); }
+.fmt-split-label { font-size: 12px; color: var(--text-faint); }
+.fmt-split-track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.fmt-split-track span { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 999px; }
+.fmt-split-row.is-muted .fmt-split-track span { opacity: 0.35; }
+.fmt-split-val { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--text-mute); }
+
+@media (max-width: 620px) {
+  .fmt-split-row { grid-template-columns: 100px 1fr auto; gap: var(--s-2); }
+  .fmt-split-label { font-size: 11px; }
+}
+
+/* ───── Angle card ───── */
+
+.angle-card {
+  padding: var(--s-5);
+  margin: 0 0 var(--s-4);
+  border-radius: var(--tile-radius);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.angle-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.angle-card h3 {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.4vw, 22px);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--s-3);
+}
+.angle-persona { font-size: 13px; color: var(--text-faint); margin: 0 0 var(--s-3); }
+
+.angle-line {
+  padding: 12px 14px;
+  margin: 0 0 var(--s-2);
+  border-radius: var(--radius-control);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+}
+.angle-line b {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+.angle-line q { font-size: 15px; line-height: 1.45; quotes: none; }
+
+.angle-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-4); }
+.angle-actions a,
+.angle-actions button {
+  padding: 11px 18px;
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s var(--ease);
+}
+.angle-actions a:hover,
+.angle-actions button:hover { transform: translateY(-1px); }
+.angle-actions .is-primary { background: var(--accent); color: #fff; box-shadow: var(--glow-accent); }
+.angle-actions .is-ghost { border: 1px solid var(--border-strong); color: var(--text); }
+
+/* ───── What sign-in buys ─────
+ *
+ * Replaced a blur over the bottom half of the report. Hiding conclusions we
+ * had already reached read as a paywall over our own homework, and on a free
+ * read the blurred sections were mostly empty anyway. This is an offer for a
+ * leg we have not run, so it is styled as a card that belongs on the page
+ * rather than as a veil over one.
+ */
+.vd-unlock {
+  padding: var(--s-6);
+  border-radius: var(--tile-radius);
+  border: 1px solid rgba(255, 77, 109, 0.45);
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(255, 77, 109, 0.13), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  box-shadow: var(--shadow-2);
+}
+.unlock-list {
+  list-style: none;
+  margin: 0 0 var(--s-5);
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+.unlock-list li {
+  display: grid;
+  gap: 2px;
+  padding-left: 26px;
+  position: relative;
+}
+.unlock-list li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.unlock-list strong { font-size: 15px; font-weight: 700; }
+.unlock-list span { font-size: 13.5px; line-height: 1.5; color: var(--text-mute); }
+.unlock-credits {
+  margin: 0 0 var(--s-5);
+  padding: 14px 16px;
+  border-radius: var(--radius-control);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-mute);
+}
+
+/* ───── Empty and honest states ───── */
+
+/* "We do not have enough evidence to call this" is a real answer and gets a
+ * real treatment, not a greyed-out apology. */
+.vd-thin {
+  padding: var(--s-5);
+  border-radius: var(--tile-radius);
+  border: 1px dashed var(--border-strong);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-mute);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.vd-thin strong { color: var(--text); }
+
+/* A cold market is an invitation, not a dead end, so the answer carries an
+ * action rather than leaving the reader on a paragraph. */
+.vd-notice-cta { display: inline-flex; margin-top: var(--s-4); }
+
+@media (prefers-reduced-motion: reduce) {
+  .angle-card, .vd-form button, .angle-actions a, .angle-actions button { transition: none; }
+  .angle-card:hover, .vd-form button:hover, .angle-actions a:hover,
+  .angle-actions button:hover { transform: none; }
+}
+
+/* ═════ Answers before working ═════
+ *
+ * Everything below exists because a research report and a recommendation are
+ * different products. The report is still here in full, but a merchant who has
+ * never bought an ad now meets four findings, one call and three plain-word
+ * readings before a single quote, and reaches the evidence by choosing to.
+ */
+
+/* ── What we found ── */
+
+.vd-found { }
+.found-list { display: grid; gap: var(--s-3); margin-bottom: var(--s-4); }
+.found-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-3);
+  align-items: start;
+  padding: 15px 18px;
+  border-radius: var(--tile-radius);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
+}
+.found-ico { font-size: 18px; line-height: 1.3; }
+.found-label {
+  margin: 0 0 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.found-claim { margin: 0; font-size: 15.5px; line-height: 1.5; color: var(--text); }
+
+.found-more {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-soft);
+  cursor: pointer;
+}
+.found-more:hover { color: var(--accent); }
+
+/* ── The recommendation, as answers ── */
+
+.call-answer {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-3);
+  align-items: start;
+  margin-bottom: var(--s-3);
+}
+.call-answer-ico { font-size: 16px; line-height: 1.35; }
+.call-answer-label {
+  margin: 0 0 2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+}
+.call-answer-text { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--text-mute); }
+.call-claim-label { margin-top: var(--s-4); }
+
+/* Explainability, folded away: visible enough to answer a doubt, quiet enough
+ * that the page does not turn back into a methodology. */
+.call-why {
+  margin-top: var(--s-4);
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+}
+.call-why > summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-mute);
+  list-style: none;
+}
+.call-why > summary::-webkit-details-marker { display: none; }
+.call-why > summary::before { content: '＋ '; color: var(--text-faint); }
+.call-why[open] > summary::before { content: '－ '; }
+.call-why > summary:hover { color: var(--text); }
+.call-why-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-mute);
+}
+.call-why-list li { margin-bottom: 4px; }
+.call-why-src {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-soft);
+  cursor: pointer;
+}
+.call-why-src:hover { color: var(--accent); }
+
+/* ── Demand, competition, opportunity, in words ── */
+
+/* auto-fit, not repeat(3): a free read has no competitor data, so it renders
+ * Demand alone. Hard-coded thirds left that single card stranded in a third of
+ * the row with two empty columns beside it, which read as a loading failure
+ * rather than as the honest "this is all we measured". */
+.str-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--s-3);
+}
+.str-card {
+  padding: 18px 20px;
+  border-radius: var(--tile-radius);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
+}
+.str-name {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.str-word {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3vw, 28px);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--accent);
+}
+.str-why { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text-mute); }
+.str-det { margin-top: 12px; }
+.str-det > summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-faint);
+  list-style: none;
+}
+.str-det > summary::-webkit-details-marker { display: none; }
+.str-det > summary:hover { color: var(--text-mute); }
+.str-det p { margin: 8px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--text-mute); }
+
+@media (max-width: 720px) {
+  .str-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Progress, in the merchant's language ── */
+
+.vd-working {
+  margin: 0 0 var(--s-4);
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 26px);
+  letter-spacing: -0.02em;
+}
+.vd-working-note { margin: var(--s-4) 0 0; font-size: 13px; color: var(--text-faint); }
+
+/* Touch floors on the report. Every one of these is a real control that was
+ * between 20 and 42px: the source links under each quote, the jump into the
+ * evidence, and the two buttons that turn an angle into an ad. */
+@media (pointer: coarse) {
+  .found-more,
+  .call-why-src,
+  .ev-meta a,
+  .ev-meta .ev-src,
+  .angle-actions button,
+  .angle-actions a,
+  .vd-call-actions button,
+  .str-det > summary,
+  .call-why > summary {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  /* The source line is a row of two, so the row carries the height rather than
+   * each chip growing a box of its own. */
+  .ev-meta { min-height: 44px; align-items: center; }
+}
+
+/* A first-party review reads differently from a forum quote, so it looks
+ * different. The badge is the attribution doing its job: the reader has to be
+ * able to tell at a glance that this one came from their own buyers. */
+.ev-card-review { border-left-color: var(--accent-soft); }
+.ev-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 77, 109, 0.45);
+  background: rgba(255, 77, 109, 0.1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+}

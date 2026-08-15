@@ -28,34 +28,88 @@
 
 const hf = require('./lib/hf');
 const promptLib = require('./lib/prompts');
-const { priceStudioOrder } = require('./lib/pricing');
+const { priceStudioOrder, creditsForOrder } = require('./lib/pricing');
 const { getUser } = require('./lib/auth');
 const sb = require('./lib/supabase');
 const { allow } = require('./lib/ratelimit');
 
 const SEGMENT_SECONDS = 15;
 
-/* The free taste: one short grounded clip per account, ever. Long enough for
- * one hook beat with the real product in frame, short enough that giving it
- * away costs ~a dollar in credits (5 credits/second at 720p: 5s = 25cr,
- * 10s = 50cr). Chris can turn the dial with SAMPLE_SECONDS in Netlify env,
- * clamped 4-10 so a typo can never give away a full film. */
-const SAMPLE_SECONDS = Math.min(10, Math.max(4, parseInt(process.env.SAMPLE_SECONDS, 10) || 5));
+/*
+ * Marketing Studio will not make a clip shorter than this.
+ *
+ * The engine declares duration_range 12-15 (models_explore, 2026-08-14). The
+ * free sample was asking it for 5 seconds, which is outside that range, so the
+ * create was being rejected and the free taste has almost certainly never
+ * worked for anybody.
+ */
+const MS_VIDEO_MIN_SECONDS = 12;
+
+/*
+ * The free taste: one short grounded clip per account, ever. It runs on the
+ * same engine as the paid product on purpose, because a sample that does not
+ * look like what you would buy sells nothing.
+ *
+ * That fidelity has a price. The floor is the engine's floor, so the cheapest
+ * possible free sample is a 12 second Marketing Studio render, which is close
+ * to a full UGC film in credits rather than the ~1 dollar the old 5 second
+ * figure assumed. Chris can still turn the dial with SAMPLE_SECONDS, but it is
+ * clamped to what the engine will actually accept instead of to 4-10, which
+ * only ever produced a 422.
+ */
+const SAMPLE_SECONDS = Math.min(
+  SEGMENT_SECONDS,
+  Math.max(MS_VIDEO_MIN_SECONDS, parseInt(process.env.SAMPLE_SECONDS, 10) || MS_VIDEO_MIN_SECONDS)
+);
 
 /* Products whose output is stills, for the creations.type column. */
-const IMAGE_PRODUCTS = ['photoshoot', 'adpack'];
+const IMAGE_PRODUCTS = ['photoshoot', 'adpack', 'adsingle'];
+
+/* The ad pack ships twenty creatives, matching ADPACK_INCLUDED_FORMATS in
+ * lib/pricing.js. Each name is a distinct direct-response concept, so a pack is
+ * twenty different arguments rather than twenty crops of the same one. Ordered
+ * by how reliably each concept converts, so a short pack still gets the best. */
+const ADPACK_DEFAULT_FORMATS = 20;
+/* Deduped: the catalog lists "Stat Surround" twice, and a repeated concept in a
+ * twenty pack means the buyer paid for the same argument twice. */
+/*
+ * Higgsfield's DTC Ads formats: the name the buyer picks, the style_id that
+ * actually drives the render, and Higgsfield's own published sample of it.
+ *
+ * The style_id is the whole point. Passing it to ms_image reproduces the exact
+ * layout in that sample with the customer's product dropped in, which is what
+ * makes a preview on our site an honest promise instead of decoration.
+ * Measured 2026-08-14: Star Review through ms_image came back with the same
+ * skeleton as Higgsfield's published sample (quote, star row, review card,
+ * helpful count), where the same concept through nano_banana_2 failed outright.
+ *
+ * review_shaped marks the formats that stage a testimonial. They invent a
+ * reviewer name, a rating and a helpful count; Higgsfield's own sample does it
+ * too. Publishing fabricated endorsements is the customer's legal problem, so
+ * these stay out of the default rotation and unlock only when real review text
+ * is supplied. 28 of the 39 formats are not review shaped, comfortably more
+ * than a 20 creative pack needs.
+ */
+const AD_FORMATS = require('../../catalog/higgsfield/ad-formats.json').items;
+const AD_FORMAT_BY_NAME = AD_FORMATS.reduce(function (m, f) { m[f.name] = f; return m; }, {});
+const AD_FORMAT_NAMES = AD_FORMATS
+  .filter(function (f) { return !f.review_shaped; })
+  .map(function (f) { return f.name; });
 
 /* Write the library row for this render. Owner precedence: the paid order's
  * owner (webhook/checkout wrote it), else the signed-in caller (dev-key
  * renders while testing logged in). Anonymous dev renders own nothing and
  * write nothing. Failures only log: the render itself must never break
  * because bookkeeping hiccuped. Returns the creation id or null. */
-async function persistCreation(order, engine, paidSessionId, event) {
+async function persistCreation(order, engine, paidSessionId, event, creditOrderId) {
   try {
     if (!sb.configured()) return null;
     const db = sb.admin();
     let userId = null;
-    let orderId = null;
+    // A credit render already opened its own order row, and the ledger's spend
+    // points at it. Carrying the id onto the creation is what later lets a
+    // failed creative find what was paid for it and refund the right amount.
+    let orderId = creditOrderId || null;
     if (paidSessionId) {
       const { data: o } = await db.from('orders')
         .select('id,user_id,status')
@@ -260,6 +314,7 @@ async function agentStoryboard(order, segments, facts) {
     s.avatar && s.avatar.name ? 'Creator: ' + s.avatar.name : null,
     s.hook && s.hook.name ? 'Opening hook: "' + s.hook.name + '" whose script is: ' + ((promptLib.findHook(s.hook.id) || {}).prompt || '') : null,
     s.setting && s.setting.name ? 'Scene: ' + s.setting.name : null,
+    brandBrief(s) ? 'Brand context, apply throughout: ' + brandBrief(s) : null,
     s.directions ? 'Customer direction, follow it faithfully over everything else: ' + String(s.directions).slice(0, 1200) : null,
     'Total length: ' + (segments * SEGMENT_SECONDS) + ' seconds as ' + segments + ' segments of ' + SEGMENT_SECONDS + 's, generated separately and stitched into one continuous film.',
   ].filter(Boolean).join('\n');
@@ -314,6 +369,7 @@ function writeStoryboard(order, segments, facts) {
     (facts && facts.description ? ' The product: ' + String(facts.description).slice(0, 400) + '.' : '') +
     (setting ? ' Scene: ' + setting + '.' : '') +
     ' Natural handheld feel, honest tone, no captions burned in.' +
+    (brandBrief(s) ? ' Brand context, apply throughout: ' + brandBrief(s) : '') +
     (s.directions ? ' Customer direction, follow it faithfully: ' + String(s.directions).slice(0, 1200) : '');
 
   if (segments === 1) {
@@ -366,18 +422,66 @@ async function webProductFacts(id) {
   }
 }
 
+/*
+ * Scrape the customer's product page into an engine web product and wait for
+ * it, within a budget. The resolved id is written back onto the selections,
+ * not just returned: productImageRef() and webProductFacts() both read
+ * s.webProductId, so a caller that only awaited this function used to throw the
+ * scrape away and fall back to an INVENTED product. Keeping the id here means
+ * no call site can make that mistake again.
+ */
+/*
+ * What we know about the product when the engine's scrape came back empty.
+ *
+ * The pasted link is the whole grounding chain: the scrape becomes
+ * web_product_ids on the video job and its title and description are what the
+ * script talks about. Measured 2026-08-13, that scrape fails on about 2 in 5
+ * real stores, and when it does the render used to proceed knowing nothing:
+ * a paid film about a generic product the customer never sold.
+ *
+ * product-unlock-background has usually already read the same page through
+ * Bright Data and cached what it found. It cannot supply web_product_ids, so
+ * the visual grounding is still lost, but the script can at least be written
+ * about the real product. Free to read, since the page was already paid for.
+ */
+async function unlockedFacts(link) {
+  if (!link) return null;
+  try {
+    const { getStore } = require('@netlify/blobs');
+    const peek = require('./product-peek');
+    const target = await peek.guardUrl(link);
+    if (!target) return null;
+    const rec = await getStore('peeks').get(peek.unlockKey(target.href), { type: 'json' });
+    if (!rec || (!rec.title && !rec.description)) return null;
+    return {
+      title: rec.title || null,
+      description: rec.description || null,
+      type: null,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 async function ensureWebProduct(s, budgetMs) {
   let id = s.webProductId || null;
   try {
     if (!id && s.link) {
+      // A cold scrape takes about ten seconds, measured, which is the entire
+      // budget of a synchronous Netlify function. The studio peeks the product
+      // at step one and sends the id along, so this only happens on a path that
+      // skipped the peek. When we already hold a peeked image we can ground the
+      // render without waiting, so wait briefly and move on; only when there is
+      // nothing else to ground on is the full wait worth the risk.
       const wp = await hf.createWebProduct(s.link);
       id = wp && wp.id;
+      if (s.productImage) budgetMs = Math.min(budgetMs, 3000);
     }
     if (!id) return null;
     const deadline = Date.now() + budgetMs;
     for (;;) {
       const got = await hf.getWebProduct(id);
-      if (got.status === 'completed') return id;
+      if (got.status === 'completed') { s.webProductId = id; return id; }
       if (got.status === 'failed') return null;
       if (Date.now() > deadline) return null;
       await sleep(1500);
@@ -387,24 +491,97 @@ async function ensureWebProduct(s, budgetMs) {
   }
 }
 
-/* The customer's actual product image as a media reference, or null. */
+/*
+ * The customer's actual product image as a media reference, or null.
+ *
+ * Order matters, and it is not the cheap one first.
+ *
+ *   1. The image the customer actually saw. product-peek reads the page and the
+ *      engine scrapes it separately, and the two can disagree: an Allbirds wool
+ *      runner URL scraped as a flip flop from the same page, observed live
+ *      2026-08-13. The studio showed the buyer the page's image and they
+ *      approved it, so a pack built on the engine's other guess would advertise
+ *      a product they never agreed to sell. Correctness beats one second.
+ *      Costs a fetch and a PUT.
+ *
+ *   2. The web product's own media_input_id. That id IS a usable reference, so
+ *      this path costs no upload at all. It is also where a peeked image ends
+ *      up when product-peek fell back to the scrape, in which case the two are
+ *      the same picture and nothing is lost.
+ *
+ *   3. The web product's media URL, fetched and PUT.
+ *
+ * Note what is NOT here: handing the engine a URL. The media endpoint only ever
+ * PRESIGNS, the `url` in the body is ignored for images exactly as for video,
+ * and the id it returns has no bytes behind it, so passing it as a reference
+ * 500s the generation. That silently un-grounded every ad pack and photoshoot
+ * until it was measured.
+ *
+ * Returning null is a real outcome, not a failure: the render proceeds
+ * ungrounded rather than dying. But it means the product in the image is
+ * invented, so it is worth a log line.
+ */
+async function uploadRefFromUrl(url) {
+  const src = await fetch(url);
+  if (!src.ok) throw new Error('product image fetch failed (' + src.status + ')');
+  const buf = Buffer.from(await src.arrayBuffer());
+  const media = await hf.uploadImageBytes(buf, src.headers.get('content-type') || 'image/jpeg');
+  return media && media.id ? { type: 'media_input', id: media.id } : null;
+}
+
 async function productImageRef(s) {
+  // 1. what the buyer approved
+  if (typeof s.productImage === 'string' && /^https:\/\//.test(s.productImage)) {
+    try {
+      const ref = await uploadRefFromUrl(s.productImage);
+      if (ref) return ref;
+    } catch (e) {
+      // Not fatal: the engine's own scrape is still a real picture of the
+      // product, and a grounded render on that beats an invented one.
+      console.warn('productImageRef: approved image unusable, falling back:', e.message);
+    }
+  }
+
+  // 2 and 3. whatever the engine scraped
   try {
-    let url = null;
     if (s.webProductId) {
       const wp = await hf.getWebProduct(s.webProductId);
       const primary = (wp.medias || []).find(function (m) { return m.is_primary; }) || (wp.medias || [])[0];
-      if (primary) url = primary.url;
+      if (primary && primary.media_input_id) return { type: 'media_input', id: primary.media_input_id };
+      if (primary && primary.url) return await uploadRefFromUrl(primary.url);
     }
-    if (!url && typeof s.productImage === 'string' && /^https:\/\//.test(s.productImage)) {
-      url = s.productImage;
-    }
-    if (!url) return null;
-    const media = await hf.uploadImageFromUrl(url);
-    return media && media.id ? { type: 'media_input', id: media.id } : null;
   } catch (e) {
+    console.error('productImageRef failed, rendering ungrounded:', e.message);
     return null;
   }
+
+  console.warn('productImageRef: no product image, rendering ungrounded');
+  return null;
+}
+
+/*
+ * Brand memory as a prompt line.
+ *
+ * Deliberately shapes HOW something is said and never WHAT is claimed. Tone,
+ * audience and vocabulary are the customer's to set; product facts come from
+ * the product page and the research, because a brand field that could assert
+ * "clinically proven" would launder an unevidenced claim into every creative.
+ *
+ * Words to avoid is listed last and phrased as a hard rule, because it is the
+ * one a model is most likely to drift past.
+ */
+function brandBrief(s) {
+  const b = s && s.brand;
+  if (!b) return null;
+  const bits = [];
+  if (b.brand_name) bits.push('Brand: ' + String(b.brand_name).slice(0, 80));
+  if (b.audience) bits.push('They sell to: ' + String(b.audience).slice(0, 200));
+  if (b.tone) bits.push('Voice: ' + String(b.tone).slice(0, 200));
+  if (b.words_use) bits.push('Words that are theirs, use them: ' + String(b.words_use).slice(0, 200));
+  if (b.offer) bits.push('Standing offer: ' + String(b.offer).slice(0, 120));
+  if (b.notes) bits.push(String(b.notes).slice(0, 300));
+  if (b.words_avoid) bits.push('NEVER use these words or phrases: ' + String(b.words_avoid).slice(0, 200));
+  return bits.length ? bits.join('. ') : null;
 }
 
 /* Map a studio order to engine calls. Returns { kind, jobType, paramsList }. */
@@ -412,7 +589,20 @@ async function planOrder(order) {
   const s = order.selections || {};
   const product = order.product || '';
   const aspect = s.aspect || '9:16';
-  const duration = Math.max(SEGMENT_SECONDS, parseInt(s.duration, 10) || SEGMENT_SECONDS);
+  /*
+   * Duration is client supplied, so it needs a ceiling as well as a floor.
+   * Unclamped, selections.duration = 1e9 asks for 66 million segments, and
+   * createJobsInWaves would sit there issuing engine calls until the function
+   * died. Payment happens before planning so nobody could actually reach it
+   * without paying for it first, but a spend guard is the wrong last line of
+   * defence against resource exhaustion: the loop should refuse to be that
+   * large whoever asks. Eight minutes is well past the longest film sold.
+   */
+  const MAX_SEGMENTS = 32;
+  const duration = Math.min(
+    SEGMENT_SECONDS * MAX_SEGMENTS,
+    Math.max(SEGMENT_SECONDS, parseInt(s.duration, 10) || SEGMENT_SECONDS)
+  );
   const segments = Math.ceil(duration / SEGMENT_SECONDS);
 
   // cheap live-proof product: one Soul V2 image
@@ -499,7 +689,7 @@ async function planOrder(order) {
     const mode = product === 'auto' || product === 'sample' ? 'ugc' : product.slice(5);
     if (product === 'sample') {
       const webProductId = await ensureWebProduct(s, 6000);
-      const facts = await webProductFacts(webProductId);
+      const facts = (await webProductFacts(webProductId)) || (await unlockedFacts(s.link));
       const name = (facts && facts.title) || s.productName || 'the product';
       const p = {
         prompt: 'UGC selfie video, handheld phone energy. A relatable creator holds ' + name +
@@ -521,7 +711,7 @@ async function planOrder(order) {
     // Resolve the scraped product first: its real name and description feed
     // the storyboard, so the script talks about the actual product.
     const webProductId = await ensureWebProduct(s, 6000);
-    const facts = await webProductFacts(webProductId);
+    const facts = (await webProductFacts(webProductId)) || (await unlockedFacts(s.link));
     const prompts = (await agentStoryboard(order, segments, facts)) || writeStoryboard(order, segments, facts);
     return {
       kind: 'videos', jobType: 'marketing_studio_video',
@@ -547,7 +737,8 @@ async function planOrder(order) {
   }
 
   if (product === 'cinematic') {
-    const cinFacts = await webProductFacts(s.webProductId);
+    await ensureWebProduct(s, 8000); // scrape before reading facts
+    const cinFacts = (await webProductFacts(s.webProductId)) || (await unlockedFacts(s.link));
     let prompts = (await agentStoryboard(order, segments, cinFacts)) || writeStoryboard(order, segments, cinFacts);
     // Cinematic Studio takes no hook_id/setting_id, so inject the full library
     // prompt text that Marketing Studio would have applied server-side.
@@ -577,7 +768,8 @@ async function planOrder(order) {
   if (product === 'photoshoot') {
     const COUNT = 10;
     const shootMode = (s.mode && s.mode.id) || 'product_shot';
-    const shootFacts = await webProductFacts(s.webProductId);
+    await ensureWebProduct(s, 8000); // scrape before reading facts or medias
+    const shootFacts = (await webProductFacts(s.webProductId)) || (await unlockedFacts(s.link));
     const intent =
       (s.directions && String(s.directions).slice(0, 600)) ||
       ('Brand-quality ' + shootMode.replace(/_/g, ' ') + ' of ' +
@@ -609,7 +801,6 @@ async function planOrder(order) {
     const NANO_ASPECTS = { '1:1': '1:1', '16:9': '3:2', '9:16': '2:3', '4:3': '4:3', '21:9': '3:2' };
     const shootAspect = NANO_ASPECTS[typeof s.aspect === 'string' ? s.aspect : (s.aspect && s.aspect.id)] || '1:1';
 
-    await ensureWebProduct(s, 4000); // best effort: fills medias for the ref
     const ref = await productImageRef(s);
 
     return {
@@ -626,7 +817,194 @@ async function planOrder(order) {
     };
   }
 
-  return null; // adpack / soul stay concierge for now
+  /*
+   * DTC Ad Pack: twenty static ad creatives in one pass.
+   *
+   * This used to return null and be fulfilled by hand, which stopped being
+   * tenable when the pack went to twenty creatives for $12. It renders on the
+   * same proven path as the photoshoot (nano_banana_2 grounded on the
+   * customer's real product image), and the only new work is turning each ad
+   * FORMAT into a brief.
+   *
+   * The formats are the value. Each one is a distinct direct-response concept
+   * ("Customer Quote", "Then vs Now", "Star Review", "Bundle Deal"), so a pack
+   * is twenty different arguments for the same product rather than twenty
+   * variations of one. That is what makes it an answer to the creative
+   * treadmill instead of another swipe file.
+   *
+   * Two rules hold here, both borrowed from the research engine:
+   *   - Never invent a product claim. Copy is built from the scraped facts and
+   *     the customer's own directions; if we do not know it, we do not say it.
+   *   - On-image text is stated explicitly and kept short, because one typo
+   *     makes a careful brand look careless.
+   */
+  if (product === 'adpack' || product === 'adsingle') {
+    const chosen = Array.isArray(s.formats) ? s.formats.filter(Boolean) : [];
+    // One creative, whatever the client sent in formats. This is the product a
+    // new account's welcome credits buy, so its size is fixed by the SKU rather
+    // than by anything the browser can ask for.
+    const single = product === 'adsingle';
+
+    /*
+     * A revision re-renders ONE creative, not the pack. The buyer gets twenty
+     * starting points and will always want to change a headline or re-roll a
+     * concept that missed, so each creative is addressable on its own by
+     * (concept, headline, aspect). One image is about two credits, which is
+     * what keeps the "no reject fees" promise on the pricing page affordable
+     * rather than aspirational.
+     */
+    const revising = !!(s.revise && (s.revise.concept || s.revise.headline));
+    /*
+     * Same ceiling reasoning as film segments: the formats array arrives from
+     * the client and drives one engine call each, so an array of ten thousand
+     * is ten thousand creates. Pricing scales with the count and the charge is
+     * taken before any of this runs, so it is not a way to get free work, but
+     * the loop still should not agree to be unbounded. There are 39 formats in
+     * the catalogue, so 60 leaves room to ask for repeats.
+     */
+    const MAX_ADPACK_FORMATS = 60;
+    const wanted = (revising || single)
+      ? 1
+      : Math.min(MAX_ADPACK_FORMATS, Math.max(1, chosen.length || ADPACK_DEFAULT_FORMATS));
+
+    // Scrape first, then read. The facts and the product image both come off
+    // the same web product, so asking for either before it exists is how a
+    // pack ends up describing a product we never actually read.
+    await ensureWebProduct(s, 8000);
+    const adFacts = (await webProductFacts(s.webProductId)) || (await unlockedFacts(s.link));
+    const name = (adFacts && adFacts.title) || s.productName || s.desc || 'the product';
+    const detail = (adFacts && adFacts.description) ? String(adFacts.description).slice(0, 400) : '';
+    const brandLine = s.productSiteName ? ' by ' + s.productSiteName : '';
+
+    // The angle's headline when the order came from a validation report,
+    // otherwise the customer's own direction. Never invented here.
+    const headlineSrc = (revising && s.revise.headline) ? s.revise.headline : s.headline;
+    const headline = (typeof headlineSrc === 'string' && headlineSrc.trim())
+      ? headlineSrc.trim().slice(0, 90)
+      : '';
+    const directions = (s.directions && String(s.directions).slice(0, 400)) || '';
+
+    /*
+     * Placement ratios: 4:5 is the feed workhorse, 1:1 travels everywhere, 9:16
+     * is stories and reels. Cycling them means one pack covers every slot.
+     *
+     * ms_image has no 4:5, so 3:4 stands in for it: both are portrait and a
+     * 3:4 crops to 4:5 without losing the composition. The old nano_banana_2
+     * mapping sent 4:5 to 4:3, which is landscape, so every "feed" creative in
+     * a pack came back the wrong way round for the placement it was made for.
+     */
+    const AD_ASPECTS = ['4:5', '1:1', '9:16'];
+    const MS_AD_ASPECT = { '4:5': '3:4', '1:1': '1:1', '9:16': '9:16' };
+
+    /*
+     * Real review text, supplied by the buyer. Nothing is scraped: DTC stores
+     * keep reviews inside Yotpo, Okendo, Judge.me, Trustpilot and friends,
+     * each behind its own key, and measured 2026-08-14 none of Allbirds,
+     * Brooklinen or Huel expose review bodies in server-side HTML at all.
+     * Guessing here would put invented words in a real customer's mouth, so
+     * the words have to come from the person who owns them.
+     */
+    const realReviews = Array.isArray(s.reviews)
+      ? s.reviews.map(function (r) { return String((r && (r.text || r)) || '').trim(); })
+          .filter(Boolean).slice(0, 3)
+      : [];
+    const allowReview = realReviews.length > 0;
+
+    const picked = revising
+      ? [String(s.revise.concept || 'Headline')]
+      : (chosen.length
+        ? chosen.map(function (f) { return (f && (f.name || f.id)) || 'Headline'; })
+        : AD_FORMAT_NAMES.slice(0, wanted));
+
+    /*
+     * A testimonial format with nothing real to quote will invent a reviewer, a
+     * star rating and a helpful count. Swap those slots for an honest format
+     * that is not already in the set rather than ship a fabricated endorsement.
+     */
+    const substituted = [];
+    const names = picked.map(function (n, i) {
+      const f = AD_FORMAT_BY_NAME[n];
+      if (allowReview || !f || !f.review_shaped) return n;
+      const spare = AD_FORMAT_NAMES.filter(function (x) { return picked.indexOf(x) < 0; });
+      const to = spare.length ? spare[i % spare.length] : 'Headline';
+      // Only worth telling them about when they asked for it by name. Filling
+      // the default twenty from honest formats needs no announcement.
+      if (revising || chosen.length) substituted.push({ from: n, to: to });
+      return to;
+    });
+
+    // A revision keeps the slot's original placement so the re-roll drops back
+    // into the same spot in the set rather than changing shape.
+    const aspectOffset = revising ? (parseInt(s.revise.index, 10) || 0) : 0;
+
+    const prompts = [];
+    for (let i = 0; i < wanted; i++) {
+      const concept = names[i % names.length];
+      const fmt = AD_FORMAT_BY_NAME[concept];
+      // Only a format that stages a testimonial gets the review text, and it
+      // gets it verbatim: the format supplies the layout, the customer supplies
+      // the words, and the model is told to invent neither.
+      const reviewLine = (fmt && fmt.review_shaped && realReviews.length)
+        ? 'Use only this real customer review, quoted exactly as written: "'
+          + realReviews[i % realReviews.length].slice(0, 240)
+          + '". Do not invent a reviewer name, star rating, review count or helpful count. '
+        : '';
+      // A brief with named slots, not an adjective pile: product, concept,
+      // scene, lighting, the exact on-image text, and what to avoid.
+      prompts.push(
+        'Direct response static ad creative. Concept: ' + concept + '. ' +
+        'Product: ' + name + brandLine + '. ' +
+        (detail ? 'What it is: ' + detail + ' ' : '') +
+        (brandBrief(s) ? brandBrief(s) + '. ' : '') +
+        (directions ? 'Brand direction: ' + directions + ' ' : '') +
+        reviewLine +
+        'Studio quality commercial photography, clean composition with room for text, ' +
+        'soft directional lighting, the real product as the hero and unaltered. ' +
+        (headline ? 'Render this exact on-image text, spelled exactly: "' + headline + '". ' +
+                    'Bold clean sans-serif, high contrast, fully legible, no other text. '
+                  : 'No on-image text. ') +
+        'Avoid: stock photo look, extra logos, altered packaging, distorted or misspelled text, ' +
+        'watermarks, and any invented claim or badge.'
+      );
+    }
+
+    const adRef = await productImageRef(s);
+
+    /*
+     * DTC Ads rather than a general image model.
+     *
+     * style_id is what buys the format: Higgsfield holds the layout recipe for
+     * "Star Review" or "Comparison Table" and applies it, so the pack looks
+     * like the samples on our site instead of twenty variations on a headline
+     * over a photo. Measured 2026-08-14 against the same product and grounding:
+     * 0.5 credits an image versus 2.0, and the Star Review format that failed
+     * outright on nano_banana_2 rendered first time here.
+     *
+     * style_id is required by the engine, so an unrecognised concept falls back
+     * to Headline instead of 422ing a pack the customer has already paid for.
+     */
+    const FALLBACK_STYLE = (AD_FORMAT_BY_NAME.Headline || AD_FORMATS[0]).style_id;
+
+    return {
+      kind: 'images', jobType: 'ms_image',
+      // Named formats we could not honour, so the UI can say why and offer the
+      // fix ("paste your real reviews to unlock Star Review") instead of the
+      // buyer silently receiving a format they did not ask for.
+      substituted: substituted.length ? substituted : undefined,
+      paramsList: prompts.map(function (prompt, i) {
+        const fmt = AD_FORMAT_BY_NAME[names[i % names.length]];
+        const p = {
+          prompt: prompt,
+          aspect_ratio: MS_AD_ASPECT[AD_ASPECTS[(i + aspectOffset) % AD_ASPECTS.length]] || '1:1',
+          style_id: (fmt && fmt.style_id) || FALLBACK_STYLE,
+        };
+        if (adRef) p.image_references = [adRef];
+        return p;
+      }),
+    };
+  }
+
+  return null; // soul stays concierge for now
 }
 
 function json(status, body) {
@@ -637,7 +1015,51 @@ function json(status, body) {
   };
 }
 
+/*
+ * Create every job in the plan, in waves.
+ *
+ * This used to be a sequential loop, which was fine while an order meant one to
+ * four jobs. A twenty creative ad pack made it a timeout: the engine answers a
+ * create in about 0.8s, so twenty in a row is roughly 17 seconds against a
+ * Netlify synchronous function ceiling of 10. The customer's card is already
+ * charged by this point, so a timeout here is the worst failure we can have.
+ *
+ * Waves rather than one big Promise.all: twenty simultaneous creates is a good
+ * way to meet a rate limiter, and a rate limited create costs us the same
+ * timeout we are trying to avoid. Eight at a time puts a twenty pack in three
+ * waves, comfortably inside the ceiling.
+ *
+ * One retry per failed create, because a single flaky create should not cost
+ * someone their whole order. If a job still will not create we throw, which
+ * surfaces as a 402 or 502 and leaves the refund paths to do their job.
+ */
+const CREATE_WAVE = 8;
+
+async function createJobsInWaves(plan) {
+  const total = plan.paramsList.length;
+  const jobs = new Array(total);
+
+  for (let start = 0; start < total; start += CREATE_WAVE) {
+    const wave = [];
+    for (let i = start; i < Math.min(start + CREATE_WAVE, total); i++) wave.push(i);
+    await Promise.all(wave.map(async function (i) {
+      let created;
+      try {
+        created = await hf.createJob(plan.kind, plan.jobType, plan.paramsList[i]);
+      } catch (e) {
+        if (e.status === 402) throw e; // out of credits: retrying cannot help
+        console.warn('create failed for job ' + (i + 1) + '/' + total + ', retrying:', e.message);
+        created = await hf.createJob(plan.kind, plan.jobType, plan.paramsList[i]);
+      }
+      jobs[i] = { id: created.id, segment: i + 1, of: total };
+    }));
+  }
+
+  return jobs;
+}
+
 exports.planOrder = planOrder; // exposed for tests and the concierge CLI path
+exports.brandBrief = brandBrief; // exposed so the brand line can be asserted in tests
 
 exports.handler = async (event) => {
   require('./lib/blobs-context').connect(event);
@@ -657,34 +1079,164 @@ exports.handler = async (event) => {
   const given = (event.headers && (event.headers['x-render-key'] || event.headers['X-Render-Key'])) || '';
   const devAuthorized = !!devKey && given === devKey;
 
-  if (!devAuthorized && !(await allow('render', event, 12))) {
+  /*
+   * Loose on purpose. This was 12 an hour, set when every render meant its own
+   * Stripe checkout, so twelve was already an implausible number of purchases.
+   * Under credits it is the wrong shape entirely: someone who has just bought
+   * 50,000 credits is entitled to spend them, and cutting them off at the
+   * thirteenth render punishes the best customer we have.
+   *
+   * The wallet is the real limit. A render cannot happen without a balance to
+   * charge, and the balance is checked and debited inside one locked statement,
+   * so there is nothing here for a free rider to exploit. This ceiling exists
+   * only to stop a flood from turning into a pile of engine calls.
+   */
+  if (!devAuthorized && !(await allow('render', event, 200))) {
     return json(429, { error: 'Too many render requests. Please wait a bit and try again.' });
   }
 
   let stampJobs = null;
-  if (!devAuthorized && order.product === 'sample') {
-    // The free taste: no payment, but a real account and only ever one.
-    // Signed-in also means the drip picks them up and the film has a home.
+  let creditOrderId = null; // set when the render was paid for with credits
+
+  /*
+   * The free 5 second clip is retired.
+   *
+   * It was the most expensive thing we gave away by a wide margin: 80 engine
+   * credits, about $4.16 a head, against $0.026 for a static ad and $0.049 for
+   * a full market read. It also stopped making sense once the report started
+   * measuring whether a category is won by video or statics, because we were
+   * handing every visitor a video regardless of what we had just told them.
+   *
+   * Refused here rather than only removed from the pages, because the entry
+   * point was a product id in a JSON body and anything that can still post one
+   * would otherwise still spend the money. Every UI route to it is gone; this
+   * is the backstop.
+   */
+  if (order.product === 'sample') {
+    return json(410, {
+      error: 'The free clip has been replaced by a free market read: we tell you what your buyers '
+        + 'actually say and which competitor ads are proven, then make the ad from that.',
+      replacement: '/validate',
+    });
+  }
+
+  /*
+   * The free ad, and the only work we do without payment or an account.
+   *
+   * A report ends by naming the line we would run. Making the visitor create an
+   * account before they can see that line as an actual ad is asking them to
+   * commit before we have proved anything, so the first creative off a report
+   * is free and needs nothing. It replaces the old free 5 second clip and costs
+   * $0.026 against that clip's $4.16, which is the entire reason the trade is
+   * affordable.
+   *
+   * Four things stop it being a free image API:
+   *
+   *   it is one SKU only, adsingle, so nobody can ask for a film
+   *   it needs the report's claim token, which is 32 random bytes we issued
+   *   it is once per report, held in Blobs, so replaying the call does nothing
+   *   it is rate limited per address on top of all of that
+   *
+   * Anonymous renders write no library row (persistCreation returns early
+   * without a user), so the image lives on the render page and signing in is
+   * how you keep it. That is the ask, and it comes after we have delivered.
+   */
+  let freeAd = false;
+  if (!devAuthorized && order.product === 'adsingle' && order.freeReport) {
+    const { id: rid, claim } = order.freeReport;
     if (!sb.configured()) return json(503, { error: 'accounts not configured' });
-    const user = await getUser(event);
-    if (!user) return json(401, { error: 'Sign in free to claim your sample.' });
-    if (!(await allow('sample', event, 3))) {
-      return json(429, { error: 'Too many sample requests. Please wait a bit and try again.' });
+    if (!(await allow('free-ad', event, 30))) {
+      return json(429, { error: 'Too many free ads from this connection. Try again shortly.' });
     }
-    const { count, error: dupErr } = await sb.admin().from('creations')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.userId)
-      .ilike('title', 'Free sample%');
-    if (dupErr) return json(503, { error: 'could not check sample eligibility' });
-    if ((count || 0) > 0) {
-      return json(409, { error: 'Your free sample is already in your library. A full film starts at $12.' });
+
+    const { data: rep } = await sb.admin().from('reports')
+      .select('id,claim_token,user_id,status').eq('id', String(rid || '')).maybeSingle();
+    if (!rep || rep.status !== 'ready') return json(404, { error: 'no such report' });
+
+    /* Same ownership test report-status uses: the claim token, compared in
+     * constant time, or a signed-in owner. */
+    let owns = false;
+    const given = String(claim || '');
+    if (rep.claim_token && given && given.length === rep.claim_token.length) {
+      owns = require('crypto').timingSafeEqual(Buffer.from(given), Buffer.from(rep.claim_token));
     }
-  } else if (!devAuthorized) {
-    if (!paidSessionId) return json(403, { error: 'payment required' });
-    const paid = await checkPaidSession(paidSessionId, order);
-    if (!paid.ok) return json(paid.status, { error: paid.error });
-    if (paid.jobs) return json(200, { jobs: paid.jobs, engine: paid.engine, replay: true });
-    stampJobs = paid.stamp;
+    if (!owns && rep.user_id) {
+      const u = await getUser(event);
+      owns = !!u && u.userId === rep.user_id;
+    }
+    if (!owns) return json(404, { error: 'no such report' });
+
+    // Once per report. Checked and claimed before any engine call, so a double
+    // click cannot buy two.
+    try {
+      const { getStore } = require('@netlify/blobs');
+      const store = getStore('free-ads');
+      if (await store.get('report:' + rep.id)) {
+        return json(409, {
+          error: 'This report already had its free ad. Sign in and your welcome credits make three more.',
+        });
+      }
+      await store.set('report:' + rep.id, String(Date.now()));
+    } catch (e) {
+      console.error('free ad guard unavailable:', e.message);
+      return json(503, { error: 'could not start the free ad' });
+    }
+    freeAd = true;
+  }
+
+  if (!devAuthorized && !freeAd) {
+    /*
+     * Two ways to pay: a Stripe session, or credits already on the account.
+     *
+     * Credits are charged here, at create, because that is when the engine
+     * charges us (measured 2026-08-14: DTC Ads bills the moment a job is
+     * accepted, not on completion). Anything that then fails to render is
+     * refunded per creative by render-status, so a failure never quietly eats
+     * someone's balance.
+     */
+    if (!paidSessionId) {
+      if (!sb.configured()) return json(503, { error: 'accounts not configured' });
+      const user = await getUser(event);
+      if (!user) return json(401, { error: 'Sign in to spend credits.' });
+
+      const credits = creditsForOrder(order);
+      if (!credits) return json(400, { error: 'this product has no credit price' });
+
+      // The order row exists before the spend so the ledger has something
+      // stable to point at, and so a refund can find what was paid for it.
+      const priced = priceStudioOrder(order);
+      const { data: row, error: orderErr } = await sb.admin().from('orders').insert({
+        user_id: user.userId,
+        product: order.product,
+        selections: order.selections || {},
+        amount_cents: priced ? priced.amountCents : null,
+        status: 'paid',
+      }).select('id').single();
+      if (orderErr || !row) return json(503, { error: 'could not open an order' });
+
+      const { error: spendErr } = await sb.admin().rpc('credit_spend', {
+        p_user: user.userId,
+        p_amount: credits,
+        p_ref: 'order:' + row.id,
+        p_note: order.product,
+      });
+      if (spendErr) {
+        // Balance is checked and debited inside one locked statement, so this
+        // is the only place "not enough credits" can be decided. Roll the empty
+        // order back rather than leave a paid row nothing was charged for.
+        await sb.admin().from('orders').delete().eq('id', row.id);
+        if (/insufficient credits/i.test(spendErr.message || '')) {
+          return json(402, { error: 'Not enough credits for this render.', creditsNeeded: credits });
+        }
+        return json(503, { error: 'could not charge credits' });
+      }
+      creditOrderId = row.id;
+    } else {
+      const paid = await checkPaidSession(paidSessionId, order);
+      if (!paid.ok) return json(paid.status, { error: paid.error });
+      if (paid.jobs) return json(200, { jobs: paid.jobs, engine: paid.engine, replay: true });
+      stampJobs = paid.stamp;
+    }
   }
 
   // Action orders work on a clip from the payer's own library. The resolved
@@ -702,19 +1254,67 @@ exports.handler = async (event) => {
     }
   }
 
+  /*
+   * Brand memory, attached before anything is planned.
+   *
+   * The customer told us their voice once, in their account. Making them retype
+   * it into the direction box on every order is how brand context ends up
+   * missing from most creatives: not because people disagree with it, but
+   * because nobody types the same paragraph twice.
+   *
+   * Loaded server side and merged into selections, so it reaches every prompt
+   * builder through the path they already read. Never fatal: an order without a
+   * brand profile is exactly the order we made yesterday.
+   */
+  try {
+    const brandUser = await getUser(event);
+    if (brandUser && sb.configured()) {
+      const { data: brand } = await sb.admin().from('brand_profiles')
+        .select('brand_name,audience,tone,words_use,words_avoid,offer,notes')
+        .eq('user_id', brandUser.userId)
+        .is('scope', null)
+        .maybeSingle();
+      if (brand) order.selections = Object.assign({}, order.selections, { brand: brand });
+    }
+  } catch (e) {
+    console.error('brand profile not loaded:', e.message);
+  }
+
   const plan = await planOrder(order);
   if (!plan) return json(501, { error: 'this product is fulfilled concierge-side for now' });
 
   try {
-    const jobs = [];
-    for (let i = 0; i < plan.paramsList.length; i++) {
-      const created = await hf.createJob(plan.kind, plan.jobType, plan.paramsList[i]);
-      jobs.push({ id: created.id, segment: i + 1, of: plan.paramsList.length });
-    }
+    const jobs = await createJobsInWaves(plan);
     if (stampJobs) await stampJobs(jobs, plan.jobType);
-    const creationId = await persistCreation(order, plan.jobType, paidSessionId, event);
-    return json(200, { jobs: jobs, engine: plan.jobType, creation: creationId });
+    const creationId = await persistCreation(order, plan.jobType, paidSessionId, event, creditOrderId);
+    return json(200, {
+      jobs: jobs,
+      engine: plan.jobType,
+      creation: creationId,
+      substituted: plan.substituted || undefined,
+    });
   } catch (e) {
+    /*
+     * The credits are already spent by this point, and if no job was created
+     * there is nothing for render-status to refund against later. Give them
+     * back here rather than leave a customer charged for an empty order.
+     */
+    if (creditOrderId) {
+      try {
+        const credits = creditsForOrder(order);
+        if (credits) {
+          await sb.admin().rpc('credit_refund', {
+            p_user: (await getUser(event) || {}).userId,
+            p_amount: credits,
+            p_ref: 'order-failed:' + creditOrderId,
+            p_note: 'No jobs could be created',
+          });
+        }
+        await sb.admin().from('orders').update({ status: 'failed' }).eq('id', creditOrderId);
+      } catch (refundErr) {
+        console.error('credit refund after create failure did not land:', refundErr.message);
+      }
+    }
     return json(e.status === 402 ? 402 : 502, { error: String(e.message), detail: e.detail || null });
   }
 };

@@ -14,9 +14,14 @@
 
   var STATUS_URL = '/.netlify/functions/render-status';
   var CREATE_URL = '/.netlify/functions/render-create';
+  var REVISE_URL = '/.netlify/functions/render-revise';
   var DELIVERY_WINDOW = 'within 24 hours';
 
   var STEPS = ['research', 'brief', 'generate', 'finish'];
+
+  /* The delivered image set, once it exists: its urls, its tiles, which one is
+   * selected, and the creation row it belongs to. Editing works off this. */
+  var pack = null;
 
   function $(q) { return document.querySelector(q); }
 
@@ -78,6 +83,7 @@
           var setEl = $('#result-set');
           if (setEl) {
             setEl.innerHTML = '';
+            pack = { order: order, urls: urls.slice(), tiles: [], stage: node, index: 0, headlines: [] };
             urls.forEach(function (u, i) {
               var a = document.createElement('a');
               a.className = 'result-set-item' + (i === 0 ? ' sel' : '');
@@ -90,14 +96,13 @@
               a.addEventListener('click', function (e) {
                 if (e.metaKey || e.ctrlKey) return;
                 e.preventDefault();
-                node.src = u;
-                setEl.querySelectorAll('.result-set-item').forEach(function (x) { x.classList.remove('sel'); });
-                a.classList.add('sel');
-                $('#btn-download').href = u;
+                selectTile(i);
               });
               setEl.appendChild(a);
+              pack.tiles.push(a);
             });
             setEl.hidden = false;
+            mountAdEditor();
           }
         }
       }
@@ -128,18 +133,237 @@
     $('#render-title').textContent = 'Your content is ready';
     var subMsg;
     if (isVideo && urls.length > 1) {
-      subMsg = 'One film in ' + urls.length + ' segments, playing in order above. ' +
+      subMsg = 'One video in ' + urls.length + ' segments, playing in order above. ' +
         'The single stitched master lands in your email shortly.';
     } else if (!isVideo && urls.length > 1) {
-      subMsg = urls.length + ' images, all yours. Click any frame to view it, then download.';
+      subMsg = order.product === 'adpack'
+        ? urls.length + ' creatives, ' + urls.length + ' different arguments for the same product. ' +
+          'Click any one to view it, download it, or change it below.'
+        : urls.length + ' images, all yours. Click any frame to view it, then download.';
     } else {
-      subMsg = 'Made with the ' + (order.style ? niceStyle(order.style) + ' style' : order.title) + '. Download it and post.';
+      subMsg = 'Made with the ' + (order.style ? styleLabel(order) + ' style' : order.title) + '. Download it and post.';
     }
     $('#render-sub').textContent = subMsg;
   }
 
+  /* The style's display name, preferring the one the studio already stored.
+   *
+   * selections.styleName is the preset's own `name` from catalog/presets.json
+   * (studio.js sets it when a preset is picked, and pricing.js reads the same
+   * field), so it is the only spelling the catalogue actually endorses.
+   * Deriving from the id instead loses every acronym: measured 2026-08-15,
+   * title-casing produced "Golden Hour Ugc" and "Unbox Asmr" for two of the
+   * twelve presets, on the render headline and the delivered message.
+   *
+   * The id fallback still matters for orders saved before styleName existed
+   * and for paths that carry a style with no preset behind it. */
+  function styleLabel(order) {
+    var stored = order.selections && order.selections.styleName;
+    if (stored) return stored;
+    return niceStyle(order.style);
+  }
+
+  /* Title-cases a style id. The acronym list is the set that actually appears
+   * capitalised in catalog/presets.json names (UGC, ASMR); without it, plain
+   * title casing renders them "Ugc" and "Asmr". */
+  var STYLE_ACRONYMS = { ugc: 'UGC', asmr: 'ASMR' };
+
   function niceStyle(id) {
-    return id.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    return id.replace(/-/g, ' ').replace(/[^\s]+/g, function (w) {
+      return STYLE_ACRONYMS[w.toLowerCase()] || w.charAt(0).toUpperCase() + w.slice(1);
+    });
+  }
+
+  /* ══ Ad pack editing ══════════════════════════════════════════════
+   * Twenty creatives arrive at once, which makes them a starting point rather
+   * than a verdict. Every one is addressable on its own: pick a tile, change
+   * the headline or the concept, and only that tile re-renders, in place, at
+   * our cost. That is what keeps "no reject fees" honest.
+   *
+   * The server owns everything that matters here. It proves ownership from the
+   * signed-in token, rebuilds the brief from the selections that were actually
+   * paid for, counts the allowance on the row, and writes the replacement into
+   * the buyer's library. This file only asks and swaps pixels. */
+  function selectTile(i) {
+    if (!pack || !pack.tiles[i]) return;
+    pack.index = i;
+    pack.stage.src = pack.urls[i];
+    pack.tiles.forEach(function (x) { x.classList.remove('sel'); });
+    pack.tiles[i].classList.add('sel');
+    $('#btn-download').href = pack.urls[i];
+    var which = $('#ad-edit-which');
+    if (which) which.textContent = 'creative ' + (i + 1) + ' of ' + pack.urls.length;
+    var hl = $('#ad-edit-headline');
+    if (hl) hl.value = pack.headlines[i] || '';
+  }
+
+  function swapTile(i, url) {
+    if (!pack || !pack.tiles[i]) return;
+    pack.urls[i] = url;
+    pack.tiles[i].href = url;
+    var im = pack.tiles[i].querySelector('img');
+    if (im) im.src = url;
+    if (pack.index === i) { pack.stage.src = url; $('#btn-download').href = url; }
+  }
+
+  function editNote(msg, warn) {
+    var n = $('#ad-edit-note');
+    if (!n) return;
+    n.textContent = msg;
+    n.classList.toggle('warn', !!warn);
+  }
+
+  /* The creation id is what a revision addresses. The normal path has it from
+   * render-create. A buyer returning on another device does not, so fall back
+   * to matching this set against their library by its first image. */
+  function findCreationId(order, token) {
+    if (order.creation) return Promise.resolve(order.creation);
+    if (!token) return Promise.resolve(null);
+    return fetch('/.netlify/functions/account-creations', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var rows = (d && (d.creations || d.rows || d)) || [];
+        if (!Array.isArray(rows)) return null;
+        var first = pack.urls[0];
+        var hit = rows.find(function (c) {
+          return c && Array.isArray(c.result_urls) && c.result_urls.indexOf(first) >= 0;
+        });
+        return hit ? hit.id : null;
+      })
+      .catch(function () { return null; });
+  }
+
+  function mountAdEditor() {
+    var form = $('#ad-edit');
+    if (!form || !pack || pack.order.product !== 'adpack') return;
+
+    // Layout preview: show the editor, wire selection, refuse to spend.
+    if (new URLSearchParams(window.location.search).get('preview') === 'adpack') {
+      fillConcepts();
+      selectTile(0);
+      form.hidden = false;
+      $('#ad-edit-left').textContent = 'preview';
+      editNote('Preview only. On a real pack this re-renders just the selected creative, free.');
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        editNote('Preview only, so nothing renders here. On your delivered pack this button re-rolls the selected creative.', true);
+      });
+      return;
+    }
+
+    var auth = window.HexaAuth;
+    (auth ? auth.ready() : Promise.resolve()).then(function () {
+      var token = auth && auth.accessToken();
+      if (!token) return; // signed out: the set is still theirs to download
+      return findCreationId(pack.order, token).then(function (creationId) {
+        if (!creationId) return;
+        pack.creation = creationId;
+        fillConcepts();
+        selectTile(0);
+        form.hidden = false;
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          submitRevision(token);
+        });
+      });
+    });
+  }
+
+  /* The concepts are the ones we actually render, read from the same catalog
+   * the pack is built from, so the menu can never offer something the server
+   * will refuse. */
+  function fillConcepts() {
+    var sel = $('#ad-edit-concept');
+    if (!sel) return;
+    fetch('catalog/higgsfield/ad-formats.json')
+      .then(function (r) { return r.json(); })
+      .then(function (list) {
+        var names = [];
+        (list || []).forEach(function (f) {
+          if (f && f.name && names.indexOf(f.name) < 0) names.push(f.name);
+        });
+        if (!names.length) { sel.hidden = true; return; }
+        sel.innerHTML = '';
+        var keep = document.createElement('option');
+        keep.value = '';
+        keep.textContent = 'Same concept';
+        sel.appendChild(keep);
+        names.forEach(function (n) {
+          var o = document.createElement('option');
+          o.value = n; o.textContent = n;
+          sel.appendChild(o);
+        });
+      })
+      .catch(function () { sel.hidden = true; });
+  }
+
+  function submitRevision(token) {
+    var btn = $('#ad-edit-go');
+    var hlEl = $('#ad-edit-headline');
+    var cnEl = $('#ad-edit-concept');
+    var i = pack.index;
+    var headline = (hlEl && hlEl.value || '').trim();
+    var concept = (cnEl && cnEl.value) || '';
+    if (!headline && !concept) {
+      editNote('Change the headline or pick a different concept first.', true);
+      return;
+    }
+
+    btn.disabled = true;
+    pack.headlines[i] = headline;
+    pack.tiles[i].classList.add('busy');
+    editNote('Re-rolling creative ' + (i + 1) + '. About a minute.');
+
+    fetch(REVISE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ creation: pack.creation, index: i, concept: concept, headline: headline }),
+    })
+      .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d); }); })
+      .then(function (d) { pollRevision(token, d.job.id, i, d.revisionsLeft, 0); })
+      .catch(function (d) {
+        btn.disabled = false;
+        pack.tiles[i].classList.remove('busy');
+        editNote((d && d.error) || 'That edit could not start. Nothing was spent; try again.', true);
+      });
+  }
+
+  function pollRevision(token, jobId, i, left, tries) {
+    if (tries > 60) { // ~3 minutes; a still image never legitimately takes that
+      $('#ad-edit-go').disabled = false;
+      pack.tiles[i].classList.remove('busy');
+      editNote('That re-roll is taking unusually long. It will appear in your library when it lands.', true);
+      return;
+    }
+    var qs = '?creation=' + encodeURIComponent(pack.creation) +
+      '&index=' + i + '&job=' + encodeURIComponent(jobId);
+    fetch(REVISE_URL + qs, { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        if (s.status === 'completed' && s.url) {
+          swapTile(i, s.url);
+          pack.tiles[i].classList.remove('busy');
+          $('#ad-edit-go').disabled = false;
+          editNote('Creative ' + (i + 1) + ' is updated, here and in your library.');
+          var leftEl = $('#ad-edit-left');
+          if (leftEl && typeof left === 'number') {
+            leftEl.textContent = left + (left === 1 ? ' edit left' : ' edits left');
+          }
+          return;
+        }
+        if (s.status === 'failed') {
+          pack.tiles[i].classList.remove('busy');
+          $('#ad-edit-go').disabled = false;
+          editNote(s.message || 'That re-roll did not render. Your edit is back in the bank.', true);
+          return;
+        }
+        setTimeout(function () { pollRevision(token, jobId, i, left, tries + 1); }, 3000);
+      })
+      .catch(function () {
+        setTimeout(function () { pollRevision(token, jobId, i, left, tries + 1); }, 4000);
+      });
   }
 
   /* The peeked product image, faint behind the scan while the order builds.
@@ -195,7 +419,7 @@
           else { pct = Math.min(94, pct + 3); setPct(pct); }
           if (s.segmentsTotal > 1) {
             var filmName = order.selections && order.selections.productName
-              ? order.selections.productName + ' film' : 'film';
+              ? order.selections.productName + ' video' : 'video';
             $('#render-sub').textContent = 'Rendering scene ' + Math.min(s.segmentsDone + 1, s.segmentsTotal) +
               ' of ' + s.segmentsTotal + ' of your ' + filmName + '.';
           }
@@ -221,6 +445,10 @@
       .then(function (d) {
         if (!d.jobs || !d.jobs.length) return Promise.reject(d);
         order.jobs = d.jobs;
+        // The library row this render writes into. Kept so the delivered set
+        // can be edited later without looking itself up again. A replayed
+        // session does not return one, so never overwrite a known id with null.
+        if (d.creation) order.creation = d.creation;
         try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
         pollLive(order, d.jobs.map(function (j) { return j.id; }).join(','), sessionId);
       })
@@ -228,6 +456,55 @@
         console.error('paid create failed', d);
         paidQueuedState(order);
       });
+  }
+
+  /*
+   * Credit arrival: the same create call, charged to the account balance.
+   *
+   * The bearer token is the whole payment instrument here, so unlike the Stripe
+   * path this one waits for the session to resolve before it asks. Firing early
+   * sends no Authorization header, and render-create answers 401 "Sign in to
+   * spend credits" to somebody who is, in fact, signed in.
+   */
+  function createWithCredits(order) {
+    var go = function () {
+      var token = window.HexaAuth && window.HexaAuth.accessToken && window.HexaAuth.accessToken();
+      if (!token) {
+        try { localStorage.setItem('hexa-pending-order', JSON.stringify(order)); } catch (e) {}
+        window.location.href = '/login.html?next=' + encodeURIComponent('/render.html?credits=1');
+        return;
+      }
+      fetch(CREATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ order: order }),
+      })
+        .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d); }); })
+        .then(function (d) {
+          if (!d.jobs || !d.jobs.length) return Promise.reject(d);
+          order.jobs = d.jobs;
+          if (d.creation) order.creation = d.creation;
+          // Saved before the poll starts: from here a refresh finds the jobs
+          // and rejoins the render instead of spending the balance again.
+          try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
+          pollLive(order, d.jobs.map(function (j) { return j.id; }).join(','), null);
+        })
+        .catch(function (d) {
+          // Out of credits is the one failure with a real answer, so it says the
+          // number rather than a generic apology. Nothing was charged: the spend
+          // is refused before any job is created.
+          if (d && d.creditsNeeded) {
+            $('#render-kicker').textContent = 'Not enough credits';
+            $('#render-title').textContent = 'This one needs ' + Number(d.creditsNeeded).toLocaleString() + ' credits';
+            $('#render-sub').textContent = 'Nothing was charged. Top up and your order is still here, exactly as you built it.';
+            return;
+          }
+          console.error('credit create failed', d);
+          paidQueuedState(order);
+        });
+    };
+    if (window.HexaAuth && !window.HexaAuth.loaded()) window.HexaAuth.ready().then(go);
+    else go();
   }
 
   /* Free sample: no sign-in wall at the door. A signed-out visitor gets the
@@ -281,6 +558,7 @@
         .then(function (d) {
           if (!d.jobs || !d.jobs.length) return Promise.reject(d);
           order.jobs = d.jobs;
+          if (d.creation) order.creation = d.creation;
           try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
           pollLive(order, d.jobs.map(function (j) { return j.id; }).join(','), null);
         })
@@ -298,10 +576,16 @@
     setPct(100);
     $('#render-kicker').textContent = 'Free sample';
     $('#render-title').textContent = 'Your free sample is already made';
-    $('#render-sub').textContent = 'One per account, and yours lives in your library. The full film, same look at any length, starts at $12.';
+    /* No price in this sentence on purpose. It read "starts at $12", which was
+     * the ad pack's price, not a video's: the cheapest video in
+     * catalog/pricing.json is $9. index.html binds every number to data-price
+     * attributes for exactly this reason, but pricing.json is not public (see
+     * _redirects), so there is nothing here to bind to and a typed number just
+     * drifts again. The studio quotes the real price one click away. */
+    $('#render-sub').textContent = 'One per account, and yours lives in your library. The full video runs to any length, in the same look.';
     var note = $('#render-note');
     note.hidden = false;
-    note.innerHTML = '<a href="/account.html">Open your library</a> · <a href="/#styles">Make the full film</a>';
+    note.innerHTML = '<a href="/account.html">Open your library</a> · <a href="/#styles">Make the full video</a>';
   }
 
   function paidQueuedState(order) {
@@ -324,8 +608,42 @@
     $('#render-note').textContent = 'Run it again from the studio, or reply to your confirmation email and we will make it right.';
   }
 
+  /* Preview the delivered ad pack without buying one.
+   *
+   * The editor only exists on a finished set, which normally means a paid
+   * order, so there is otherwise no way to look at it, review it or change it.
+   * ?preview=adpack stages a set from the real ad format thumbnails and mounts
+   * the editor read-only. Nothing renders and nothing is spent. */
+  function previewAdPack() {
+    var order = { product: 'adpack', title: 'DTC Ad Pack', style: null, selections: { aspect: '4:5' } };
+    $('#render-stage').setAttribute('data-aspect', '4:5');
+    fetch('catalog/studio-data.json')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var urls = (d.ad_formats || [])
+          .map(function (f) { return f.preview; })
+          .filter(Boolean)
+          .slice(0, 20);
+        if (!urls.length) { failState('No preview thumbnails in the catalog.'); return; }
+        setPct(100);
+        reveal(order, { url: urls[0], urls: urls, type: 'image' });
+        $('#render-kicker').textContent = 'Preview';
+        $('#render-title').textContent = 'What a delivered ad pack looks like';
+        $('#render-sub').textContent =
+          'Twenty creatives, twenty different arguments for the same product. ' +
+          'Click any one to select it, then use the editor below. This is a layout preview: ' +
+          'the images are format samples and nothing here renders or charges.';
+      })
+      .catch(function () { failState('Could not load the preview.'); });
+  }
+
   function boot() {
     var y = $('#y'); if (y) y.textContent = String(new Date().getFullYear());
+
+    if (new URLSearchParams(window.location.search).get('preview') === 'adpack') {
+      previewAdPack();
+      return;
+    }
 
     var order = readOrder();
     if (!order) {
@@ -345,7 +663,7 @@
     // their product, faintly on the stage while it composes/renders
     showProductGhost(order);
 
-    var label = order.style ? niceStyle(order.style) : order.title;
+    var label = order.style ? styleLabel(order) : order.title;
     $('#render-title').textContent = 'Rendering your ' + label;
     $('#render-kicker').textContent = order.title || 'Rendering';
 
@@ -377,6 +695,23 @@
     if (paid) {
       setStep(0);
       createPaid(order, paid);
+      return;
+    }
+
+    /*
+     * Credit arrival: paid from the balance on the account instead of a card.
+     *
+     * Unlike the Stripe path this is NOT safe to re-enter. A Stripe session id
+     * is a receipt the server can recognise a second time, so a refresh returns
+     * the same jobs; credits have no equivalent, so a refresh here would charge
+     * the balance twice. The jobs are written into the saved order the moment
+     * they come back, and the branch above catches them on any later load,
+     * which is what makes a refresh land on the running render rather than on
+     * a second charge.
+     */
+    if (params.get('credits')) {
+      setStep(0);
+      createWithCredits(order);
       return;
     }
 

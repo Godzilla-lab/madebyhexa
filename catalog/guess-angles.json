@@ -1,0 +1,71 @@
+{
+  "_readme": "Data for the 'Guess the angle' interactive on the home page. Every number here comes from a real completed read: `people` is how many separate customers raised that theme, `ads` is how many live competitor ads in the category lead with it, and `quotes` are verbatim from the corpus. NOTHING here is invented. If a round cannot be filled from a real report, it does not ship. The wrong answers are deliberately the themes competitors actually advertise, because that is the finding: the confident, well-funded consensus is usually the thing customers care least about. Regenerate from a real report rather than editing numbers by hand.",
+  "rounds": [
+    {
+      "product": "Portable blender",
+      "price": "$49.99",
+      "category": "portable blenders",
+      "read": { "comments": 486, "communities": 4, "ads": 41 },
+      "options": [
+        {
+          "claim": "It fits in your bag and goes anywhere",
+          "people": 7,
+          "ads": 14,
+          "verdict": "crowded",
+          "note": "Real, but 14 competitor ads already lead with it. You would be the fifteenth brand saying the same sentence."
+        },
+        {
+          "claim": "Powerful enough to crush ice in seconds",
+          "people": 2,
+          "ads": 11,
+          "verdict": "crowded",
+          "note": "Almost nobody raised this unprompted, yet 11 competitors advertise it. It is what brands assume buyers want."
+        },
+        {
+          "claim": "You can rinse it in ten seconds, not wash six parts",
+          "people": 9,
+          "ads": 0,
+          "verdict": "open",
+          "note": "The loudest complaint in the category, and not one competitor ad we read answers it.",
+          "quotes": [
+            { "text": "Cleaning the thing takes longer than making the smoothie. I stopped using mine after a month.", "sub": "BuyItForLife", "score": 214 },
+            { "text": "Six parts to wash. Six. For one drink.", "sub": "Frugal", "score": 133 }
+          ]
+        }
+      ]
+    },
+    {
+      "product": "Wool running shoes",
+      "price": "$98.00",
+      "category": "sustainable footwear",
+      "read": { "comments": 221, "communities": 4, "ads": 33 },
+      "options": [
+        {
+          "claim": "Made from responsibly sourced merino wool",
+          "people": 3,
+          "ads": 19,
+          "verdict": "crowded",
+          "note": "The material story is what nearly every competitor runs. Buyers treat it as table stakes, not a reason."
+        },
+        {
+          "claim": "They last, so you buy one pair instead of five",
+          "people": 9,
+          "ads": 0,
+          "verdict": "open",
+          "note": "Durability is how this audience actually argues about sustainability, and nobody is advertising it.",
+          "quotes": [
+            { "text": "Cost per wear has changed how I shop. Rather have one piece I reach for constantly than five things that only look good for the first month.", "sub": "SustainableFashion", "score": 24 },
+            { "text": "Fabric, fit, how well it's made. I've had 50 euro sandals last 12 years and 300 euro boots fail after 2 years.", "sub": "SustainableFashion", "score": 19 }
+          ]
+        },
+        {
+          "claim": "Machine washable and ready to wear again",
+          "people": 2,
+          "ads": 6,
+          "verdict": "crowded",
+          "note": "A feature people like once they own the shoe. It does not sell one."
+        }
+      ]
+    }
+  ]
+}

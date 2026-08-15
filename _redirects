@@ -19,8 +19,22 @@
 # Investor deck: serve deck.html at the clean, shareable /deck URL.
 /deck              /deck.html    200
 
+# Secrets. netlify.toml publishes from ".", so every file in the working tree
+# is a candidate for upload, and .gitignore does not enter into it: the CLI
+# deploys the DIRECTORY, not the git tree. A force rule is the only thing
+# standing between these paths and the open internet.
+#
+# This is defence in depth and not the primary control. The real fix is to stop
+# publishing from the repo root, which is a bigger change than a redirect file.
+# Until then, anything added to the root that holds a credential needs a line
+# here on the same day it is created.
+/.env                 /  301!
+/.env.*               /  301!
+
 # Internal files: never serve these publicly (real files, so force is required).
 /README.md            /  301!
+/ARCHITECTURE.md      /  301!
+/HANDOFF.md           /  301!
 /REVIEW-TEMPLATES.md  /  301!
 /COMPETITORS.md       /  301!
 /WINNING-ADS.md       /  301!
@@ -32,7 +46,18 @@
 /transcripts/*        /  301!
 /outreach/*           /  301!
 /tools/*              /  301!
+# Test captures. Only screenshots of pages that are already public, so this is
+# tidiness rather than secrecy, but the directory is 42MB and publish = "."
+# means it is a deploy-weight problem before it is anything else.
+/.uitest/*            /  301!
 /netlify/*            /  301!
+# The research engine: prompts, scoring, the ranked corpus and generated
+# reports. This is the part of the product a competitor would most like to
+# read, and corpus.db is gitignored but still sits in the published directory.
+/research/*           /  301!
+# Database shape and migrations. Not secret on its own, but it is a map of
+# every table an attacker would go looking for.
+/supabase/*           /  301!
 /netlify.toml         /  301!
 /package.json         /  301!
 /package-lock.json    /  301!
@@ -43,4 +68,10 @@
 # so the exemptions must sit above the block.
 /catalog/studio-data.json  /catalog/studio-data.json  200!
 /catalog/presets.json      /catalog/presets.json      200!
+# Public because the home page quiz reads it. Frozen findings from reads we
+# already published, no cost, margin or prompt data.
+/catalog/guess-angles.json /catalog/guess-angles.json 200!
+# The account page's top-up chooser reads this. Generated from pricing.json but
+# display only: pack sizes and dollar prices, no cost or margin fields.
+/catalog/credit-packs.json /catalog/credit-packs.json 200!
 /catalog/*            /  301!

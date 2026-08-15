@@ -10,7 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+
+
+<link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="studio.css" />
   <link rel="stylesheet" href="render.css" />
   <script src="pixels.js"></script>
@@ -27,6 +29,7 @@
     <nav class="nav-links">
       <a href="/">Studio</a>
       <a href="/#pricing">Pricing</a>
+      <a href="/validate">Research</a>
       <a href="/login.html" id="nav-account">Sign in</a>
     </nav>
   </header>
@@ -77,6 +80,24 @@
 
       <!-- Full deliverable set: photoshoot frames or film segments -->
       <div class="result-set" id="result-set" hidden></div>
+
+      <!-- Ad pack editor: every creative in the set is addressable on its own,
+           so a headline that reads wrong or a concept that missed can be
+           re-rolled in place instead of buying another pack. -->
+      <form class="ad-edit" id="ad-edit" hidden>
+        <p class="ad-edit-head">
+          Editing <strong id="ad-edit-which">creative 1</strong>
+          <span class="ad-edit-left" id="ad-edit-left"></span>
+        </p>
+        <div class="ad-edit-row">
+          <label class="sr-only" for="ad-edit-headline">Headline on the image</label>
+          <input type="text" id="ad-edit-headline" maxlength="90" placeholder="Headline on the image" />
+          <label class="sr-only" for="ad-edit-concept">Concept</label>
+          <select id="ad-edit-concept"></select>
+          <button type="submit" class="ad-edit-go" id="ad-edit-go">Re-roll this one</button>
+        </div>
+        <p class="ad-edit-note" id="ad-edit-note">Pick any creative above, change the headline or the concept, and only that one re-renders. Free.</p>
+      </form>
 
       <!-- Done state actions -->
       <div class="render-actions" id="render-actions" hidden>

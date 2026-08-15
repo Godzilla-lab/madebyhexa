@@ -11,7 +11,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+
+
+<link rel="stylesheet" href="styles.css" />
   <style>
     [hidden] { display: none !important; }
     .acct-nav {
@@ -146,38 +148,7 @@
     .acct-tab.is-active { background: rgba(255, 255, 255, 0.1); color: var(--text); }
 
     /* ── Welcome onboarding (first sign-in, empty library) ── */
-    .acct-freeclip {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 18px 28px;
-      margin: 0 0 22px; padding: 20px 24px;
-      border: 1px dashed rgba(255, 77, 109, 0.45); border-radius: 18px;
-      background: rgba(255, 77, 109, 0.05);
-    }
-    .acct-freeclip[hidden] { display: none; }
-    .acct-freeclip-copy { flex: 1 1 260px; min-width: 240px; }
-    .acct-freeclip-badge {
-      display: inline-block; margin: 0 0 8px; font-family: var(--font-mono); font-size: 10px;
-      font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fff;
-      background: var(--accent); border-radius: 999px; padding: 4px 10px;
-    }
-    .acct-freeclip h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 21px; font-weight: 700; letter-spacing: -0.02em; }
-    .acct-freeclip p { margin: 0; color: var(--text-mute); font-size: 13.5px; line-height: 1.5; max-width: 420px; }
-    .acct-freeclip-form { flex: 1 1 320px; display: flex; gap: 10px; min-width: 0; }
-    .acct-freeclip-form input {
-      flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--text);
-      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-strong);
-      border-radius: 12px; padding: 12px 14px; outline: none; transition: border-color 0.25s;
-    }
-    .acct-freeclip-form input:focus { border-color: rgba(255, 77, 109, 0.55); }
-    .acct-freeclip-form button {
-      font: inherit; font-size: 13.5px; font-weight: 800; color: #fff; white-space: nowrap;
-      background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 100%);
-      border: none; border-radius: 12px; padding: 12px 18px; cursor: pointer;
-      box-shadow: 0 12px 30px -12px rgba(255, 77, 109, 0.55); transition: transform 0.25s;
-    }
-    .acct-freeclip-form button:hover { transform: translateY(-1px); }
     @media (max-width: 560px) {
-      .acct-freeclip-form { flex-direction: column; }
-      .acct-freeclip-form button { width: 100%; }
     }
     .acct-welcome {
       border-radius: 24px; padding: clamp(28px, 4.5vw, 48px);
@@ -261,6 +232,111 @@
     .acct-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
     .acct-btn-danger { background: rgba(255, 60, 60, 0.12); border-color: rgba(255, 80, 80, 0.35); color: #ff9d9d; }
     .acct-btn-danger:hover { background: rgba(255, 60, 60, 0.22); }
+    /* ── Credits ──
+       The balance is the number that decides what they can do next, so it is
+       sized like a headline and paired with what it actually buys. A five
+       figure number on its own means nothing to someone seeing it first time. */
+    .acct-credits {
+      margin: 0 0 26px;
+      padding: 20px 22px;
+      border-radius: 18px;
+      border: 1px solid var(--border-strong);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    }
+    .acct-credits-top { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+    .acct-credits-label {
+      margin: 0 0 4px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint);
+    }
+    .acct-credits-num {
+      margin: 0; font-size: 38px; font-weight: 700; line-height: 1;
+      letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+    }
+    .acct-credits-unit { font-size: 15px; font-weight: 600; color: var(--text-mute); letter-spacing: 0; }
+    .acct-credits-sub { margin: 8px 0 0; font-size: 13px; color: var(--text-mute); }
+    .acct-btn-primary { background: var(--accent); border-color: transparent; color: #fff; font-weight: 700; }
+    .acct-btn-primary:hover { background: var(--accent); filter: brightness(1.08); }
+
+    .acct-packs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .acct-pack {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border-strong);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+    .acct-pack:hover { border-color: var(--accent); background: rgba(255,77,109,0.09); transform: translateY(-1px); }
+    .acct-pack[disabled] { opacity: 0.5; cursor: wait; transform: none; }
+    .acct-pack-credits { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .acct-pack-unit { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em; }
+    .acct-pack-usd { margin-top: 6px; font-size: 14px; font-weight: 600; color: var(--text-mute); }
+    .acct-pack-bonus {
+      margin-top: 6px; padding: 2px 8px; border-radius: 999px;
+      background: rgba(125, 219, 154, 0.16); color: #7ddb9a;
+      font-size: 11px; font-weight: 700;
+    }
+
+    /* The statement. Collapsed by default: it is what makes the balance
+       auditable, not what anyone needs on arrival. */
+    .acct-ledger { margin-top: 16px; }
+    .acct-ledger summary {
+      cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-mute);
+      list-style: none; padding: 6px 0;
+    }
+    .acct-ledger summary::-webkit-details-marker { display: none; }
+    .acct-ledger summary::before { content: '▸ '; color: var(--text-faint); }
+    .acct-ledger[open] summary::before { content: '▾ '; }
+    .acct-ledger-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+    }
+    .acct-ledger-row:last-child { border-bottom: 0; }
+    .acct-ledger-kind { display: block; font-size: 13.5px; }
+    .acct-ledger-note { display: block; font-size: 12px; color: var(--text-faint); }
+    .acct-ledger-right { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; }
+    .acct-ledger-delta { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; color: var(--text-mute); }
+    .acct-ledger-delta.is-up { color: #7ddb9a; }
+    .acct-ledger-when { font-size: 12px; color: var(--text-faint); }
+
+    /* ── Shopify connection ── */
+    .acct-shopify {
+      margin: 0 0 26px;
+      padding: 20px 22px;
+      border-radius: 18px;
+      border: 1px solid var(--border-strong);
+      background: rgba(255, 255, 255, 0.025);
+    }
+    .acct-shop-head { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; justify-content: space-between; }
+    .acct-shop-state { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+    .acct-shop-state.is-on::before {
+      content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 9px;
+      border-radius: 50%; background: #7ddb9a; vertical-align: middle;
+    }
+    .acct-shop-sub { margin: 7px 0 0; font-size: 13px; color: var(--text-mute); max-width: 52ch; line-height: 1.5; }
+    .acct-shop-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .acct-shop-form input {
+      flex: 1 1 280px; min-width: 0;
+      padding: 11px 14px; font: inherit; font-size: 14px; color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-strong); border-radius: 11px;
+    }
+    .acct-shop-form input:focus { outline: none; border-color: rgba(255, 77, 109, 0.55); }
+    .acct-shop-form[hidden] { display: none; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+
     .acct-note { font-size: 12.5px; color: var(--text-faint); margin: 10px 0 0; min-height: 16px; }
     .acct-note.is-ok { color: #7ddb9a; }
     .acct-note.is-err { color: #ff9d9d; }
@@ -273,6 +349,23 @@
       .acct-nav .acct-new { padding: 8px 13px; font-size: 13px; }
       .acct-main { padding: 14px 16px 60px; }
       .acct-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    }
+
+    /* Touch floors, same 44px rule the studio and the report already keep.
+     * Measured 2026-08-15, first audit run that could reach this page while
+     * signed in: "Add credits" and "Connect Shopify" were 34px (.acct-btn is
+     * 9px of padding on a 13.5px line), and "See what others made first" was
+     * 24px, being a bare text link. Desktop keeps the compact sizing. */
+    @media (pointer: coarse) {
+      .acct-btn,
+      .acct-tab,
+      .acct-welcome-alt,
+      .cr-act {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
     }
   </style>
 </head>
@@ -301,28 +394,61 @@
       <h1 class="acct-title" id="acct-greeting">Everything you have made</h1>
     </div>
 
+    <!-- Credits. Above the tabs on purpose: it is the number that decides what
+         they can do next, so it should never be a thing you have to go and
+         find. The statement below it is what makes the balance auditable, which
+         is the whole reason the ledger is a ledger. -->
+    <section class="acct-credits" id="acct-credits" hidden>
+      <div class="acct-credits-top">
+        <div>
+          <p class="acct-credits-label">Credit balance</p>
+          <p class="acct-credits-num"><span id="acct-credits-value">0</span> <span class="acct-credits-unit">credits</span></p>
+          <p class="acct-credits-sub" id="acct-credits-sub"></p>
+        </div>
+        <button class="acct-btn acct-btn-primary" id="acct-topup" type="button">Add credits</button>
+      </div>
+
+      <div class="acct-packs" id="acct-packs" hidden><!-- filled by account.js --></div>
+
+      <details class="acct-ledger">
+        <summary>Where your credits went</summary>
+        <div class="acct-ledger-rows" id="acct-ledger-rows">
+          <p class="acct-note">Loading…</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- Shopify. Sits with credits because both are account plumbing: the
+         things you set up once and then stop thinking about. -->
+    <section class="acct-shopify" id="acct-shopify" hidden>
+      <div class="acct-shop-head">
+        <div>
+          <p class="acct-credits-label">Your store</p>
+          <p class="acct-shop-state" id="acct-shop-state">Not connected</p>
+          <p class="acct-shop-sub" id="acct-shop-sub">Connect Shopify and pick products instead of pasting links. We only ever read your product catalogue.</p>
+        </div>
+        <button class="acct-btn" id="acct-shop-disconnect" type="button" hidden>Disconnect</button>
+      </div>
+      <form class="acct-shop-form" id="acct-shop-form">
+        <label class="sr-only" for="acct-shop-input">Your Shopify store address</label>
+        <input id="acct-shop-input" type="text" autocomplete="off" spellcheck="false"
+               placeholder="your-store.myshopify.com" />
+        <button class="acct-btn acct-btn-primary" type="submit">Connect Shopify</button>
+      </form>
+      <p class="acct-note" id="acct-shop-note" aria-live="polite"></p>
+    </section>
+
     <div class="acct-tabs" role="tablist" aria-label="Account sections">
       <button class="acct-tab is-active" id="tab-library" type="button" role="tab" aria-selected="true">Library</button>
       <button class="acct-tab" id="tab-settings" type="button" role="tab" aria-selected="false">Settings</button>
     </div>
 
     <div id="panel-library">
-      <section class="acct-freeclip" id="acct-freeclip" hidden>
-        <div class="acct-freeclip-copy">
-          <span class="acct-freeclip-badge">Free</span>
-          <h2>Your free clip is waiting</h2>
-          <p>Every account gets one 5 second clip of its product, on us. Paste the product link and watch it render.</p>
-        </div>
-        <form class="acct-freeclip-form" id="acct-freeclip-form">
-          <input type="url" id="acct-freeclip-link" inputmode="url" autocomplete="off" spellcheck="false" required placeholder="https://yourbrand.com/products/your-product" />
-          <button type="submit">Make my free clip</button>
-        </form>
-      </section>
 
       <section class="acct-welcome" id="acct-welcome" hidden>
         <p class="acct-welcome-kicker">Welcome to Hexa</p>
-        <h2 id="welcome-title">You are in. Let's make your first film.</h2>
-        <p>Three steps between you and a product film so real no one can tell it never touched a camera. The first one is already done.</p>
+        <h2 id="welcome-title">You are in. Let's make your first ad.</h2>
+        <p>Three steps between you and an ad built from what your market actually wants. The first one is already done.</p>
         <div class="acct-progress" aria-hidden="true">
           <span class="acct-progress-bar"><span class="acct-progress-fill"></span></span>
           <span class="acct-progress-label">1 of 3 done</span>
@@ -331,30 +457,30 @@
           <div class="acct-step is-done">
             <span class="acct-step-num" aria-hidden="true">&#10003;</span>
             <h3>Create your account</h3>
-            <p>Done. Every film and photoshoot you make lives here.</p>
+            <p>Done. Every read, ad and photoshoot you make lives here.</p>
           </div>
           <div class="acct-step is-next">
             <span class="acct-step-num" aria-hidden="true">2</span>
             <h3>Paste your product link</h3>
-            <p>Shopify, Amazon or any product page. We read the images and write the storyboard.</p>
+            <p>Shopify, Amazon or any product page. We read the page, your reviews and the ads your competitors run.</p>
           </div>
           <div class="acct-step">
             <span class="acct-step-num" aria-hidden="true">3</span>
             <h3>Watch it render</h3>
-            <p>Pick a style and length, and your film is ready in minutes, not weeks.</p>
+            <p>We call the angle the research found, and your ad is ready in minutes, not weeks.</p>
           </div>
         </div>
         <div class="acct-welcome-cta">
-          <a class="acct-new" href="/#composer">Make your first film</a>
+          <a class="acct-new" href="/#composer">Make your first ad</a>
           <a class="acct-welcome-alt" href="/#reel">See what others made first</a>
         </div>
         <div class="acct-inspo">
           <p class="acct-inspo-label">Made with Hexa</p>
           <div class="acct-inspo-grid">
-            <a href="/#reel"><img src="assets/reel-thumbs/43a72eb58f.webp" alt="Hexa film still" loading="lazy" /></a>
-            <a href="/#reel"><img src="assets/reel-thumbs/20c70d0755.webp" alt="Hexa film still" loading="lazy" /></a>
-            <a href="/#reel"><img src="assets/reel-thumbs/21776f5939.webp" alt="Hexa film still" loading="lazy" /></a>
-            <a href="/#reel"><img src="assets/reel-thumbs/2b4354ce31.webp" alt="Hexa film still" loading="lazy" /></a>
+            <a href="/#reel"><img src="assets/reel-thumbs/43a72eb58f.webp" alt="Hexa ad still" loading="lazy" /></a>
+            <a href="/#reel"><img src="assets/reel-thumbs/20c70d0755.webp" alt="Hexa ad still" loading="lazy" /></a>
+            <a href="/#reel"><img src="assets/reel-thumbs/21776f5939.webp" alt="Hexa ad still" loading="lazy" /></a>
+            <a href="/#reel"><img src="assets/reel-thumbs/2b4354ce31.webp" alt="Hexa ad still" loading="lazy" /></a>
           </div>
         </div>
       </section>
@@ -367,7 +493,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8h.01M12.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7.5"/><path d="m3 16 5-5c.9-.9 2.1-.9 3 0l4 4"/><path d="M14 14l1-1c.9-.9 2.1-.9 3 0l3 3"/><path d="M19 16v6M22 19h-6"/></svg>
         </span>
         <h2>Your first creation is one link away</h2>
-        <p>Paste a product link in the studio and watch it become a film so real no one can tell. Everything you make lands here.</p>
+        <p>Paste a product link in the studio and watch it become an ad built from what your market actually wants. Everything you make lands here.</p>
         <a class="acct-new" href="/#composer">Start creating</a>
       </div>
     </div>
@@ -378,6 +504,39 @@
         <p>Your profile, security and data. Changes apply to this account only.</p>
       </div>
       <div class="acct-cards">
+
+        <!-- Brand memory. Filled in once, applied to everything afterwards.
+             Shapes how things are said; never what is claimed. -->
+        <div class="acct-card-set">
+          <h3>Your brand</h3>
+          <p class="acct-note" style="margin:0 0 14px">Tell us once and every ad we make sounds like you. This shapes the writing, not the facts: what your product does still comes from your page and the research.</p>
+          <div class="acct-field">
+            <label for="brand-name">Brand name</label>
+            <input id="brand-name" type="text" autocomplete="organization" placeholder="Hexa" />
+          </div>
+          <div class="acct-field">
+            <label for="brand-audience">Who you sell to</label>
+            <input id="brand-audience" type="text" placeholder="Lifters who train five days a week" />
+          </div>
+          <div class="acct-field">
+            <label for="brand-tone">How you sound</label>
+            <input id="brand-tone" type="text" placeholder="Blunt, funny, no hype" />
+          </div>
+          <div class="acct-field">
+            <label for="brand-words-use">Words that are yours</label>
+            <input id="brand-words-use" type="text" placeholder="built, honest, everyday" />
+          </div>
+          <div class="acct-field">
+            <label for="brand-words-avoid">Words to never use</label>
+            <input id="brand-words-avoid" type="text" placeholder="luxury, revolutionary, game-changing" />
+          </div>
+          <div class="acct-field">
+            <label for="brand-offer">Standing offer</label>
+            <input id="brand-offer" type="text" placeholder="Free shipping over $50" />
+          </div>
+          <button class="acct-btn" id="brand-save" type="button">Save brand</button>
+          <p class="acct-note" id="brand-note" aria-live="polite"></p>
+        </div>
 
         <div class="acct-card-set">
           <h3>Profile</h3>
