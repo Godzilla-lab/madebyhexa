@@ -395,11 +395,45 @@ function arcFor(segments) {
  * (the harvested library) and writes one purpose-built prompt per 15s
  * segment, in that same house style. Falls back to the beat-sheet template
  * when no ANTHROPIC_API_KEY is configured or the call fails. */
+/* research/lib/llm.mjs is ESM and this file is CommonJS, so it comes in by
+ * dynamic import. Cached after the first call, since a warm function will plan
+ * many orders. A failure here is never fatal: the beat sheet still writes a
+ * competent storyboard, so the render goes out either way. */
+let _llm = null;
+async function loadLLM() {
+  if (_llm) return _llm;
+  try {
+    _llm = await import('../../research/lib/llm.mjs');
+  } catch (e) {
+    console.error('prompt agent: could not load the model router:', e.message);
+    _llm = null;
+  }
+  return _llm;
+}
+
 async function agentStoryboard(order, segments, facts) {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
+  /*
+   * Routed through the research engine's provider chain, not straight at the
+   * Anthropic SDK.
+   *
+   * This used to open `if (!process.env.ANTHROPIC_API_KEY) return null`, and
+   * that key is set in no Netlify context (checked across production,
+   * deploy-preview, branch-deploy and dev on 2026-08-15). So the prompt agent
+   * had never once run in production: every video ever sold fell through to
+   * the beat sheet template below, silently, because the fallback is a good
+   * one and nothing looked broken.
+   *
+   * research/lib/llm.mjs already solves this. It holds the provider chain the
+   * report engine runs on, and that chain is live today on the xAI key. Going
+   * through it means the agent runs now, and upgrades itself to Opus 5 the
+   * moment an Anthropic key exists, without this file changing again.
+   */
+  const llm = await loadLLM();
+  if (!llm || !llm.configured()) {
+    console.error('prompt agent: no LLM provider configured, using the beat sheet');
+    return null;
+  }
   const s = order.selections || {};
-  const Anthropic = require('@anthropic-ai/sdk');
-  const client = new Anthropic();
 
   const brief = [
     'Product: ' + (s.link || s.desc || 'unknown'),
@@ -428,25 +462,66 @@ async function agentStoryboard(order, segments, facts) {
   };
 
   try {
-    const msg = await client.messages.create({
-      model: 'claude-opus-4-8',
-      max_tokens: 4096,
-      thinking: { type: 'adaptive' },
-      system:
-        'You are the storyboard writer for a hyper-real AI video studio. You write generation ' +
-        'prompts for a video engine that renders 15-second segments. Study the proven prompt ' +
-        'library below: match its concrete, physical, camera-aware style. Every segment prompt ' +
-        'must state that this is ONE continuous video (same person, same room, same outfit, same ' +
-        'lighting), describe exactly how the previous segment ended and how this one picks up ' +
-        'from that body position, follow a direct-response ad arc (hook, problem, demo, payoff, ' +
-        'call to action) across the segments, and end by describing the exact frame the segment ' +
-        'closes on so the next segment can continue it.\n\n' + promptLib.asExemplars(),
-      messages: [{ role: 'user', content: 'Write the ' + segments + ' segment prompts for this order:\n' + brief }],
-      output_config: { format: { type: 'json_schema', schema: schema } },
+    const out = await llm.ask({
+      /*
+       * Worker tier, not synthesis, and that is a measured choice rather than
+       * a thrifty one. Measured live against this account on 2026-08-15 with
+       * the real exemplar prompt:
+       *
+       *   grok-4.6 (synth)   49 to 64s, ignored the json schema and answered
+       *                      with nested objects that would not parse
+       *   grok-4.20 (worker)  2.6s, honoured the schema exactly, and xAI
+       *                      returned 1,088 of 1,133 prompt tokens as cached
+       *
+       * The timing alone settles it. render-create is a synchronous function
+       * and Netlify caps those at 26 seconds, so a synthesis call would 502
+       * the create request and the customer would watch a paid render fail.
+       * This is prompt writing against a worked example, not open judgment,
+       * which is exactly the profile the worker tier is for.
+       */
+      model: llm.WORKER,
+      maxTokens: 4096,
+      effort: 'high',
+      label: 'storyboard',
+      schema: schema,
+      /*
+       * Split so the static half can be cached.
+       *
+       * The instruction and the exemplar library are byte-identical on every
+       * call, about 1,400 tokens of them, and the only volatile part is the
+       * brief, which goes in `prompt` and therefore sits after the breakpoint.
+       * Marking the last static block writes a prefix that later orders read
+       * back at roughly a tenth of input price. Opus 5 needs 512 tokens
+       * minimum for a cacheable prefix, so this clears it with room.
+       *
+       * Move anything order-specific into these blocks and the prefix stops
+       * matching: the cache then silently never hits, at full price, with
+       * nothing visibly broken. tools/promptcheck.mjs is what catches that.
+       * Providers that cannot cache flatten these to one system string.
+       */
+      system: [
+        {
+          type: 'text',
+          text:
+            'You are the storyboard writer for a hyper-real AI video studio. You write generation ' +
+            'prompts for a video engine that renders 15-second segments. Study the proven prompt ' +
+            'library below: match its concrete, physical, camera-aware style. Every segment prompt ' +
+            'must state that this is ONE continuous video (same person, same room, same outfit, same ' +
+            'lighting), describe exactly how the previous segment ended and how this one picks up ' +
+            'from that body position, follow a direct-response ad arc (hook, problem, demo, payoff, ' +
+            'call to action) across the segments, and end by describing the exact frame the segment ' +
+            'closes on so the next segment can continue it.',
+        },
+        {
+          type: 'text',
+          text: promptLib.asExemplars(),
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      prompt: 'Write the ' + segments + ' segment prompts for this order:\n' + brief,
     });
-    const text = msg.content.filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('');
-    const out = JSON.parse(text);
-    if (Array.isArray(out.prompts) && out.prompts.length === segments) return out.prompts;
+    if (out && Array.isArray(out.prompts) && out.prompts.length === segments) return out.prompts;
+    console.error('prompt agent returned ' + (out ? 'the wrong number of prompts' : 'nothing') + ', using the beat sheet');
   } catch (e) {
     console.error('prompt agent failed, using beat-sheet template:', e.message);
   }

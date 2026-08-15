@@ -118,6 +118,22 @@ export function providerLabel() {
 
 let anthropicClient = null;
 
+/*
+ * `system` may be a plain string or an array of content blocks. Blocks exist
+ * so a caller can mark a cache breakpoint on the static half of a long prompt:
+ * Anthropic caches on exact prefix match, so a large instruction that is
+ * byte-identical every call is read back at about a tenth of input price.
+ *
+ * Only the Anthropic transport can honour that. Every other provider here is
+ * OpenAI-shaped and takes one system string, so flatten() is what they get.
+ * Callers therefore never have to know which provider is live, which is the
+ * whole point of this file.
+ */
+function flattenSystem(system) {
+  if (!Array.isArray(system)) return system;
+  return system.map((b) => (typeof b === 'string' ? b : b.text || '')).join('\n\n');
+}
+
 async function askAnthropic({ model, system, prompt, schema, maxTokens, effort, cost, label }) {
   if (!anthropicClient) anthropicClient = new Anthropic();
 
@@ -197,8 +213,11 @@ async function postChat(body, { base, key, userAgent }) {
   return json;
 }
 
-async function askOpenAICompatible({ providerName, model, system, prompt, schema, maxTokens, cost, label }) {
+async function askOpenAICompatible({ providerName, model, system: systemIn, prompt, schema, maxTokens, cost, label }) {
   const cfg = openaiConfig(providerName);
+  // One system string is all an OpenAI-shaped API takes; cache breakpoints,
+  // if the caller set any, are an Anthropic feature and simply do not apply.
+  const system = flattenSystem(systemIn);
 
   const base = {
     model,
@@ -317,3 +336,8 @@ export async function ask({
 export async function askAll(jobs) {
   return Promise.all(jobs.map((j) => ask(j)));
 }
+
+/* Exposed for tools/promptcheck.mjs. Flattening is what keeps a cacheable
+ * Anthropic prompt usable on an OpenAI-shaped provider, and it is invisible
+ * from outside, so the test needs a handle on it. */
+export const __flattenSystemForTest = flattenSystem;
