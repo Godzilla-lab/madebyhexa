@@ -66,6 +66,10 @@ function makeDb(seed, opts) {
             r.user_id === row.user_id && r.idempotency_key === row.idempotency_key);
           if (clash) err = { code: '23505', message: 'duplicate key value violates unique constraint "orders_idempotency_once"' };
         }
+        if (name === 'creation_recipes' && opts && opts.noRecipeTable) {
+          // Postgres 42P01: relation does not exist, i.e. migration 014 unrun.
+          err = { code: '42P01', message: 'relation "public.creation_recipes" does not exist' };
+        }
         let made = null;
         if (!err) {
           made = Object.assign({ id: name.slice(0, 2) + '-' + (++seq) }, row);
@@ -443,6 +447,65 @@ console.log('\n  Money path\n');
   }));
   check('a database without migration 013 still renders, guard or no guard',
     !!res.jobs && res.jobs.length > 0, JSON.stringify(res));
+}
+
+/* ── 13. What we sent is recorded next to what came back ─────────
+ *
+ * Otherwise every claim about which engine or format performs better is
+ * unverifiable: the outcome is stored and the recipe is not. */
+{
+  const db = makeDb({
+    profiles: [{ id: 'user-1' }],
+    credit_ledger: [{ user_id: 'user-1', kind: 'grant', ref: 'signup', delta: 50000 }],
+  });
+  const mod = install({ jobs: {}, db, user: USER });
+  await mod.create.handler({
+    httpMethod: 'POST',
+    headers: { authorization: 'Bearer tok' },
+    body: JSON.stringify({
+      order: {
+        product: 'adpack',
+        selections: {
+          link: 'https://example-store.com/products/portable-blender',
+          productName: 'Portable Blender',
+          headline: 'Blend it. Drink it. Rinse it. Done.',
+          angle: { claim: 'Sell the cleanup, not the blending.', persona: 'Busy parents' },
+        },
+      },
+      idempotencyKey: 'key-recipe-0001',
+    }),
+  });
+  const recipe = (db.tables.creation_recipes || [])[0];
+  check('the recipe behind a render is recorded', !!recipe, JSON.stringify(db.tables.creation_recipes));
+  if (recipe) {
+    check('  with the engine that was really called', recipe.engine === 'ms_image', recipe.engine);
+    check('  with the prompt that was really sent',
+      /Blend it\. Drink it\./.test(recipe.prompt || ''), (recipe.prompt || '').slice(0, 120));
+    check('  with the params, and the prompt not duplicated inside them',
+      recipe.params && recipe.params.style_id && !recipe.params.prompt,
+      JSON.stringify(Object.keys(recipe.params || {})));
+    check('  with whether it was grounded', recipe.grounded === false, String(recipe.grounded));
+    check('  and traceable back to the angle behind it',
+      /Sell the cleanup/.test(recipe.angle_id || ''), recipe.angle_id);
+  }
+}
+
+/* ── 14. A missing measurement never costs a customer a render ──── */
+{
+  const db = makeDb({
+    profiles: [{ id: 'user-1' }],
+    credit_ledger: [{ user_id: 'user-1', kind: 'grant', ref: 'signup', delta: 50000 }],
+  }, { noRecipeTable: true });
+  const mod = install({ jobs: {}, db, user: USER });
+  const res = body(await mod.create.handler({
+    httpMethod: 'POST',
+    headers: { authorization: 'Bearer tok' },
+    body: JSON.stringify({
+      order: { product: 'adsingle', selections: { productName: 'Blender' } },
+      idempotencyKey: 'key-norecipe-001',
+    }),
+  }));
+  check('a database without migration 014 still renders', !!res.jobs && res.jobs.length > 0, JSON.stringify(res));
 }
 
 console.log(`\n  ${fail === 0 ? C.g : C.r}${pass}/${pass + fail} passed${C.x}\n`);

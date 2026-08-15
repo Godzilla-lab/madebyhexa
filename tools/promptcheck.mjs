@@ -223,6 +223,20 @@ if (sent.length >= 2) {
     cold.includes('No on-image text') && !cold.includes('spelled exactly'), cold.slice(0, 200));
 }
 
+/* ── Who wrote the prompt ─────────────────────────────────────────
+ *
+ * The agent and the beat sheet produce very different prompts and used to be
+ * indistinguishable after the fact, which is exactly how the agent stayed
+ * switched off in production for months with nothing looking broken. The plan
+ * now carries which one ran, and creation_recipes stores it. */
+{
+  const video = await planOrder({
+    product: 'mode:ugc',
+    selections: { duration: 30, productName: 'Zephyr Blender', desc: 'a quiet blender' },
+  });
+  check('a video plan records that the agent wrote it', video.promptSource === 'agent', String(video.promptSource));
+}
+
 /* ── Grounding, and what we refuse to invent ──────────────────────
  *
  * Grounding is what separates "an ad for your blender" from "an ad for a

@@ -173,6 +173,57 @@ async function persistCreation(order, engine, paidSessionId, event, creditOrderI
   }
 }
 
+/*
+ * What we actually sent, stored next to what came back.
+ *
+ * Every claim about which engine or which format performs better is currently
+ * unverifiable: creations records the outcome and the delivered urls, but not
+ * the recipe. Two renders that behaved completely differently are afterwards
+ * indistinguishable. This is the honest version of "how do we know what works
+ * best" and it starts as an empty table that earns its answers.
+ *
+ * Never fatal, and deliberately after the creation exists rather than part of
+ * it: a customer's render must not fail because a measurement did.
+ */
+async function persistRecipe(creationId, plan, order) {
+  if (!creationId || !plan || !sb.configured()) return;
+  try {
+    const first = (plan.paramsList || [])[0] || {};
+    // The prompt is stored separately, so it does not have to be scrubbed out
+    // of params by anything reading this later.
+    const params = Object.assign({}, first);
+    delete params.prompt;
+
+    const s = (order && order.selections) || {};
+    const angle = (s.angle && typeof s.angle === 'object') ? s.angle : null;
+
+    const { error } = await sb.admin().from('creation_recipes').insert({
+      creation_id: creationId,
+      engine: plan.jobType || null,
+      params: params,
+      prompt: typeof first.prompt === 'string' ? first.prompt.slice(0, 6000) : null,
+      /* Image products take the ad-prompt builder rather than a storyboard
+       * writer, so neither label fits and 'unknown' is the honest answer. */
+      prompt_source: plan.promptSource || 'unknown',
+      grounded: typeof plan.grounded === 'boolean' ? plan.grounded : null,
+      grounded_by: plan.groundedBy || null,
+      angle_id: angle ? String(angle.claim || '').slice(0, 200) : null,
+    });
+    if (error) {
+      // Migration 014 may not be applied yet. Say which, rather than logging a
+      // bare Postgres string nobody can act on.
+      if (error.code === '42P01') {
+        console.error('creation_recipes missing: apply supabase/migrations/014_creation_recipe.sql. ' +
+          'Renders are fine; nothing is being measured.');
+      } else {
+        console.error('recipe insert failed:', error.message);
+      }
+    }
+  } catch (e) {
+    console.error('recipe persist failed:', e.message);
+  }
+}
+
 /* Post-render actions (action:revoice / action:translate / action:upscale)
  * run on ONE finished clip the payer already owns. Resolve the source video
  * from the buyer's library, never from a client-supplied URL: the orders row
@@ -395,6 +446,22 @@ function arcFor(segments) {
  * (the harvested library) and writes one purpose-built prompt per 15s
  * segment, in that same house style. Falls back to the beat-sheet template
  * when no ANTHROPIC_API_KEY is configured or the call fails. */
+/*
+ * The storyboard, and a record of who wrote it.
+ *
+ * `(await agentStoryboard(...)) || writeStoryboard(...)` was a good line that
+ * threw away the one fact worth keeping. The agent and the beat sheet produce
+ * very different prompts, and afterwards nothing distinguished them, which is
+ * precisely how the agent stayed switched off in production for months without
+ * anyone noticing. Now the plan carries which one ran, and creation_recipes
+ * stores it, so "does the agent actually write better ads" is answerable.
+ */
+async function storyboardFor(order, segments, facts) {
+  const written = await agentStoryboard(order, segments, facts);
+  if (written) return { prompts: written, source: 'agent' };
+  return { prompts: writeStoryboard(order, segments, facts), source: 'template' };
+}
+
 /* research/lib/llm.mjs is ESM and this file is CommonJS, so it comes in by
  * dynamic import. Cached after the first call, since a warm function will plan
  * many orders. A failure here is never fatal: the beat sheet still writes a
@@ -925,9 +992,11 @@ async function buildPlan(order) {
     // the storyboard, so the script talks about the actual product.
     const webProductId = await ensureWebProduct(s, 6000);
     const facts = (await webProductFacts(webProductId)) || (await unlockedFacts(s.link));
-    const prompts = (await agentStoryboard(order, segments, facts)) || writeStoryboard(order, segments, facts);
+    const board = await storyboardFor(order, segments, facts);
+    const prompts = board.prompts;
     return {
       kind: 'videos', jobType: 'marketing_studio_video',
+      promptSource: board.source,
       paramsList: prompts.map(function (prompt) {
         const p = {
           prompt: prompt,
@@ -952,13 +1021,15 @@ async function buildPlan(order) {
   if (product === 'cinematic') {
     await ensureWebProduct(s, 8000); // scrape before reading facts
     const cinFacts = (await webProductFacts(s.webProductId)) || (await unlockedFacts(s.link));
-    let prompts = (await agentStoryboard(order, segments, cinFacts)) || writeStoryboard(order, segments, cinFacts);
+    const cinBoard = await storyboardFor(order, segments, cinFacts);
+    let prompts = cinBoard.prompts;
     // Cinematic Studio takes no hook_id/setting_id, so inject the full library
     // prompt text that Marketing Studio would have applied server-side.
     const hookRec = s.hook && promptLib.findHook(s.hook.id || s.hook.name);
     if (hookRec) prompts = prompts.map(function (p, i) { return i === 0 ? p + ' Hook: ' + hookRec.prompt : p; });
     return {
       kind: 'videos', jobType: 'cinematic_studio_video_3_5',
+      promptSource: cinBoard.source,
       paramsList: prompts.map(function (prompt) {
         const p = {
           prompt: prompt,
@@ -1562,6 +1633,7 @@ exports.handler = async (event) => {
     const jobs = await createJobsInWaves(plan);
     if (stampJobs) await stampJobs(jobs, plan.jobType);
     const creationId = await persistCreation(order, plan.jobType, paidSessionId, event, creditOrderId, jobs);
+    await persistRecipe(creationId, plan, order);
     return json(200, {
       jobs: jobs,
       engine: plan.jobType,
