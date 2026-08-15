@@ -187,7 +187,7 @@ const server = http.createServer(async (req, res) => {
 
   if (p.startsWith('/__stub')) {
     const want = p.split('/')[2];
-    if (want && ['full', 'anon', 'building', 'partial', 'feeddown'].includes(want)) MODE = want;
+    if (want && ['full', 'anon', 'building', 'partial', 'feeddown', 'ungrounded'].includes(want)) MODE = want;
     return send(res, 200,
       `<!doctype html><meta charset=utf-8><title>stub: ${MODE}</title>` +
       `<body style="font:16px system-ui;background:#0a0608;color:#fff;padding:40px">` +
@@ -196,7 +196,8 @@ const server = http.createServer(async (req, res) => {
       `<a style="color:#ff7a8e" href="/__stub/anon">anon</a> (free read: angles, no competitor legs)<br>` +
       `<a style="color:#ff7a8e" href="/__stub/building">building</a> (never finishes, watch the progress UI)<br>` +
       `<a style="color:#ff7a8e" href="/__stub/partial">partial</a> (a pack that delivers 19 of 20, with the refund note)<br>` +
-      `<a style="color:#ff7a8e" href="/__stub/feeddown">feeddown</a> (render-status 502s: the poll must give up, not spin)</p>` +
+      `<a style="color:#ff7a8e" href="/__stub/feeddown">feeddown</a> (render-status 502s: the poll must give up, not spin)<br>` +
+      `<a style="color:#ff7a8e" href="/__stub/ungrounded">ungrounded</a> (the product page could not be read; the render must say so)</p>` +
       `<p><a style="color:#ff7a8e" href="/">back to the site</a></p>`,
       'text/html; charset=utf-8');
   }
@@ -229,7 +230,20 @@ const server = http.createServer(async (req, res) => {
       'text/html; charset=utf-8');
   }
 
-  if (p.includes('/render-create')) { req.resume(); return json(res, { jobs: [{ id: 'job-1' }] }); }
+  /* render-create's answer. `grounded:false` is the case worth being able to
+   * look at: the engine could not read the product page, so the ad is about a
+   * product LIKE theirs. ?ungrounded=1 on the page reaches this through the
+   * order, so drive it with the stub mode instead. */
+  if (p.includes('/render-create')) {
+    req.resume();
+    return json(res, {
+      jobs: [{ id: 'job-1', segment: 1, of: 1 }],
+      engine: 'ms_image',
+      creation: 'c-stub-1',
+      grounded: MODE !== 'ungrounded',
+      groundedBy: MODE === 'ungrounded' ? undefined : 'web_product',
+    });
+  }
 
   /* The render screen's finished state was unreachable here.
    *

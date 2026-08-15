@@ -755,7 +755,50 @@ function brandBrief(s) {
 }
 
 /* Map a studio order to engine calls. Returns { kind, jobType, paramsList }. */
+/*
+ * Is this plan actually about the customer's product?
+ *
+ * Grounding is what separates "an ad for your blender" from "an ad for a
+ * blender". Two mechanisms do it: web_product_ids + specific_mode='web_product'
+ * hands Marketing Studio the engine's own scrape of the real page, and
+ * image_references hands an image model the real photograph. Every path tries
+ * one of them, and every path is also allowed to proceed without it, because a
+ * page we cannot read should not kill a paid render.
+ *
+ * The problem was that failing to ground was a console.warn and nothing else,
+ * so twenty creatives of a product that is not yours looked exactly like
+ * twenty creatives of a product that is. Read off the params that will really
+ * be sent rather than a flag someone has to remember to set, so it cannot
+ * drift away from what the engine receives.
+ */
+function groundingOf(plan) {
+  const params = (plan && plan.paramsList) || [];
+  if (!params.length) return { grounded: false, by: null };
+  const all = function (test) { return params.every(test); };
+  const by =
+    /* A post-render action works ON a finished video the buyer already owns,
+     * so its input_video IS the grounding and there is no product to scrape. */
+    all(function (p) { return p && p.input_video && p.input_video.id; }) ? 'input_video'
+    : all(function (p) { return p && Array.isArray(p.web_product_ids) && p.web_product_ids.length; }) ? 'web_product'
+    : all(function (p) { return p && Array.isArray(p.image_references) && p.image_references.length; }) ? 'image_reference'
+    : null;
+  return { grounded: !!by, by: by };
+}
+
 async function planOrder(order) {
+  const plan = await buildPlan(order);
+  if (!plan) return null;
+  const g = groundingOf(plan);
+  plan.grounded = g.grounded;
+  plan.groundedBy = g.by;
+  if (!g.grounded) {
+    console.warn('plan is UNGROUNDED: ' + (plan.jobType || '?') +
+      ' for ' + (order && order.product) + ', ' + (plan.paramsList || []).length + ' jobs');
+  }
+  return plan;
+}
+
+async function buildPlan(order) {
   const s = order.selections || {};
   const product = order.product || '';
   const aspect = s.aspect || '9:16';
@@ -1107,7 +1150,15 @@ async function planOrder(order) {
     const picked = revising
       ? [String(s.revise.concept || 'Headline')]
       : (chosen.length
-        ? chosen.map(function (f) { return (f && (f.name || f.id)) || 'Headline'; })
+        /* The studio sends { id, name } objects, but a bare name is the obvious
+         * thing for any other caller to send and it used to fall all the way
+         * through to 'Headline' without a word. Silently rendering a different
+         * concept than the one asked for is the exact failure the substitution
+         * list below exists to make visible. */
+        ? chosen.map(function (f) {
+          if (typeof f === 'string') return f;
+          return (f && (f.name || f.id)) || 'Headline';
+        })
         : AD_FORMAT_NAMES.slice(0, wanted));
 
     /*
@@ -1254,6 +1305,7 @@ async function createJobsInWaves(plan) {
 }
 
 exports.planOrder = planOrder; // exposed for tests and the concierge CLI path
+exports.__groundingForTest = groundingOf; // tools/promptcheck.mjs
 exports.brandBrief = brandBrief; // exposed so the brand line can be asserted in tests
 
 exports.handler = async (event) => {
@@ -1515,6 +1567,11 @@ exports.handler = async (event) => {
       engine: plan.jobType,
       creation: creationId,
       substituted: plan.substituted || undefined,
+      /* Said out loud, not just logged. If we could not read the product page
+       * the render is about a product like theirs rather than theirs, and
+       * somebody about to run it as an ad should know that before they do. */
+      grounded: plan.grounded,
+      groundedBy: plan.groundedBy || undefined,
     });
   } catch (e) {
     /*

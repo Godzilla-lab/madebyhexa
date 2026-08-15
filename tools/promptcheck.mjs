@@ -223,6 +223,98 @@ if (sent.length >= 2) {
     cold.includes('No on-image text') && !cold.includes('spelled exactly'), cold.slice(0, 200));
 }
 
+/* ── Grounding, and what we refuse to invent ──────────────────────
+ *
+ * Grounding is what separates "an ad for your blender" from "an ad for a
+ * blender", and it is the whole basis of the pitch that we do not guess. Two
+ * things are checked: that a plan reports honestly whether it is grounded, and
+ * that the formats which fabricate a testimonial stay out of the rotation. */
+{
+  const cat = require(join(ROOT, 'catalog/higgsfield/ad-formats.json'));
+  const reviewShaped = cat.items.filter((f) => f.review_shaped).map((f) => f.name);
+  check(`the catalogue still marks the ${reviewShaped.length} testimonial formats`,
+    reviewShaped.length === 11, `${reviewShaped.length} marked`);
+
+  const pack = await planOrder({
+    product: 'adpack',
+    selections: { link: 'https://example-store.com/products/portable-blender', productName: 'Portable Blender' },
+  });
+  const concepts = (pack.paramsList || []).map((p) => p.style_id);
+  const styleOf = {};
+  cat.items.forEach((f) => { styleOf[f.style_id] = f; });
+  const staged = concepts.filter((id) => styleOf[id] && styleOf[id].review_shaped);
+  check('a default pack rotates no format that invents a reviewer',
+    staged.length === 0, staged.map((id) => styleOf[id].name).join(', '));
+
+  /* Asking for a testimonial format BY NAME with no reviews to back it. It has
+   * to be swapped out and the swap declared, not quietly rendered. */
+  const REVIEW_FMT = reviewShaped[0];
+  const asked = await planOrder({
+    product: 'adpack',
+    selections: {
+      link: 'https://example-store.com/products/portable-blender', productName: 'Portable Blender',
+      formats: [{ name: REVIEW_FMT }],
+    },
+  });
+  const askedStyles = (asked.paramsList || []).map((p) => styleOf[p.style_id]).filter(Boolean);
+  check(`asking for "${REVIEW_FMT}" with no reviews renders something else`,
+    askedStyles.every((f) => !f.review_shaped), askedStyles.map((f) => f.name).join(', '));
+  check('  and the swap is declared rather than done quietly',
+    Array.isArray(asked.substituted) && asked.substituted.some((x) => x.from === REVIEW_FMT),
+    JSON.stringify(asked.substituted));
+
+  /* The same request WITH real review text. Now the format is allowed, and the
+   * words in it have to be the customer's own, verbatim. */
+  const QUOTE = 'Genuinely the first blender my toddler slept through.';
+  const withReviews = await planOrder({
+    product: 'adpack',
+    selections: {
+      link: 'https://example-store.com/products/portable-blender', productName: 'Portable Blender',
+      formats: [{ name: REVIEW_FMT }], reviews: [QUOTE],
+    },
+  });
+  const quoted = (withReviews.paramsList || []).filter((p) => /quoted exactly as written/.test(p.prompt || ''));
+  check('real review text unlocks the testimonial format', quoted.length > 0,
+    `${quoted.length} creatives carry a quote`);
+  check('  and the words are the buyer’s own, verbatim',
+    quoted.length > 0 && quoted.every((p) => p.prompt.includes(QUOTE)),
+    quoted.length ? quoted[0].prompt.slice(0, 200) : 'none');
+  check('  and the engine is told to invent no rating or reviewer',
+    quoted.length > 0 && quoted.every((p) => /Do not invent a reviewer name, star rating/.test(p.prompt)),
+    `${quoted.length} checked`);
+
+  /* A bare name, the obvious thing a non-studio caller sends. It used to fall
+   * through to 'Headline' silently. */
+  const byString = await planOrder({
+    product: 'adpack',
+    selections: {
+      link: 'https://example-store.com/products/portable-blender', productName: 'Portable Blender',
+      formats: ['Bold Statement'],
+    },
+  });
+  check('a format asked for by bare name is the format that renders',
+    (byString.paramsList || []).every((p) => styleOf[p.style_id] && styleOf[p.style_id].name === 'Bold Statement'),
+    [...new Set((byString.paramsList || []).map((p) => (styleOf[p.style_id] || {}).name))].join(', '));
+
+  // Grounding is reported off the params that really go to the engine, so it
+  // cannot drift away from what was actually sent.
+  check('a plan says whether it is grounded', typeof pack.grounded === 'boolean', typeof pack.grounded);
+  check('  and an unreadable product page reports ungrounded rather than pretending',
+    pack.grounded === false && !pack.groundedBy,
+    JSON.stringify({ grounded: pack.grounded, by: pack.groundedBy }));
+
+  const groundedPack = { paramsList: [{ image_references: [{ type: 'media_input', id: 'm1' }] }] };
+  const half = { paramsList: [{ image_references: [{ id: 'm1' }] }, { prompt: 'no reference' }] };
+  const { __groundingForTest } = require(join(ROOT, 'netlify/functions/render-create.js'));
+  check('an image plan with references reads as grounded',
+    __groundingForTest(groundedPack).by === 'image_reference');
+  check('a plan where only SOME jobs are grounded reads as ungrounded',
+    __groundingForTest(half).grounded === false,
+    JSON.stringify(__groundingForTest(half)));
+  check('a post-render action grounds on the video the buyer already owns',
+    __groundingForTest({ paramsList: [{ input_video: { type: 'media_input', id: 'v1' } }] }).by === 'input_video');
+}
+
 if (WANT === 'anthropic') {
   console.log(`\n  ${C.y}Not checked here:${C.x} that an Anthropic cache READ occurs. That needs`);
   console.log(`  a real ANTHROPIC_API_KEY and an assertion on cache_read_input_tokens > 0`);

@@ -165,6 +165,26 @@
       $('#render-title').textContent = 'Your content is ready, minus ' +
         (p.failed === 1 ? 'one' : p.failed) + ' that did not render';
     }
+
+    /*
+     * Grounding, said out loud when it failed.
+     *
+     * render-create tries to hand the engine the real product, either the
+     * scraped page or the real photograph. When neither is available it
+     * renders anyway, which is right, because an unreadable page should not
+     * kill a paid render. But then the result is an ad for a product LIKE
+     * theirs, and until now that looked identical to an ad for theirs. Anyone
+     * about to run it as an ad should know which one they have.
+     *
+     * Only shown when the server actually said so; absence is not evidence.
+     */
+    if (order.ungrounded && !(status && status.partial)) {
+      var gnote = $('#render-note');
+      gnote.textContent = 'We could not read your product page, so this was made from your ' +
+        'description rather than your actual product. Check it looks like the real thing before ' +
+        'you run it, and add a product photo in the studio for an exact match.';
+      gnote.hidden = false;
+    }
   }
 
   /* The style's display name, preferring the one the studio already stored.
@@ -540,6 +560,7 @@
         // can be edited later without looking itself up again. A replayed
         // session does not return one, so never overwrite a known id with null.
         if (d.creation) order.creation = d.creation;
+        if (d.grounded === false) order.ungrounded = true;
         try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
         pollLive(order, d.jobs.map(function (j) { return j.id; }).join(','), sessionId);
       })
@@ -589,6 +610,7 @@
           if (!d.jobs || !d.jobs.length) return Promise.reject(d);
           order.jobs = d.jobs;
           if (d.creation) order.creation = d.creation;
+          if (d.grounded === false) order.ungrounded = true;
           // Saved before the poll starts: from here a refresh finds the jobs
           // and rejoins the render instead of spending the balance again.
           try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
