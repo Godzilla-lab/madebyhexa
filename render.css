@@ -192,7 +192,7 @@
   transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
 .btn-download {
-  color: #fff;
+  color: var(--on-accent);
   background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 100%);
   box-shadow: 0 12px 34px -12px rgba(255, 77, 109, 0.6);
 }

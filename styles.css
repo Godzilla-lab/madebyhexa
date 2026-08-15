@@ -1,9 +1,24 @@
 /* ───── Reset & tokens ───── */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+/* The site draws its own buttons everywhere, but a good number of rules set a
+   background without ever setting a border, and then inherit the UA's. With
+   color-scheme: dark declared below, that inherited ButtonBorder turns LIGHT,
+   which put a white ring around the report's primary action. Neutralise it
+   once here; every rule that wants a border still declares one and wins. */
+button { border: 0; background: none; color: inherit; font: inherit; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 :root {
+  /* Tell the engine this is a dark document. Without it Chrome paints every
+     native control from its LIGHT palette on a black page: buttonface is
+     rgb(239,239,239), so any <button> missing an explicit background gets a
+     pale grey pill, and scrollbars, <select> and autofill all come out light
+     too. That is how the report's secondary action ended up at 1.14:1. This
+     line does not restyle anything we already style; it fixes the default we
+     inherit everywhere we forget to. */
+  color-scheme: dark;
+
   --bg-0: #07050a;
   --bg-1: #0a0608;
   --crimson: #5a0a1a;
@@ -12,10 +27,22 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
   --accent-soft: #ff7a8e;
   --text: rgba(255, 255, 255, 0.94);
   --text-mute: rgba(255, 255, 255, 0.62);
-  --text-faint: rgba(255, 255, 255, 0.4);
+  /* 0.50, not 0.40. At 0.40 this measured 3.74:1 on the page ground and
+     3.76:1 on a card, under the 4.5:1 AA floor for body text, and it is the
+     token behind most small print on the site: captions, notes, the footer,
+     "no card to start". 0.46 is the exact boundary and too tight to hold, so
+     0.50 takes it to 5.31:1 with room. Still clearly fainter than --text-mute
+     at 0.62 (7.77:1), so the three-step hierarchy survives the change. */
+  --text-faint: rgba(255, 255, 255, 0.5);
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.14);
   --accent-deep: #e6395a;
+  /* What text is allowed to be when it sits ON the accent. The brand pink is
+     unchanged; white on it measures 3.21:1, under the 4.5:1 AA floor, while
+     this near-black measures 6.27:1 on --accent and 4.89:1 on --accent-deep.
+     Use it on any accent surface carrying words. Decorative accent fills
+     (progress bars, dots, rules) have no text and do not need it. */
+  --on-accent: #0a0608;
   --tile-radius: 18px;
   --radius-control: 12px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -157,12 +184,18 @@ body {
   transition: color 200ms var(--ease);
 }
 .nav-links a:hover { color: var(--text); }
-.nav-cta {
+/* a.nav-cta, not .nav-cta !important. The !important was here to beat
+   `.nav-links a` above, which is one element more specific than a bare class.
+   Naming the element ties the specificity and wins on order instead, which
+   matters because !important also beat the phone rule below: that one gives
+   the chip an accent background, and its text colour was being discarded, so
+   --text sat on the pink at 2.99:1. Every .nav-cta in the site is an <a>. */
+a.nav-cta {
   padding: 8px 16px;
   border-radius: 999px;
   background: rgba(255,255,255,0.08);
   border: 1px solid var(--border);
-  color: var(--text) !important;
+  color: var(--text);
 }
 .nav-cta:hover { background: rgba(255,255,255,0.14); }
 
@@ -1394,6 +1427,16 @@ body {
 .footer a { color: var(--text-mute); text-decoration: none; }
 .footer a:hover { color: var(--text); }
 .footer-sep { opacity: 0.5; }
+/* The report's source note. Its own row under the links rather than another
+   item in the flex line, which is what flex-basis:100% buys here. */
+.foot-fine {
+  flex-basis: 100%;
+  max-width: 62ch;
+  margin: 6px auto 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
 
 /* ───── Legal / long-form prose pages ───── */
 .legal {
@@ -1731,7 +1774,7 @@ body.lb-open { overflow: hidden; }
   padding: 6px 13px;
   border-radius: 999px;
   background: linear-gradient(180deg, #ff5d75 0%, #e23a4a 100%);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -2355,7 +2398,7 @@ body.lb-open { overflow: hidden; }
   }
   .nav-links .nav-cta {
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
     font-weight: 700;
     font-size: 13.5px;
     padding: 9px 16px;

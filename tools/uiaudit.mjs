@@ -143,6 +143,129 @@ function audit() {
     }
   }
 
+  /*
+   * 5. Contrast, against the WCAG AA floor.
+   *
+   * This is the one design rule with a number behind it rather than an
+   * opinion, which is exactly why it belongs in an audit instead of a review.
+   * 4.5:1 for body text, 3:1 for large text (18.66px bold, or 24px).
+   *
+   * Two honest limits, both enforced by skipping rather than guessing:
+   * text over a background IMAGE, gradient or video cannot be composited to a
+   * single colour, and a wrong number here would be worse than no number. The
+   * site puts white text over dark video in several heroes, so this skips a
+   * real part of the page and says so rather than inventing a pass.
+   */
+  const lum = (r, g, b) => {
+    const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const parse = (c) => {
+    const m = String(c).match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+    return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] } : null;
+  };
+  /*
+   * Walk up for the background this text is actually read against. Returns a
+   * LIST of candidate colours, because a gradient has no single answer, and
+   * the caller scores the worst of them.
+   *
+   * A gradient used to return null, which quietly excused the largest button
+   * on the home page: "Create my ad" is white on a pink gradient, so the site's
+   * primary CTA was the one thing the contrast rule never looked at. Solid
+   * colour stops are parseable, so they get measured. A gradient over a photo
+   * or a video still returns null, and that is a real hole rather than a pass.
+   */
+  const backdrop = (el) => {
+    for (let n = el; n && n !== document.documentElement.parentElement; n = n.parentElement) {
+      const s = getComputedStyle(n);
+      const img = s.backgroundImage;
+      if (img && img !== 'none') {
+        // Only *-gradient(...) is resolvable; url() over a photo is not.
+        if (!/gradient\(/.test(img) || /url\(/.test(img)) return null;
+        const stops = (img.match(/rgba?\([^)]*\)/g) || []).map(parse)
+          .filter((c) => c && c.a >= 0.95);
+        if (stops.length) return stops;
+        return null; // a translucent gradient over something unknown
+      }
+      const c = parse(s.backgroundColor);
+      if (c && c.a >= 0.95) return [c];
+      if (c && c.a > 0) return null; // a translucent layer we cannot resolve
+    }
+    return null;
+  };
+  for (const el of document.querySelectorAll('main *, footer *, header *')) {
+    if (!vis(el)) continue;
+    const txt = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim();
+    if (txt.length < 3) continue;
+    const s = getComputedStyle(el);
+    const fg = parse(s.color);
+    const cands = backdrop(el);
+    if (!fg || !cands || !cands.length) continue;
+    /* Fully transparent text is not unreadable text: it is the standard
+     * background-clip:text trick, where the gradient behind IS the letterform.
+     * Scoring it gives a meaningless 1.00:1 against its own fill. */
+    if (fg.a === 0 || s.webkitBackgroundClip === 'text' || s.backgroundClip === 'text') continue;
+    // Score every candidate and keep the worst: text has to be readable over
+    // the whole of a gradient, not just over the end that happens to suit it.
+    let ratio = Infinity, bg = cands[0];
+    for (const c of cands) {
+      // Composite the text colour onto its backdrop; alpha is how --text-faint
+      // and friends are actually written, so ignoring it would measure nothing.
+      const mix = {
+        r: fg.a * fg.r + (1 - fg.a) * c.r,
+        g: fg.a * fg.g + (1 - fg.a) * c.g,
+        b: fg.a * fg.b + (1 - fg.a) * c.b,
+      };
+      const L1 = lum(mix.r, mix.g, mix.b), L2 = lum(c.r, c.g, c.b);
+      const r = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+      if (r < ratio) { ratio = r; bg = c; }
+    }
+    const px = parseFloat(s.fontSize);
+    const bold = (parseInt(s.fontWeight, 10) || 400) >= 700;
+    const large = px >= 24 || (bold && px >= 18.66);
+    const floor = large ? 3 : 4.5;
+    if (ratio < floor) {
+      /* Name the two colours. A ratio on its own says a rule was broken but
+       * not by what, and the same number turns up from several different
+       * tokens, so without this every fix starts with the same hunt. */
+      const sel = el.tagName.toLowerCase() + (el.className ? '.' + String(el.className).trim().split(/\s+/).join('.') : '');
+      out.push({ sec: el.closest('section')?.id || 'page', rule: 'contrast',
+        detail: `${ratio.toFixed(2)}:1 (needs ${floor}:1) ${s.color} on rgb(${Math.round(bg.r)}, ${Math.round(bg.g)}, ${Math.round(bg.b)}) at ${Math.round(px)}px  ${sel.slice(0, 60)}  "${txt.slice(0, 24)}"` });
+    }
+  }
+
+  /*
+   * 6. Accessible names and stable layout. The measurable subset of the Vercel
+   * web interface guidelines: a control with no text and no label is unusable
+   * by a screen reader, and an <img> with no dimensions moves the page under
+   * the reader's thumb while it loads.
+   */
+  for (const el of document.querySelectorAll('button, a, input, select, textarea')) {
+    if (!vis(el)) continue;
+    const name = (el.textContent || '').trim() ||
+      el.getAttribute('aria-label') || el.getAttribute('title') ||
+      (el.id && document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent.trim()) ||
+      el.closest('label')?.textContent.trim() ||
+      (el.getAttribute('aria-labelledby') &&
+        document.getElementById(el.getAttribute('aria-labelledby'))?.textContent.trim()) ||
+      (el.tagName === 'INPUT' && ['hidden', 'submit', 'button'].includes(el.type) ? 'n/a' : '');
+    if (!name) {
+      out.push({ sec: el.closest('section')?.id || 'page', rule: 'no-accessible-name',
+        detail: `<${el.tagName.toLowerCase()}${el.type ? ' type=' + el.type : ''}${el.className ? ' class="' + String(el.className).split(' ')[0] + '"' : ''}> has no text, label or aria-label` });
+    }
+  }
+  for (const img of document.querySelectorAll('img')) {
+    if (!vis(img)) continue;
+    if (!img.getAttribute('width') || !img.getAttribute('height')) {
+      out.push({ sec: img.closest('section')?.id || 'page', rule: 'img-no-dimensions',
+        detail: `${(img.getAttribute('src') || '').split('/').pop().slice(0, 40)} has no width/height, so it shifts layout as it loads` });
+    }
+    if (img.getAttribute('alt') === null) {
+      out.push({ sec: img.closest('section')?.id || 'page', rule: 'img-no-alt',
+        detail: `${(img.getAttribute('src') || '').split('/').pop().slice(0, 40)} has no alt (use alt="" if decorative)` });
+    }
+  }
+
   // Dedupe: one instance of each defect per section is enough to act on.
   const seen = new Set();
   return out.filter((o) => {

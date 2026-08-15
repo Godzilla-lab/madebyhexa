@@ -67,7 +67,7 @@
   padding: 15px 26px;
   font: inherit;
   font-weight: 700;
-  color: #fff;
+  color: var(--on-accent);
   white-space: nowrap;
   background: var(--accent);
   border: 0;
@@ -214,7 +214,7 @@
   transition: transform 0.2s var(--ease);
 }
 .vd-call-actions button:hover { transform: translateY(-1px); }
-.vd-call-actions .is-primary { background: var(--accent); color: #fff; box-shadow: var(--glow-accent); }
+.vd-call-actions .is-primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--glow-accent); }
 .vd-call-actions .is-ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
 .vd-call-actions button:disabled { opacity: 0.6; cursor: default; transform: none; }
 .vd-call-err { margin: 12px 0 0; font-size: 13.5px; color: #ff9d9d; }
@@ -258,7 +258,7 @@
 .gap-row.is-open .gap-tag {
   border-color: transparent;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .gap-people { font-size: 12px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 .gap-claim { margin: 0 0 12px; font-size: 15px; line-height: 1.5; color: var(--text); }
@@ -431,8 +431,12 @@
 }
 .angle-actions a:hover,
 .angle-actions button:hover { transform: translateY(-1px); }
-.angle-actions .is-primary { background: var(--accent); color: #fff; box-shadow: var(--glow-accent); }
-.angle-actions .is-ghost { border: 1px solid var(--border-strong); color: var(--text); }
+.angle-actions .is-primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--glow-accent); }
+/* background is not optional here. Without it a <button> keeps the UA's
+   buttonface grey, so this near-white label sat on rgb(239,239,239) at 1.14:1
+   and the secondary action on every angle card was all but invisible. Its
+   sibling at .vd-call-actions .is-ghost always had the declaration. */
+.angle-actions .is-ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
 
 /* ───── What sign-in buys ─────
  *

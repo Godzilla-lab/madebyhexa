@@ -81,11 +81,17 @@
     <div class="vd-report" id="vd-out" hidden></div>
   </main>
 
-  <footer class="site-foot">
-    <p>
-      <a href="/">Hexa AI</a> · <a href="/terms.html">Terms</a> ·
-      <a href="/privacy.html">Privacy</a> · <a href="/refund.html">Refunds</a>
-    </p>
+  <!-- .footer, not .site-foot: site-foot was styled in no stylesheet on the
+       site, so these four links rendered in Chrome's default link blue on the
+       near-black page, at 2.14:1 against a 4.5:1 floor. -->
+  <footer class="footer">
+    <a href="/">Hexa AI</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="/terms.html">Terms</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="/privacy.html">Privacy</a>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <a href="/refund.html">Refunds</a>
     <p class="foot-fine">
       Research is synthesised from public discussion and public ad libraries. Every quote
       links to its source so you can check it yourself.
