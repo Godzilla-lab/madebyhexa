@@ -159,6 +159,77 @@ async function refundLostCreatives(ctx, jobs, lost) {
   }
 }
 
+/*
+ * The same idea for a pack bought with a card.
+ *
+ * refundLostCreatives looks for a credit_ledger spend keyed 'order:<id>', and
+ * a Stripe order never has one, so it returned 0 and a card buyer whose pack
+ * came up short was refunded nothing at all. Credit buyers were made whole and
+ * card buyers were not, for the identical failure.
+ *
+ * Refunded proportionally against what Stripe actually captured, which already
+ * accounts for discounts and whatever tax was charged on top, rather than
+ * against a list price we would have to recompute.
+ *
+ * Idempotence does not lean on the key alone. Stripe idempotency keys expire
+ * after 24 hours, so the refunds already recorded against the payment intent
+ * are totted up first and only the shortfall is sent. That holds however many
+ * tabs poll and however long the pack sits open.
+ *
+ * Returns cents actually refunded.
+ */
+async function refundLostCard(paidSessionId, jobs, lost) {
+  try {
+    if (!paidSessionId || !lost) return 0;
+    if (!process.env.STRIPE_SECRET_KEY) return 0;
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    const session = await stripe.checkout.sessions.retrieve(paidSessionId);
+    if (!session || session.payment_status !== 'paid') return 0;
+    const pi = typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent && session.payment_intent.id;
+    if (!pi) return 0;
+
+    const total = Number(session.amount_total || 0);
+    const perCreative = Math.floor(total / Math.max(1, jobs.length));
+    const want = perCreative * lost;
+    if (!want) return 0;
+
+    const existing = await stripe.refunds.list({ payment_intent: pi, limit: 100 });
+    const already = (existing.data || []).reduce(function (n, r) {
+      // A failed or cancelled refund returned nothing, so it does not count.
+      if (r.status === 'failed' || r.status === 'canceled') return n;
+      return n + Number(r.amount || 0);
+    }, 0);
+    if (already >= want) return already;
+
+    await stripe.refunds.create(
+      { payment_intent: pi, amount: want - already, reason: 'requested_by_customer' },
+      { idempotencyKey: 'hexa-partial-' + paidSessionId + '-' + want }
+    );
+    console.log('partial refund', want - already, 'cents on session', paidSessionId);
+    return want;
+  } catch (e) {
+    console.error('partial card refund failed (will retry on next poll):', e.message);
+    return 0;
+  }
+}
+
+/* One shortfall, two ways of having paid for it. Returns whichever moved. */
+async function refundLost(ctx, paidSessionId, jobs, lost) {
+  if (paidSessionId) {
+    return { credits: 0, cents: await refundLostCard(paidSessionId, jobs, lost) };
+  }
+  return { credits: await refundLostCreatives(ctx, jobs, lost), cents: 0 };
+}
+
+/* "$1.20", "$12". Cents, said the way a receipt says it. */
+function usd(cents) {
+  const n = Number(cents) / 100;
+  return '$' + (Number.isInteger(n) ? String(n) : n.toFixed(2));
+}
+
 async function recordCompleted(ctx, urls, thumb) {
   try {
     if (!ctx.db) return;
@@ -346,17 +417,26 @@ exports.handler = async (event) => {
 
         const urls = good.map(function (j) { return j.result_url; });
         await recordCompleted(ctx, urls, good[0].thumbnail_url);
-        const credits = await refundLostCreatives(ctx, jobs, lost);
+        const back = await refundLost(ctx, q.paid, jobs, lost);
         return json(200, {
           status: 'completed',
           step: 'finish',
           pct: 100,
-          partial: { delivered: good.length, of: jobs.length, failed: lost, creditsReturned: credits },
+          partial: {
+            delivered: good.length,
+            of: jobs.length,
+            failed: lost,
+            creditsReturned: back.credits,
+            centsRefunded: back.cents,
+          },
           // Said out loud on purpose. A silent refund still produces the
-          // support ticket, because people notice the balance move anyway.
+          // support ticket, because people notice the money move anyway. It
+          // names whichever thing actually came back, since "credits returned
+          // to your balance" is the wrong sentence for a card order.
           message: lost + (lost === 1 ? ' creative' : ' creatives') + ' failed to render and '
-            + (credits ? credits.toLocaleString() + ' credits were returned to your balance.'
-                       : 'you were not charged for them.'),
+            + (back.credits ? back.credits.toLocaleString() + ' credits were returned to your balance.'
+             : back.cents ? usd(back.cents) + ' was refunded to your card.'
+             : 'you were not charged for them.'),
           result: {
             url: urls[0],
             urls: urls,

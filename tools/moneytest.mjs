@@ -112,7 +112,7 @@ function makeDb(seed, opts) {
 
 /* Install fakes ahead of the handler, so it requires ours rather than the
  * real modules. */
-function install({ jobs, db, user, stripeSession }) {
+function install({ jobs, db, user, stripeSession, onRefund }) {
   for (const k of Object.keys(require.cache)) {
     if (k.includes('/netlify/functions/') || k.includes('/node_modules/stripe/')) delete require.cache[k];
   }
@@ -122,6 +122,10 @@ function install({ jobs, db, user, stripeSession }) {
   };
   if (stripeSession !== undefined) {
     process.env.STRIPE_SECRET_KEY = 'sk_test_fake';
+    /* Stripe holds its own refund history, and the code sums it before
+     * refunding again, so the fake has to remember too or the idempotence
+     * test would be checking nothing. */
+    const ledger = [];
     const p = require.resolve('stripe');
     require.cache[p] = {
       id: p, filename: p, loaded: true,
@@ -129,7 +133,16 @@ function install({ jobs, db, user, stripeSession }) {
         checkout: { sessions: { retrieve: () => stripeSession
           ? Promise.resolve(stripeSession)
           : Promise.reject(new Error('No such checkout.session')) } },
-        refunds: { create: () => Promise.resolve({ id: 're_1' }) },
+        paymentIntents: { update: () => Promise.resolve({}) },
+        refunds: {
+          list: () => Promise.resolve({ data: ledger.slice() }),
+          create: (args) => {
+            if (onRefund) onRefund(args);
+            const made = { id: 're_' + (ledger.length + 1), amount: args.amount || (stripeSession.amount_total || 0), status: 'succeeded' };
+            ledger.push(made);
+            return Promise.resolve(made);
+          },
+        },
       }),
     };
   }
@@ -303,6 +316,60 @@ console.log('\n  Money path\n');
   const mod = install({ jobs: {}, db, user: null, stripeSession: { payment_status: 'unpaid' } });
   const res = await recover(mod, { paid: 'cs_test_unpaid123456' });
   check('an unpaid checkout recovers nothing', res.statusCode === 402, res.statusCode + ' ' + res.body);
+}
+
+/* ── 9b. A card-paid pack that comes up short is refunded too ───── */
+{
+  const db = makeDb({
+    orders: [{ id: 'order-c', user_id: 'user-1', status: 'paid', stripe_session_id: 'cs_test_card123456' }],
+    creations: [{ id: 'creation-c', user_id: 'user-1', order_id: 'order-c', status: 'rendering' }],
+  });
+  const refundsMade = [];
+  const mod = install({
+    jobs: {
+      a: { id: 'a', job_type: 'ms_image', status: 'failed' },
+      b: { id: 'b', job_type: 'ms_image', status: 'failed' },
+      c: { id: 'c', job_type: 'ms_image', status: 'completed', result_url: 'c.jpg' },
+      d: { id: 'd', job_type: 'ms_image', status: 'completed', result_url: 'd.jpg' },
+    },
+    db, user: USER,
+    // $12.00 for four creatives, two of which died.
+    stripeSession: { payment_status: 'paid', amount_total: 1200, payment_intent: 'pi_1' },
+    onRefund: (args) => refundsMade.push(args),
+  });
+  const b = body(await call(mod, { jobs: 'a,b,c,d', paid: 'cs_test_card123456' }));
+  check('a short card-paid pack still delivers what survived',
+    b.status === 'completed' && b.result.urls.length === 2, JSON.stringify(b.result || b));
+  check('  and refunds the dead ones proportionally',
+    refundsMade.length === 1 && refundsMade[0].amount === 600,
+    JSON.stringify(refundsMade));
+  check('  and says it in dollars, not credits',
+    /\$6 was refunded to your card/.test(b.message), b.message);
+  check('  and reports the cents on the partial block',
+    b.partial && b.partial.centsRefunded === 600, JSON.stringify(b.partial));
+}
+
+/* ── 9c. Polling a short card pack does not refund again ─────────── */
+{
+  const db = makeDb({
+    orders: [{ id: 'order-c', user_id: 'user-1', status: 'paid', stripe_session_id: 'cs_test_card123456' }],
+    creations: [{ id: 'creation-c', user_id: 'user-1', order_id: 'order-c', status: 'rendering' }],
+  });
+  const refundsMade = [];
+  const mod = install({
+    jobs: {
+      a: { id: 'a', job_type: 'ms_image', status: 'failed' },
+      b: { id: 'b', job_type: 'ms_image', status: 'completed', result_url: 'b.jpg' },
+    },
+    db, user: USER,
+    stripeSession: { payment_status: 'paid', amount_total: 1200, payment_intent: 'pi_1' },
+    onRefund: (args) => refundsMade.push(args),
+  });
+  await call(mod, { jobs: 'a,b', paid: 'cs_test_card123456' });
+  await call(mod, { jobs: 'a,b', paid: 'cs_test_card123456' });
+  await call(mod, { jobs: 'a,b', paid: 'cs_test_card123456' });
+  check('three polls refund the card once',
+    refundsMade.length === 1 && refundsMade[0].amount === 600, JSON.stringify(refundsMade));
 }
 
 /* ── 10. A credit render cannot be charged twice ─────────────────
