@@ -32,6 +32,7 @@ const { priceStudioOrder, creditsForOrder } = require('./lib/pricing');
 const { getUser } = require('./lib/auth');
 const sb = require('./lib/supabase');
 const { allow } = require('./lib/ratelimit');
+const critic = require('./lib/critic');
 
 const SEGMENT_SECONDS = 15;
 
@@ -208,6 +209,10 @@ async function persistRecipe(creationId, plan, order) {
       grounded: typeof plan.grounded === 'boolean' ? plan.grounded : null,
       grounded_by: plan.groundedBy || null,
       angle_id: angle ? String(angle.claim || '').slice(0, 200) : null,
+      /* null when no critic ran at all, which is a different fact from "ran
+       * and found nothing clean", and the difference matters when reading
+       * these rows back. */
+      critic: plan.criticChecked ? (plan.criticFindings || []) : null,
     });
     if (error) {
       // Migration 014 may not be applied yet. Say which, rather than logging a
@@ -458,8 +463,28 @@ function arcFor(segments) {
  */
 async function storyboardFor(order, segments, facts) {
   const written = await agentStoryboard(order, segments, facts);
-  if (written) return { prompts: written, source: 'agent' };
-  return { prompts: writeStoryboard(order, segments, facts), source: 'template' };
+  const board = written
+    ? { prompts: written, source: 'agent' }
+    : { prompts: writeStoryboard(order, segments, facts), source: 'template' };
+
+  /*
+   * The critic reads what the writer produced before the engine does. Only
+   * worth the call on agent-written prompts: the beat sheet is a template we
+   * wrote, so it cannot invent a claim, and paying a second model to confirm
+   * that on every render would be spending money to learn nothing.
+   */
+  if (board.source !== 'agent') return board;
+  const s = order.selections || {};
+  const review = await critic.reviewPrompts(board.prompts, {
+    productName: (facts && facts.title) || s.productName || '',
+    description: (facts && facts.description) || s.desc || '',
+    headline: '', // a video says its line out loud; nothing is burned in
+    reviews: [],
+  });
+  board.prompts = review.prompts;
+  board.criticFindings = review.findings;
+  board.criticChecked = review.checked;
+  return board;
 }
 
 /* research/lib/llm.mjs is ESM and this file is CommonJS, so it comes in by
@@ -997,6 +1022,8 @@ async function buildPlan(order) {
     return {
       kind: 'videos', jobType: 'marketing_studio_video',
       promptSource: board.source,
+      criticChecked: board.criticChecked,
+      criticFindings: board.criticFindings,
       paramsList: prompts.map(function (prompt) {
         const p = {
           prompt: prompt,
@@ -1030,6 +1057,8 @@ async function buildPlan(order) {
     return {
       kind: 'videos', jobType: 'cinematic_studio_video_3_5',
       promptSource: cinBoard.source,
+      criticChecked: cinBoard.criticChecked,
+      criticFindings: cinBoard.criticFindings,
       paramsList: prompts.map(function (prompt) {
         const p = {
           prompt: prompt,

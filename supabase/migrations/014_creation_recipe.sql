@@ -32,6 +32,10 @@
 --   angle_id      the report angle behind it, when there was one, so an
 --                 angle's real-world outcome is traceable back to the
 --                 evidence that produced it.
+--   critic        what the fact-check pass removed before the engine saw the
+--                 prompt, and why. null means no critic ran, which is a
+--                 different thing from "ran and found nothing", and the
+--                 difference matters when reading these rows later.
 --
 -- One row per creation, so the creation id is the key rather than a surrogate.
 -- On delete cascade: a deleted creation should not leave its recipe behind.
@@ -46,6 +50,7 @@ create table if not exists public.creation_recipes (
   grounded      boolean,
   grounded_by   text,
   angle_id      text,
+  critic        jsonb,
   created_at    timestamptz not null default now()
 );
 

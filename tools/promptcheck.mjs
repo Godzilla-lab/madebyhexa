@@ -108,10 +108,19 @@ console.log(`\n  Prompt agent request  (provider: ${WANT})\n`);
 await planOrder(ORDER_A);
 await planOrder(ORDER_B);
 
-check('the agent actually calls a model, twice', sent.length >= 2, `${sent.length} calls`);
+/* Two different models run per order now: the storyboard writer and the fact
+ * checker behind it. Split them by their own system text, so the cache-prefix
+ * assertions compare storyboard against storyboard. */
+const isStoryboard = (r) => JSON.stringify(r.body).includes('storyboard writer');
+const boards = sent.filter(isStoryboard);
+const critics = sent.filter((r) => !isStoryboard(r) && JSON.stringify(r.body).includes('fact checker'));
 
-if (sent.length >= 2) {
-  const [a, b] = sent;
+check('the agent actually calls a model, twice', boards.length >= 2, `${boards.length} storyboard calls`);
+check('and a critic reads what it wrote before the engine does',
+  critics.length >= 2, `${critics.length} critic calls`);
+
+if (boards.length >= 2) {
+  const [a, b] = boards;
 
   if (WANT === 'anthropic') {
     check('resolves the worker tier to claude-haiku-4-5', a.body.model === 'claude-haiku-4-5', a.body.model);
