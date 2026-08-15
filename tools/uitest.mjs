@@ -364,6 +364,109 @@ async function run() {
     assert(/six parts in the sink/i.test(notes), 'the hook did not reach the brief: "' + notes + '"');
   }, 40000);
 
+  /*
+   * Check 20 proves the angle reaches the visible brief. This proves it reaches
+   * the ORDER, which is a different thing and is where it used to stop.
+   *
+   * A static pack is priced on putting the proven line ON the image. Nothing
+   * ever set selections.headline, so render-create read it as empty and
+   * instructed the engine "No on-image text", while the line we had just
+   * proved was demoted to a "Brand direction:" aside it could paraphrase or
+   * ignore. Twenty creatives, no headline, off the back of paid research.
+   */
+  await check(25, 'The proven headline reaches the order, not just the notes box', async (page) => {
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => {
+      localStorage.removeItem('hexa-studio-order');
+      localStorage.setItem('hexa-angle', JSON.stringify({
+        v: 1, ts: Date.now(), url: 'https://example-store.com/products/portable-blender',
+        product: 'adpack', claim: 'Sell the cleanup, not the blending.',
+        hook: 'It is not the smoothie that stops you. It is the six parts in the sink.',
+        headline: 'Blend it. Drink it. Rinse it. Done.', format: 'statics',
+        persona: 'Busy people who want a quick smoothie without the washing up.', receipts: 6,
+      }));
+    });
+    await go(page, '/#composer');
+    await page.waitForSelector('.chooser-headline', { timeout: 20000 });
+    // Straight at the ad pack, which is the product that carries on-image text.
+    await page.evaluate(() => {
+      const tile = [...document.querySelectorAll('.goal-tile')]
+        .find((x) => /ad pack|statics|static ads/i.test(x.textContent));
+      (tile || document.querySelector('.goal-tile')).click();
+    });
+    await page.waitForSelector('#config-body', { timeout: 15000 });
+
+    /* No test hook on the page: the order is read where the studio really puts
+     * it. submitOrder writes to localStorage before it goes anywhere near the
+     * network, so driving the drawer's own primary action is enough. */
+    // The pack needs at least one format picked before it will submit.
+    await page.waitForSelector('.opt-format', { timeout: 15000 });
+    await page.evaluate(() => document.querySelector('.opt-format').click());
+
+    /* The same button twice: "Review order" opens the ticket, "Pay" submits.
+     * submitOrder saves the order and THEN, for a signed-out visitor, navigates
+     * to login. Both are fine; the assertion is about what it saved. */
+    await page.waitForSelector('.config-submit', { timeout: 15000 });
+    await page.evaluate(() => document.querySelector('.config-submit').click());
+    await new Promise((r) => setTimeout(r, 900));
+    await page.evaluate(() => {
+      const b = document.querySelector('.config-submit');
+      if (b) b.click();
+    });
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const order = await page.evaluate(() => {
+      try { return JSON.parse(localStorage.getItem('hexa-studio-order') || 'null'); }
+      catch (e) { return null; }
+    }).catch(() => null);
+    assert(order, 'no order was saved, so nothing can be asserted about it');
+    assert(order.product === 'adpack',
+      'a statics verdict did not lead to the ad pack, it opened ' + order.product);
+
+    const sel = order.selections || {};
+    assert(/Blend it\. Drink it\./.test(sel.headline || ''),
+      'the proven headline never reached selections.headline: ' + JSON.stringify(sel.headline));
+    assert(sel.angle && /washing up/i.test(sel.angle.persona || ''),
+      'the persona did not survive the handoff: ' + JSON.stringify(sel.angle));
+    assert(sel.angle.receipts === 6,
+      'the evidence count did not survive: ' + JSON.stringify(sel.angle));
+  }, 45000);
+
+  /* The other half of the same rule: a video verdict must NOT pick up an
+   * on-image headline, because a video says its line out loud and burning it
+   * into every frame would be wrong. */
+  await check(26, 'A video verdict carries the hook, never an on-image headline', async (page) => {
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => {
+      localStorage.removeItem('hexa-studio-order');
+      localStorage.setItem('hexa-angle', JSON.stringify({
+        v: 1, ts: Date.now(), url: 'https://example-store.com/products/portable-blender',
+        product: 'mode:ugc', claim: 'Sell the cleanup, not the blending.',
+        hook: 'It is not the smoothie that stops you. It is the six parts in the sink.',
+        headline: 'Blend it. Drink it. Rinse it. Done.', format: 'video',
+        persona: 'Busy people who want a quick smoothie without the washing up.', receipts: 6,
+      }));
+    });
+    await go(page, '/#composer');
+    await page.waitForSelector('.goal-tile', { timeout: 20000 });
+    const names = await page.$$eval('.goal-tile .goal-name', (n) => n.map((x) => x.textContent.trim()));
+    assert(!names.some((n) => /static ads/i.test(n)),
+      'the statics tile was offered against a video verdict: ' + names.join(' | '));
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.goal-tile')]
+        .find((x) => x.textContent.toLowerCase().includes('real customer')).click();
+    });
+    await page.waitForSelector('#config-body textarea', { timeout: 15000 });
+    const st = await page.evaluate(() => {
+      const step = [...document.querySelectorAll('#config-body .config-step')]
+        .find((s) => /creative direction/i.test(s.textContent));
+      const box = step && step.querySelector('textarea');
+      return { notes: box ? box.value : '' };
+    });
+    assert(/six parts in the sink/i.test(st.notes),
+      'the hook did not reach the video brief: "' + st.notes + '"');
+  }, 40000);
+
   /* Arriving from a read is a different conversation from arriving cold: the
    * what is already decided, so the chooser may only ask the how. Check 20
    * proves the brief survives; this proves the question changes. */

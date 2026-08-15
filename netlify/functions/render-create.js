@@ -1046,13 +1046,37 @@ async function planOrder(order) {
     const detail = (adFacts && adFacts.description) ? String(adFacts.description).slice(0, 400) : '';
     const brandLine = s.productSiteName ? ' by ' + s.productSiteName : '';
 
-    // The angle's headline when the order came from a validation report,
-    // otherwise the customer's own direction. Never invented here.
-    const headlineSrc = (revising && s.revise.headline) ? s.revise.headline : s.headline;
+    /*
+     * The angle's headline when the order came from a validation report,
+     * otherwise the customer's own direction. Never invented here.
+     *
+     * s.angle is the fallback because the studio only started sending
+     * s.headline once this leak was found: a report-driven pack used to arrive
+     * with headline empty and render "No on-image text" over twenty creatives
+     * while the proven line sat in `directions` as advisory context. Reading
+     * the angle too means an order saved before that fix, or built by any
+     * path that carries the angle without flattening it, still lands the line.
+     */
+    const angle = (s.angle && typeof s.angle === 'object') ? s.angle : null;
+    const headlineSrc = (revising && s.revise.headline)
+      ? s.revise.headline
+      : (s.headline || (angle && (angle.headline || angle.claim)) || '');
     const headline = (typeof headlineSrc === 'string' && headlineSrc.trim())
       ? headlineSrc.trim().slice(0, 90)
       : '';
     const directions = (s.directions && String(s.directions).slice(0, 400)) || '';
+
+    /*
+     * Who the ad is for, in the ad's own brief.
+     *
+     * The report measures a persona and the studio was flattening it into the
+     * same free-text paragraph as everything else, where it reads as one more
+     * adjective. Named, the engine can cast and stage for it. Nothing is
+     * invented: this is only ever present when a report produced it.
+     */
+    const personaLine = (angle && angle.persona)
+      ? 'Who this is for: ' + String(angle.persona).slice(0, 200) + '. '
+      : '';
 
     /*
      * Placement ratios: 4:5 is the feed workhorse, 1:1 travels everywhere, 9:16
@@ -1126,6 +1150,7 @@ async function planOrder(order) {
         'Product: ' + name + brandLine + '. ' +
         (detail ? 'What it is: ' + detail + ' ' : '') +
         (brandBrief(s) ? brandBrief(s) + '. ' : '') +
+        personaLine +
         (directions ? 'Brand direction: ' + directions + ' ' : '') +
         reviewLine +
         'Studio quality commercial photography, clean composition with room for text, ' +

@@ -176,6 +176,53 @@ if (sent.length >= 2) {
   }
 }
 
+/* ── The proven angle, all the way to the engine ──────────────────
+ *
+ * The seam the product hangs on. A report proves a line; the pack has to
+ * render THAT line, as literal on-image text, not paraphrase it from a
+ * "Brand direction:" aside. This used to arrive with headline empty and take
+ * the else branch: "No on-image text." */
+{
+  const packPrompt = async (selections) => {
+    const plan = await planOrder({ product: 'adpack', selections });
+    return (plan && plan.paramsList && plan.paramsList[0] && plan.paramsList[0].prompt) || '';
+  };
+
+  const HEAD = 'Blend it. Drink it. Rinse it. Done.';
+
+  const withHeadline = await packPrompt({
+    link: 'https://example-store.com/products/portable-blender',
+    productName: 'Portable Blender',
+    headline: HEAD,
+    directions: 'Sell the cleanup, not the blending.',
+    angle: { claim: 'Sell the cleanup, not the blending.', persona: 'Busy people who hate washing up', receipts: 6 },
+  });
+  check('a report-driven pack renders the proven headline as on-image text',
+    withHeadline.includes('Render this exact on-image text, spelled exactly: "' + HEAD + '"'),
+    withHeadline.slice(0, 260));
+  check('  and does NOT say "No on-image text"', !withHeadline.includes('No on-image text'),
+    withHeadline.slice(0, 260));
+  check('  and names who the ad is for',
+    withHeadline.includes('Who this is for: Busy people who hate washing up'), withHeadline.slice(0, 400));
+
+  // An order that carries only the structured angle still lands the line.
+  const angleOnly = await packPrompt({
+    link: 'https://example-store.com/products/portable-blender',
+    productName: 'Portable Blender',
+    angle: { headline: HEAD, claim: 'Sell the cleanup', persona: '', receipts: 6 },
+  });
+  check('an order carrying only the angle still lands the headline',
+    angleOnly.includes('spelled exactly: "' + HEAD + '"'), angleOnly.slice(0, 260));
+
+  // No report, no angle: nothing is invented. Blank stays blank.
+  const cold = await packPrompt({
+    link: 'https://example-store.com/products/portable-blender',
+    productName: 'Portable Blender',
+  });
+  check('a cold pack with no proven line invents none',
+    cold.includes('No on-image text') && !cold.includes('spelled exactly'), cold.slice(0, 200));
+}
+
 if (WANT === 'anthropic') {
   console.log(`\n  ${C.y}Not checked here:${C.x} that an Anthropic cache READ occurs. That needs`);
   console.log(`  a real ANTHROPIC_API_KEY and an assertion on cache_read_input_tokens > 0`);

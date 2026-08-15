@@ -65,6 +65,13 @@
   ];
 
   /* ── Non-video products (More tiles) ── */
+  /* Products that put words ON the image, and so can carry a proven headline
+   * as literal on-image text. A video says its line out loud instead, so
+   * burning the headline into every frame would be the wrong instruction.
+   * Mirrors IMAGE_PRODUCTS in render-create.js minus photoshoot, which is
+   * product photography and takes no copy. */
+  var STATIC_TEXT_PRODUCTS = ['adpack', 'adsingle'];
+
   var PRODUCTS = {
     photoshoot: { title: 'Product Photoshoot', kicker: 'Ten images, one pass', price: 9, eta: '~2 min', steps: ['link', 'mode', 'aspect', 'notes'] },
     adpack:     { title: 'DTC Ad Pack', kicker: 'Twenty static ads, twenty angles', price: 12, eta: '~2 min', steps: ['link', 'formats', 'notes'] },
@@ -101,6 +108,7 @@
     peekJob: null,  // in-flight peek { link, promise }
     prefs: {},      // composer-chosen settings { duration, aspectId, quality }
     angleBrief: '', // creative direction carried over from a research report
+    angle: null,    // the whole proven angle behind it, when there is one
     heroPhotos: [], // photos added in the hero, before any product exists
     creditBalance: null, // null = unknown or signed out, never treated as zero
     payWith: 'card',     // 'credits' when the balance covers the order
@@ -1930,6 +1938,49 @@
       state.sel.directions = state.angleBrief.slice(0, 1200);
     }
 
+    /*
+     * The proven headline, as the headline, not as advice.
+     *
+     * This is the seam the whole product hangs on and it was leaking. The
+     * headline reached the studio, went into the creative-direction box, and
+     * stopped. Nothing ever set selections.headline, so render-create read it
+     * as empty and took the else branch at the bottom of the ad prompt:
+     * "No on-image text." A merchant paid for research, we proved a line, and
+     * then rendered twenty creatives with no line on them, while the proven
+     * one was demoted to a "Brand direction:" aside the engine is free to
+     * paraphrase or ignore.
+     *
+     * /validate's own free render already does this correctly, which is the
+     * tell: the free ad carries the headline and the paid pack did not.
+     *
+     * Only for products that put text on an image. A video says its line out
+     * loud, so a headline burned into every frame of it would be wrong.
+     */
+    if (state.angle && !state.sel.headline && STATIC_TEXT_PRODUCTS.indexOf(state.product) >= 0) {
+      var proven = state.angle.headline || state.angle.claim || '';
+      if (proven) state.sel.headline = String(proven).slice(0, 90);
+    }
+
+    /*
+     * The rest of the angle, kept whole rather than flattened into one string.
+     *
+     * The brief the engine gets is better for knowing who the ad is for and
+     * what the evidence actually was, and those were being thrown away at the
+     * handoff: only one concatenated `direction` string survived. Carried as
+     * structured fields, the server can use each part where it belongs instead
+     * of parsing a paragraph back apart.
+     */
+    if (state.angle && !state.sel.angle) {
+      state.sel.angle = {
+        claim: state.angle.claim || '',
+        hook: state.angle.hook || '',
+        headline: state.angle.headline || '',
+        persona: state.angle.persona || '',
+        format: state.angle.format || '',
+        receipts: state.angle.receipts || 0,
+      };
+    }
+
     /* Photos chosen in the hero, before there was a product to attach them to.
      * Same reason the brief is held on state: openConfig resets state.sel. */
     if (state.heroPhotos.length && !(state.sel.photos || []).length) {
@@ -2016,7 +2067,28 @@
     { ico: '🎬', name: 'Make it look premium', sub: 'Director-grade camera, lighting and colour.', product: 'cinematic' },
     { ico: '📦', name: 'Show the product', sub: 'Your product in real hands, opened and shown off.', product: 'mode:unboxing' },
     { ico: '🧪', name: 'Show how it works', sub: 'A clear walkthrough of using it, start to finish.', product: 'mode:tutorial' },
+    /* Statics. Not in the cold grid, because someone arriving with no research
+     * is choosing a look and every other tile here is a video. It appears, and
+     * leads, when a report has actually measured that statics is the format
+     * this market responds to. */
+    { ico: '🖼️', name: 'Run it as static ads', sub: 'Twenty images, twenty arguments, each carrying your proven line.', product: 'adpack', staticsOnly: true },
   ];
+
+  /*
+   * What the research said the format should be.
+   *
+   * The report measures this and returns it on the angle. It used to decide
+   * nothing except which button on the report page looked primary: the studio
+   * then offered the same six video goals whatever the evidence said, so a
+   * market proven to respond to statics was sold a video. This makes the
+   * verdict steer the grid, and makes "let Hexa choose" resolve to it.
+   */
+  function staticsVerdict() {
+    var a = state.angle;
+    if (!a) return false;
+    if (a.product === 'adpack') return true;
+    return /^(static|statics|image|images)$/i.test(String(a.format || ''));
+  }
 
   /* The live preview clip a preset would render with: its scene, else its hook. */
   function presetClip(p) {
@@ -2089,19 +2161,41 @@
     /* Goals first. Every one of these opens a product we already build; the
      * mapping is ours to know and the merchant's to never think about. */
     var goals = el('div', 'goal-grid');
-    GOALS.forEach(function (g) {
+    /*
+     * The order of these tiles is the recommendation, so the evidence decides
+     * it. On a statics verdict the statics tile appears and leads; otherwise it
+     * is not offered at all, because a merchant with no research behind them is
+     * choosing between looks and every other tile here is a video.
+     */
+    var statics = staticsVerdict();
+    var tiles = GOALS.filter(function (g) { return statics || !g.staticsOnly; })
+      .map(function (g) {
+        if (!statics) return g;
+        // Shallow copy: GOALS is module state and must not be re-badged in place.
+        if (g.staticsOnly) return Object.assign({}, g, { lead: true });
+        return Object.assign({}, g, { lead: false });
+      });
+    if (statics) tiles.sort(function (a, b) { return (b.lead ? 1 : 0) - (a.lead ? 1 : 0); });
+
+    tiles.forEach(function (g) {
       var t = el('button', 'goal-tile' + (g.lead ? ' goal-tile-lead' : ''));
       t.type = 'button';
       t.appendChild(el('span', 'goal-ico', g.ico));
       var meta = el('span', 'goal-meta');
-      if (g.lead) meta.appendChild(el('span', 'goal-badge', 'Recommended'));
+      if (g.lead) {
+        meta.appendChild(el('span', 'goal-badge',
+          g.staticsOnly ? 'What the research found' : 'Recommended'));
+      }
       meta.appendChild(el('span', 'goal-name', g.name));
       meta.appendChild(el('span', 'goal-sub', g.sub));
       t.appendChild(meta);
       t.appendChild(el('span', 'goal-price', formatPrice(g.product)));
       t.addEventListener('click', function () {
-        if (g.product.indexOf('mode:') === 0) openMode(g.product.slice(5));
-        else openConfig(g.product);
+        // "Let Hexa choose" is not a shrug: it means choose from the evidence,
+        // and the evidence has already named the format.
+        var product = (g.product === 'auto' && statics) ? 'adpack' : g.product;
+        if (product.indexOf('mode:') === 0) openMode(product.slice(5));
+        else openConfig(product);
       });
       goals.appendChild(t);
     });
@@ -3368,6 +3462,10 @@
       // Held on state so it survives whichever goal they pick next, instead of
       // only reaching the single product this handoff happened to name.
       state.angleBrief = direction || '';
+      /* The whole angle, not just the sentence that fitted in the notes box.
+       * openConfig reads it to set the on-image headline and to hand the
+       * server the persona, the format verdict and the evidence count. */
+      state.angle = handoff;
 
       /*
        * The research decided what to say. How to make it is still a question,
