@@ -565,10 +565,24 @@
         window.location.href = '/login.html?next=' + encodeURIComponent('/render.html?credits=1');
         return;
       }
+      /*
+       * The key is minted and saved BEFORE the request, which is the whole
+       * point. Saving the jobs afterwards, which is all this used to do,
+       * leaves a window: refresh while the create is in flight and the page
+       * came back with no jobs, called again, and charged the balance twice.
+       * Minted first, a refresh in that window sends the same key and the
+       * server hands back the render already running.
+       */
+      if (!order.idem) {
+        order.idem = (window.crypto && window.crypto.randomUUID)
+          ? window.crypto.randomUUID()
+          : 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+        try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
+      }
       fetch(CREATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ order: order }),
+        body: JSON.stringify({ order: order, idempotencyKey: order.idem }),
       })
         .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d); }); })
         .then(function (d) {

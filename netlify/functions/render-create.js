@@ -101,7 +101,7 @@ const AD_FORMAT_NAMES = AD_FORMATS
  * renders while testing logged in). Anonymous dev renders own nothing and
  * write nothing. Failures only log: the render itself must never break
  * because bookkeeping hiccuped. Returns the creation id or null. */
-async function persistCreation(order, engine, paidSessionId, event, creditOrderId) {
+async function persistCreation(order, engine, paidSessionId, event, creditOrderId, jobs) {
   try {
     if (!sb.configured()) return null;
     const db = sb.admin();
@@ -141,9 +141,24 @@ async function persistCreation(order, engine, paidSessionId, event, creditOrderI
       const langName = sel.language && DUB_LANGUAGES[sel.language] ? ' (' + DUB_LANGUAGES[sel.language] + ')' : '';
       title = (labels[product] || 'Edited') + langName + ' · ' + (sel._sourceTitle || 'your film');
     }
+    /*
+     * The jobs this row is made of.
+     *
+     * The column has existed since the first schema and nothing ever wrote it,
+     * so it was always the empty default. account.js:93 builds the "rejoin
+     * this render" link out of it, which meant a card that was still rendering
+     * fell through to href="#": the one moment a customer most wants to click
+     * back into their render was the one moment the link went nowhere. It is
+     * also what lets a repeated credit render replay instead of charging twice.
+     */
+    const jobIds = Array.isArray(jobs)
+      ? jobs.map(function (j) { return j && j.id; }).filter(Boolean)
+      : [];
+
     const { data: row, error } = await db.from('creations').insert({
       user_id: userId,
       order_id: orderId,
+      job_ids: jobIds,
       engine: engine || null,
       type: IMAGE_PRODUCTS.indexOf(product) >= 0 ? 'image' : 'video',
       title: title.slice(0, 120),
@@ -192,6 +207,86 @@ const DUB_LANGUAGES = {
   tur: 'Turkish', ara: 'Arabic', hin: 'Hindi', cmn: 'Mandarin', jpn: 'Japanese',
   kor: 'Korean', ind: 'Indonesian', fil: 'Filipino',
 };
+
+/* ── Credit-render replay guard ───────────────────────────────────
+ *
+ * Three small pieces: recognise a duplicate-key error, insert an order
+ * carrying the key, and find what a previous request with that key produced.
+ */
+
+/* PostgREST reports a unique violation as SQLSTATE 23505. The message match is
+ * a belt-and-braces fallback for clients that flatten the code away. */
+function isDuplicateKey(err) {
+  if (!err) return false;
+  return err.code === '23505' || /duplicate key value violates unique/i.test(String(err.message || ''));
+}
+
+/* An idempotency key is opaque to us; it only has to be stable and not be a
+ * vector. Bounded and character-restricted so it cannot be used to smuggle
+ * anything into a column other people's queries read. */
+function cleanIdempotencyKey(raw) {
+  const s = typeof raw === 'string' ? raw.trim() : '';
+  return /^[A-Za-z0-9_-]{8,128}$/.test(s) ? s : null;
+}
+
+/*
+ * Insert the order with its key.
+ *
+ * The fallback exists because migration 013 adds the column, and a deploy that
+ * lands before the migration is applied would otherwise fail every credit
+ * render with "column orders.idempotency_key does not exist" (SQLSTATE 42703).
+ * Losing the replay guard is bad; refusing to render at all is worse. It logs
+ * loudly, because running like this means the migration still has to be run.
+ */
+async function insertCreditOrder(fields, idempotencyKey) {
+  const db = sb.admin();
+  const withKey = idempotencyKey ? Object.assign({}, fields, { idempotency_key: idempotencyKey }) : fields;
+  const first = await db.from('orders').insert(withKey).select('id').single();
+  if (!first.error || !idempotencyKey) return first;
+  if (first.error.code === '42703' || /idempotency_key/.test(String(first.error.message || ''))) {
+    console.error('orders.idempotency_key missing: apply supabase/migrations/013_order_idempotency.sql. ' +
+      'Credit renders are running WITHOUT a double-charge guard.');
+    return db.from('orders').insert(fields).select('id').single();
+  }
+  return first;
+}
+
+/*
+ * What an earlier request with this key already made, in the shape a fresh
+ * create returns, so the browser cannot tell the difference and simply
+ * rejoins its render. Returns null when there is nothing to replay.
+ */
+async function replayCreditOrder(userId, idempotencyKey) {
+  if (!idempotencyKey) return null;
+  try {
+    const db = sb.admin();
+    const { data: prior, error } = await db.from('orders')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('idempotency_key', idempotencyKey)
+      .maybeSingle();
+    if (error || !prior) return null;
+
+    const { data: creation } = await db.from('creations')
+      .select('id,job_ids,engine')
+      .eq('order_id', prior.id)
+      .maybeSingle();
+    if (!creation || !creation.job_ids || !creation.job_ids.length) return null;
+
+    const all = creation.job_ids;
+    return {
+      jobs: all.map(function (id, i) { return { id: id, segment: i + 1, of: all.length }; }),
+      engine: creation.engine || null,
+      creation: creation.id,
+      replay: true,
+    };
+  } catch (e) {
+    /* A replay lookup that errors must not block the render. The worst case is
+     * the old behaviour, and the unique index still catches the insert. */
+    console.error('replay lookup failed:', e.message);
+    return null;
+  }
+}
 
 /*
  * Validate a paid Stripe session against the order. Returns:
@@ -1066,11 +1161,13 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'POST only' });
   if (!hf.configured()) return json(503, { error: 'generation backend not configured' });
 
-  let order, paidSessionId;
+  let order, paidSessionId, idempotencyKey;
   try {
     const body = JSON.parse(event.body || '{}');
     order = body.order;
     paidSessionId = typeof body.paid === 'string' ? body.paid : null;
+    // Only the credit path uses this; the card path replays off the session.
+    idempotencyKey = cleanIdempotencyKey(body.idempotencyKey);
   } catch (e) { return json(400, { error: 'bad json' }); }
   if (!order || !order.product) return json(400, { error: 'missing order' });
 
@@ -1202,16 +1299,42 @@ exports.handler = async (event) => {
       const credits = creditsForOrder(order);
       if (!credits) return json(400, { error: 'this product has no credit price' });
 
+      /*
+       * The credit path's replay guard, which is what the card path gets for
+       * free from Stripe: a session id the server recognises a second time.
+       *
+       * Credits had nothing equivalent. The whole defence was one
+       * localStorage.setItem in the browser, written AFTER this call returned,
+       * so a refresh mid-flight, a quota error or private mode charged the
+       * balance twice for one render. The key is now generated and stored by
+       * the client BEFORE the request and recorded here, with uniqueness
+       * decided by Postgres (migration 013) rather than by a check in code.
+       */
+      const replay = await replayCreditOrder(user.userId, idempotencyKey);
+      if (replay) {
+        console.log('credit render replayed for key', idempotencyKey);
+        return json(200, replay);
+      }
+
       // The order row exists before the spend so the ledger has something
       // stable to point at, and so a refund can find what was paid for it.
       const priced = priceStudioOrder(order);
-      const { data: row, error: orderErr } = await sb.admin().from('orders').insert({
+      const { data: row, error: orderErr } = await insertCreditOrder({
         user_id: user.userId,
         product: order.product,
         selections: order.selections || {},
         amount_cents: priced ? priced.amountCents : null,
         status: 'paid',
-      }).select('id').single();
+      }, idempotencyKey);
+
+      /* Lost the race: another request with the same key inserted first, which
+       * is the double submit this exists to catch. Hand back what it made
+       * rather than charging again. */
+      if (orderErr && isDuplicateKey(orderErr)) {
+        const raced = await replayCreditOrder(user.userId, idempotencyKey);
+        if (raced) return json(200, raced);
+        return json(409, { error: 'That render is already starting. Give it a moment.' });
+      }
       if (orderErr || !row) return json(503, { error: 'could not open an order' });
 
       const { error: spendErr } = await sb.admin().rpc('credit_spend', {
@@ -1286,7 +1409,7 @@ exports.handler = async (event) => {
   try {
     const jobs = await createJobsInWaves(plan);
     if (stampJobs) await stampJobs(jobs, plan.jobType);
-    const creationId = await persistCreation(order, plan.jobType, paidSessionId, event, creditOrderId);
+    const creationId = await persistCreation(order, plan.jobType, paidSessionId, event, creditOrderId, jobs);
     return json(200, {
       jobs: jobs,
       engine: plan.jobType,

@@ -36,10 +36,14 @@ function check(name, cond, detail) {
  * Tables are plain arrays. The builder collects filters and applies them on
  * the terminal call, which is what makes a lookup on the wrong ref return
  * nothing instead of the first row it finds. */
-function makeDb(seed) {
+function makeDb(seed, opts) {
   const tables = JSON.parse(JSON.stringify(seed));
   const rpcCalls = [];
   const refunded = new Set(); // stands in for credit_ledger_refund_once
+  /* Set false to model a database where migration 013 has not been applied, so
+   * the code's fallback can be checked rather than assumed. */
+  const hasIdemColumn = !opts || opts.hasIdemColumn !== false;
+  let seq = 0;
 
   function builder(name) {
     const filters = [];
@@ -51,12 +55,39 @@ function makeDb(seed) {
       in(col, vals) { filters.push((r) => vals.includes(r[col])); return api; },
       maybeSingle() { return Promise.resolve({ data: rows()[0] || null, error: null }); },
       single() { const r = rows()[0]; return Promise.resolve({ data: r || null, error: r ? null : { message: 'no rows' } }); },
+      insert(row) {
+        let err = null;
+        if (name === 'orders' && row.idempotency_key !== undefined && !hasIdemColumn) {
+          // Postgres 42703, the shape PostgREST returns for an unknown column.
+          err = { code: '42703', message: `column "idempotency_key" of relation "orders" does not exist` };
+        } else if (name === 'orders' && row.idempotency_key) {
+          // orders_idempotency_once: unique (user_id, idempotency_key)
+          const clash = (tables.orders || []).some((r) =>
+            r.user_id === row.user_id && r.idempotency_key === row.idempotency_key);
+          if (clash) err = { code: '23505', message: 'duplicate key value violates unique constraint "orders_idempotency_once"' };
+        }
+        let made = null;
+        if (!err) {
+          made = Object.assign({ id: name.slice(0, 2) + '-' + (++seq) }, row);
+          tables[name] = tables[name] || [];
+          tables[name].push(made);
+        }
+        const result = Promise.resolve({ data: err ? null : made, error: err });
+        const chain = {
+          select: () => chain,
+          single: () => result,
+          maybeSingle: () => result,
+          then: (res, rej) => result.then(res, rej),
+        };
+        return chain;
+      },
       update(patch) {
         const hit = rows();
         hit.forEach((r) => Object.assign(r, patch));
         const done = Promise.resolve({ data: hit, error: null });
         return Object.assign(done, api, { select: () => done, eq: (c, v) => { filters.push((r) => r[c] === v); return api.update(patch); } });
       },
+      delete() { const hit = rows(); tables[name] = (tables[name] || []).filter((r) => !hit.includes(r)); return api; },
       then(res, rej) { return Promise.resolve({ data: rows(), error: null }).then(res, rej); },
     };
     return api;
@@ -102,10 +133,23 @@ function install({ jobs, db, user, stripeSession }) {
       }),
     };
   }
-  stub('netlify/functions/lib/hf.js', {
+  let created = 0;
+  const hfStub = {
     configured: () => true,
     getJob: (id) => Promise.resolve(jobs[id]),
-  });
+    // Counting creates is how the double-charge test knows a replay really
+    // replayed rather than quietly rendering a second time.
+    createJob: () => Promise.resolve({ id: 'hfjob-' + (++created) }),
+    createWebProduct: () => Promise.resolve(null),
+    getWebProduct: () => Promise.resolve(null),
+    uploadImageBytes: () => Promise.resolve(null),
+    uploadVideoFromUrl: () => Promise.resolve(null),
+    createAvatars: () => Promise.resolve([]),
+    photoshootEnhance: () => Promise.resolve(null),
+    get engineCreates() { return created; },
+  };
+  stub('netlify/functions/lib/hf.js', hfStub);
+  install.hf = hfStub;
   stub('netlify/functions/lib/supabase.js', { configured: () => true, admin: () => db });
   stub('netlify/functions/lib/auth.js', { getUser: () => Promise.resolve(user), bearer: () => 'tok' });
   stub('netlify/functions/lib/ratelimit.js', { allow: () => Promise.resolve(true), ipOf: () => '1.1.1.1' });
@@ -113,6 +157,7 @@ function install({ jobs, db, user, stripeSession }) {
   return {
     status: require(join(ROOT, 'netlify/functions/render-status.js')),
     recover: require(join(ROOT, 'netlify/functions/order-recover.js')),
+    create: require(join(ROOT, 'netlify/functions/render-create.js')),
   };
 }
 
@@ -258,6 +303,79 @@ console.log('\n  Money path\n');
   const mod = install({ jobs: {}, db, user: null, stripeSession: { payment_status: 'unpaid' } });
   const res = await recover(mod, { paid: 'cs_test_unpaid123456' });
   check('an unpaid checkout recovers nothing', res.statusCode === 402, res.statusCode + ' ' + res.body);
+}
+
+/* ── 10. A credit render cannot be charged twice ─────────────────
+ *
+ * The real scenario: the browser fires the create, and before the answer
+ * lands the page is refreshed. Previously the jobs were only saved AFTER the
+ * response, so the second attempt looked like a brand new order and spent the
+ * balance again. Both attempts now carry the same key. */
+{
+  const db = makeDb({
+    profiles: [{ id: 'user-1' }],
+    credit_ledger: [{ user_id: 'user-1', kind: 'grant', ref: 'signup', delta: 50000 }],
+  });
+  const mod = install({ jobs: {}, db, user: USER });
+  const order = { product: 'adsingle', selections: { productName: 'Blender', aspect: '4:5' } };
+  const post = (key) => mod.create.handler({
+    httpMethod: 'POST',
+    headers: { authorization: 'Bearer tok' },
+    body: JSON.stringify({ order, idempotencyKey: key }),
+  });
+
+  const first = body(await post('key-abc-0001'));
+  const second = body(await post('key-abc-0001'));
+  const spends = db.rpcCalls.filter((c) => c.fn === 'credit_spend');
+
+  check('the same key charges once', spends.length === 1, `${spends.length} credit_spend calls`);
+  check('  and the replay hands back the SAME jobs',
+    !!second.jobs && JSON.stringify(second.jobs) === JSON.stringify(first.jobs),
+    JSON.stringify({ first: first.jobs, second: second.jobs }));
+  check('  and is marked as a replay', second.replay === true, JSON.stringify(second));
+  check('  and starts no second render on the engine', install.hf.engineCreates === first.jobs.length,
+    `${install.hf.engineCreates} engine creates for ${first.jobs.length} jobs`);
+  check('  and opens only one order', (db.tables.orders || []).length === 1, `${(db.tables.orders || []).length} orders`);
+
+  // A different key is a different order, and must still work.
+  const third = body(await post('key-abc-0002'));
+  check('a different key is a different render',
+    !!third.jobs && !third.replay && db.rpcCalls.filter((c) => c.fn === 'credit_spend').length === 2,
+    JSON.stringify({ replay: third.replay, spends: db.rpcCalls.filter((c) => c.fn === 'credit_spend').length }));
+}
+
+/* ── 11. The library row records the jobs it is made of ──────────── */
+{
+  const db = makeDb({
+    profiles: [{ id: 'user-1' }],
+    credit_ledger: [{ user_id: 'user-1', kind: 'grant', ref: 'signup', delta: 50000 }],
+  });
+  const mod = install({ jobs: {}, db, user: USER });
+  const res = body(await mod.create.handler({
+    httpMethod: 'POST',
+    headers: { authorization: 'Bearer tok' },
+    body: JSON.stringify({ order: { product: 'adsingle', selections: { productName: 'Blender' } }, idempotencyKey: 'key-jobs-0001' }),
+  }));
+  const creation = (db.tables.creations || [])[0];
+  check('the creation stores its job ids, so the library can link back to a live render',
+    !!creation && creation.job_ids.length === res.jobs.length && creation.job_ids[0] === res.jobs[0].id,
+    JSON.stringify(creation && creation.job_ids));
+}
+
+/* ── 12. Without migration 013, renders still work ───────────────── */
+{
+  const db = makeDb({
+    profiles: [{ id: 'user-1' }],
+    credit_ledger: [{ user_id: 'user-1', kind: 'grant', ref: 'signup', delta: 50000 }],
+  }, { hasIdemColumn: false });
+  const mod = install({ jobs: {}, db, user: USER });
+  const res = body(await mod.create.handler({
+    httpMethod: 'POST',
+    headers: { authorization: 'Bearer tok' },
+    body: JSON.stringify({ order: { product: 'adsingle', selections: { productName: 'Blender' } }, idempotencyKey: 'key-nomig-0001' }),
+  }));
+  check('a database without migration 013 still renders, guard or no guard',
+    !!res.jobs && res.jobs.length > 0, JSON.stringify(res));
 }
 
 console.log(`\n  ${fail === 0 ? C.g : C.r}${pass}/${pass + fail} passed${C.x}\n`);
