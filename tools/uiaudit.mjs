@@ -412,15 +412,31 @@ function session({ emptyLibrary = false } = {}) {
   };
 }
 
+/*
+ * The fourth slot is an action run after load and before measuring. Some of
+ * what we ship is only reachable by clicking: the account Settings tab, and
+ * the brand-profile fields inside it, sit behind a tab button, so every
+ * element in there fails the visibility filter and the audit walked straight
+ * past a whole screen while reporting the page clean.
+ */
 const PAGES = [
   ['/', 'home'],
   ['/validate?url=https://example-store.com/products/portable-blender', 'report'],
   [`/render.html?order=${RENDER_ORDER}&jobs=job-1`, 'render'],
   ['/account.html', 'account', session()],
   ['/account.html?welcome=1', 'account-welcome', session({ emptyLibrary: true })],
+  ['/account.html', 'account-settings', session(), async (page) => {
+    await page.click('#tab-settings');
+    await page.waitForSelector('#panel-settings:not([hidden])', { timeout: 5000 }).catch(() => {});
+  }],
+  /* Loaded clean but only ever smoke-checked until now. */
+  ['/login.html', 'login'],
+  ['/intake.html', 'intake'],
+  ['/thanks.html', 'thanks'],
+  ['/order-confirmed.html', 'order-confirmed'],
 ];
 
-for (const [url, name, prep] of PAGES) {
+for (const [url, name, prep, act] of PAGES) {
   for (const [w, h, label, touch] of WIDTHS) {
     const page = await browser.newPage();
     await page.setViewport({ width: w, height: h, hasTouch: touch, isMobile: touch });
@@ -432,6 +448,8 @@ for (const [url, name, prep] of PAGES) {
     // The delivered state is the one worth measuring: reveal() adds .done once
     // the poll completes, so without this the audit sees the progress frame.
     if (url.includes('render.html')) await page.waitForSelector('#stage-frame.done', { timeout: 20000 }).catch(() => {});
+    // Put the page into the state worth measuring before measuring it.
+    if (act) await act(page).catch((e) => console.log(`  ${name}: ${e.message.slice(0, 60)}`));
     // Let the reveal observers fire, so nothing is measured mid-transition.
     await page.evaluate(async () => {
       window.scrollTo(0, document.body.scrollHeight);
