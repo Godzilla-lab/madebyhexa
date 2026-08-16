@@ -242,7 +242,12 @@ function audit() {
    */
   for (const el of document.querySelectorAll('button, a, input, select, textarea')) {
     if (!vis(el)) continue;
-    const name = (el.textContent || '').trim() ||
+    /* A link wrapping only an image is named by that image's alt text, which
+     * is how the account welcome strip is built. textContent cannot see alt,
+     * so leaving it out reported four correctly-labelled links as nameless. */
+    const fromImg = [...el.querySelectorAll('img[alt]')]
+      .map((i) => i.getAttribute('alt').trim()).filter(Boolean).join(' ');
+    const name = (el.textContent || '').trim() || fromImg ||
       el.getAttribute('aria-label') || el.getAttribute('title') ||
       (el.id && document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent.trim()) ||
       el.closest('label')?.textContent.trim() ||
@@ -254,11 +259,61 @@ function audit() {
         detail: `<${el.tagName.toLowerCase()}${el.type ? ' type=' + el.type : ''}${el.className ? ' class="' + String(el.className).split(' ')[0] + '"' : ''}> has no text, label or aria-label` });
     }
   }
+  /*
+   * The defect is layout SHIFT, not a missing attribute.
+   *
+   * "Every <img> needs width and height" is the usual phrasing of this rule,
+   * and taking it literally flagged all 96 images on the site: 274 findings,
+   * every one of them wrong. The catalogue posters are position:absolute
+   * inside a parent carrying aspect-ratio 9/16, and .review-avatar has a
+   * fixed 44px height in CSS. None of them can move anything while loading,
+   * because none of their boxes depend on the file's intrinsic size.
+   *
+   * So ask the question that matters instead: is this box defined without the
+   * image? width/height attributes are one way. CSS aspect-ratio, an explicit
+   * CSS height, an aspect-ratio on the parent, or being out of flow entirely
+   * are all equally good, and are what this codebase actually uses.
+   */
+  const sizedByCss = (el) => {
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules; } catch { continue; } // cross-origin
+      /* Check the declaration BEFORE recursing. In current Chrome a plain
+       * CSSStyleRule also carries a .cssRules list (for CSS nesting), and an
+       * empty list is still truthy, so testing it first silently skipped every
+       * ordinary rule on the site and this whole helper always said false. */
+      const walk = (list) => {
+        for (const rule of list) {
+          /* `height: auto` is the opposite of a held box, and the site does
+           * ship it (.c-cell img). Counting it as "sized" would mark exactly
+           * the shifting images safe. */
+          const h = rule.style && rule.style.height;
+          const ar = rule.style && rule.style.aspectRatio;
+          const holds = (h && h !== 'auto') || (ar && ar !== 'auto');
+          if (rule.selectorText && holds) {
+            try { if (el.matches(rule.selectorText)) return true; } catch { /* :has etc */ }
+          }
+          if (rule.cssRules && rule.cssRules.length && walk(rule.cssRules)) return true; // @media, @supports
+        }
+        return false;
+      };
+      if (walk(rules)) return true;
+    }
+    return false;
+  };
   for (const img of document.querySelectorAll('img')) {
     if (!vis(img)) continue;
-    if (!img.getAttribute('width') || !img.getAttribute('height')) {
-      out.push({ sec: img.closest('section')?.id || 'page', rule: 'img-no-dimensions',
-        detail: `${(img.getAttribute('src') || '').split('/').pop().slice(0, 40)} has no width/height, so it shifts layout as it loads` });
+    const s = getComputedStyle(img);
+    const parent = img.parentElement;
+    const held =
+      (img.getAttribute('width') && img.getAttribute('height')) ||
+      s.position === 'absolute' || s.position === 'fixed' ||
+      s.aspectRatio !== 'auto' ||
+      (parent && getComputedStyle(parent).aspectRatio !== 'auto') ||
+      sizedByCss(img);
+    if (!held) {
+      out.push({ sec: img.closest('section')?.id || 'page', rule: 'img-can-shift-layout',
+        detail: `${(img.getAttribute('src') || '').split('/').pop().slice(0, 40)}: nothing fixes this box, so the page moves when it loads` });
     }
     if (img.getAttribute('alt') === null) {
       out.push({ sec: img.closest('section')?.id || 'page', rule: 'img-no-alt',

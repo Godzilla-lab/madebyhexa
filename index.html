@@ -149,7 +149,12 @@
             <div class="composer" id="composer-box">
               <div class="composer-bar">
                 <svg class="composer-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                <input type="url" id="composer-link" placeholder="Paste a Shopify, Amazon or any product link" autocomplete="off" spellcheck="false" />
+                <!-- A placeholder is not a label: it is announced as a hint on
+                     some readers and not at all on others, and it disappears the
+                     moment anyone types. The visible "What are you selling?"
+                     heading is already the right words, so name the field from
+                     it rather than inventing a second wording to drift. -->
+                <input type="url" id="composer-link" aria-labelledby="entry-ask" placeholder="Paste a Shopify, Amazon or any product link" autocomplete="off" spellcheck="false" />
                 <span class="composer-product" id="composer-product" hidden>
                   <img id="composer-product-img" alt="" />
                   <span class="composer-product-name" id="composer-product-name"></span>
