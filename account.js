@@ -8,6 +8,21 @@
   // instead of a bare empty library.
   var WELCOME = new URLSearchParams(location.search).get('welcome') === '1';
 
+  /*
+   * What a market read costs, and where the number comes from.
+   *
+   * Overwritten by loadActionPrices() from catalog/credit-packs.json, which
+   * tools/build-credit-packs.mjs generates out of pricing.json. Two surfaces
+   * quote this number (the line under the composer and "enough for N reads"),
+   * and a number typed in two places drifts from the one that decides the
+   * charge: measured 2026-08-15, the action chips advertised $4/$9/$4 while
+   * the server billed $3/$7/$3.
+   *
+   * The literal here matches DEEP_REPORT_CREDITS in report-create.js and only
+   * applies if that fetch fails, where the last agreed price beats no price.
+   */
+  var REPORT_CREDITS = 1000;
+
   function firstName(name) {
     if (!name) return null;
     // an email prefix is not a name; the greeting reads better without one
@@ -56,6 +71,11 @@
         ACTIONS.forEach(function (a) {
           if (typeof usd[a.key] === 'number') a.price = '$' + usd[a.key];
         });
+        /* Products are quoted in credits, because credits are what the account
+         * spends. Dollars belong on packs, which are the only thing bought
+         * with money. */
+        var cr = (d && d.product_credits) || {};
+        if (typeof cr.report === 'number') REPORT_CREDITS = cr.report;
       })
       .catch(function () { /* labels stay priceless; checkout still prices it */ });
   }
@@ -172,8 +192,11 @@
     row.replaceWith(pick);
   }
 
-  function initActions(creations) {
-    var grid = $('acct-grid');
+  /* The same delegated handler, bound per grid. Cards are now drawn into three
+   * of them (library, recent, in flight) and each was rendered from its own
+   * slice, so `data-idx` only means anything against the list that produced
+   * that grid. Passing both together is what keeps the two in step. */
+  function initActions(creations, grid) {
     grid.addEventListener('click', function (e) {
       var btn = e.target.closest ? e.target.closest('.cr-act') : null;
       if (!btn) return;
@@ -194,26 +217,47 @@
     });
   }
 
+  /* How many finished pieces Home shows before "See all" takes over. Home is a
+   * starting point, not an archive; the archive is one tab away. */
+  var RECENT_ON_HOME = 6;
+
   function render(creations) {
     $('acct-loading').hidden = true;
+
+    var pending = creations.filter(function (c) { return c.status !== 'completed' && c.status !== 'failed'; });
+    var rest = creations.filter(function (c) { return pending.indexOf(c) < 0; });
+
+    if (pending.length) {
+      $('acct-inflight-grid').innerHTML = pending.map(cardHtml).join('');
+      $('acct-inflight').hidden = false;
+    }
+
     if (!creations.length) {
+      /* A brand new account. The welcome panel replaces the empty state on
+       * Home; the Library tab keeps its own empty state, because somebody who
+       * goes looking for a library deserves an answer about the library. */
       if (WELCOME) {
         var fn = firstName(window.HexaAuth.name());
-        if (fn) $('welcome-title').textContent = 'You are in, ' + fn + ". Let's make your first ad.";
-        $('acct-head').hidden = true;
+        if (fn) $('welcome-title').textContent = 'You are in, ' + fn + '. Run your first read and the first ad is on us.';
         $('acct-welcome').hidden = false;
-        // One path only: while onboarding, the checklist CTA is the way in.
-        // The nav button and tabs return once they own a creation.
-        document.body.classList.add('acct-onboarding');
-      } else {
-        $('acct-empty').hidden = false;
       }
+      $('acct-empty').hidden = false;
       return;
     }
+
     var grid = $('acct-grid');
     grid.innerHTML = creations.map(cardHtml).join('');
     grid.hidden = false;
-    initActions(creations);
+    initActions(creations, grid);
+
+    if (rest.length) {
+      var recent = rest.slice(0, RECENT_ON_HOME);
+      $('acct-recent-grid').innerHTML = recent.map(cardHtml).join('');
+      $('acct-recent').hidden = false;
+      initActions(recent, $('acct-recent-grid'));
+      $('acct-see-all').hidden = rest.length <= RECENT_ON_HOME;
+    }
+    if (pending.length) initActions(pending, $('acct-inflight-grid'));
   }
 
   function loadLibrary() {
@@ -226,26 +270,138 @@
       });
   }
 
+  /* ── Reports ───────────────────────────────────────────────────
+   *
+   * Read straight from PostgREST, like the Shopify connection above it. No new
+   * function is needed: the reports table has been carrying product_title,
+   * verdict, demand_signal, evidence_count, paid and status since it was
+   * created, it is indexed on (user_id, created_at desc), and the policy
+   * "reports: owner can read" is what scopes the query. There is no account id
+   * in this call to tamper with.
+   *
+   * A report only appears here because report-claim.js put a user_id on it, so
+   * this tab is also the visible proof that the claim worked.
+   * ───────────────────────────────────────────────────────────── */
+
+  var reportsLoaded = false;
+
+  function loadReports() {
+    if (reportsLoaded || !window.HexaAuth.client) return;
+    reportsLoaded = true;
+
+    window.HexaAuth.client.from('reports')
+      .select('id,product_title,product_url,verdict,demand_signal,evidence_count,paid,status,created_at')
+      .order('created_at', { ascending: false })
+      .limit(50)
+      /* PostgREST answers failures in the response rather than by rejecting,
+       * so an unchecked r.error paints a policy denial as an empty library. */
+      .then(function (r) {
+        $('acct-reports-loading').hidden = true;
+        if (!r || r.error) {
+          reportsLoaded = false;   // a transient failure should be retryable
+          $('acct-reports-loading').hidden = false;
+          $('acct-reports-loading').textContent = 'Could not load your reports. Refresh to try again.';
+          return;
+        }
+        renderReports(r.data || []);
+      }, function () {
+        reportsLoaded = false;
+        $('acct-reports-loading').textContent = 'Could not load your reports. Refresh to try again.';
+      });
+  }
+
+  function renderReports(rows) {
+    if (!rows.length) { $('acct-reports-empty').hidden = false; return; }
+    var list = $('acct-reports-list');
+    list.textContent = '';
+
+    rows.forEach(function (r) {
+      var card = elx('a', 'acct-report');
+      /* The report is restored from the row, not from this tab's storage, so
+       * the link carries the id and nothing else. The claim token is a bearer
+       * credential and never goes in a URL. */
+      card.href = '/validate?report=' + encodeURIComponent(r.id);
+
+      var top = elx('div', 'acct-report-top');
+      top.appendChild(elx('h3', 'acct-report-title', r.product_title || 'Untitled read'));
+      top.appendChild(elx('span', 'acct-report-when', fmtDate(r.created_at)));
+      card.appendChild(top);
+
+      /* Only columns that exist get drawn. demand_signal is a real column;
+       * "competition high" and "opportunity good" are not, and inventing them
+       * from nothing is how a research product stops being one. */
+      var tags = elx('div', 'acct-report-tags');
+      if (r.status === 'building') tags.appendChild(elx('span', 'acct-tag is-work', 'Still reading'));
+      else if (r.status === 'failed') tags.appendChild(elx('span', 'acct-tag is-off', 'Did not finish'));
+      if (r.demand_signal) tags.appendChild(elx('span', 'acct-tag', 'Demand ' + r.demand_signal));
+      if (r.evidence_count) {
+        tags.appendChild(elx('span', 'acct-tag', r.evidence_count.toLocaleString() + ' comments read'));
+      }
+      if (!r.paid && r.status === 'ready') tags.appendChild(elx('span', 'acct-tag is-free', 'Free read'));
+      if (tags.children.length) card.appendChild(tags);
+
+      if (r.verdict) card.appendChild(elx('p', 'acct-report-verdict', r.verdict));
+      list.appendChild(card);
+    });
+
+    list.hidden = false;
+  }
+
   /* ── Tabs ── */
 
+  var TABS = [
+    ['tab-home', 'panel-home', ''],
+    ['tab-reports', 'panel-reports', 'reports'],
+    ['tab-library', 'panel-library', 'library'],
+    ['tab-settings', 'panel-settings', 'settings'],
+  ];
+
+  function showTab(hash) {
+    TABS.forEach(function (t) {
+      var on = t[2] === hash;
+      $(t[1]).hidden = !on;
+      $(t[0]).classList.toggle('is-active', on);
+      $(t[0]).setAttribute('aria-selected', String(on));
+    });
+    if (hash === 'reports') loadReports();
+    if (hash) location.hash = hash;
+    else if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  }
+
   function initTabs() {
-    var tabL = $('tab-library');
-    var tabS = $('tab-settings');
-    function show(which) {
-      var lib = which === 'library';
-      $('panel-library').hidden = !lib;
-      $('acct-settings').hidden = lib;
-      tabL.classList.toggle('is-active', lib);
-      tabS.classList.toggle('is-active', !lib);
-      tabL.setAttribute('aria-selected', String(lib));
-      tabS.setAttribute('aria-selected', String(!lib));
-      if (!lib) location.hash = 'settings';
-      else if (location.hash === '#settings') history.replaceState(null, '', location.pathname + location.search);
-    }
-    tabL.addEventListener('click', function () { show('library'); });
-    tabS.addEventListener('click', function () { show('settings'); });
-    // Deep link: /account.html#settings (privacy page points here)
-    if (location.hash === '#settings') show('settings');
+    TABS.forEach(function (t) {
+      $(t[0]).addEventListener('click', function () { showTab(t[2]); });
+    });
+    // Deep links: #settings (the privacy page points here), #reports, #library.
+    var h = (location.hash || '').replace('#', '');
+    showTab(TABS.some(function (t) { return t[2] === h; }) ? h : '');
+  }
+
+  /* ── The composer ── */
+
+  function initComposer() {
+    var form = $('acct-composer-form');
+    var input = $('acct-composer-url');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var url = (input.value || '').trim();
+      if (!/^https?:\/\//i.test(url)) { input.focus(); return; }
+      /* Straight to the read. The studio is downstream of it now: a signed-in
+       * customer who pastes a link is asking what to say, not which style
+       * preset to use, and the research is what answers that. */
+      location.href = '/validate?url=' + encodeURIComponent(url);
+    });
+
+    $('acct-see-all').addEventListener('click', function () { showTab('library'); });
+    $('acct-empty-start').addEventListener('click', function () {
+      showTab('');
+      $('acct-composer-url').focus();
+    });
+    $('acct-reports-start').addEventListener('click', function () {
+      showTab('');
+      $('acct-composer-url').focus();
+    });
   }
 
   /* ── Settings ── */
@@ -374,7 +530,7 @@
     if (balance <= 0) return 'Top up to make your next ad.';
     var ads = Math.floor(balance / 500);
     var videos = Math.floor(balance / 4500);
-    var reads = Math.floor(balance / 1000);
+    var reads = Math.floor(balance / REPORT_CREDITS);
     var parts = [];
     if (ads) parts.push(ads.toLocaleString() + (ads === 1 ? ' ad creative' : ' ad creatives'));
     if (reads) parts.push(reads.toLocaleString() + (reads === 1 ? ' market read' : ' market reads'));
@@ -425,12 +581,21 @@
   function initCredits() {
     var sec = $('acct-credits');
     if (!sec || !window.HexaAuth.client) return;
-    sec.hidden = false;
+
+    var pill = $('acct-balance');
+    pill.addEventListener('click', function () {
+      showTab('settings');
+      sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 
     window.HexaAuth.client.rpc('my_credit_balance').then(function (r) {
       var bal = r && !r.error ? Number(r.data || 0) : 0;
       $('acct-credits-value').textContent = bal.toLocaleString();
       $('acct-credits-sub').textContent = creditsMeaning(bal);
+      $('acct-balance-num').textContent = bal.toLocaleString();
+      pill.hidden = false;
+      pill.setAttribute('aria-label', bal.toLocaleString() + ' credits. Open credits and top up.');
+      composerNote(bal);
     });
 
     window.HexaAuth.client.rpc('my_credit_history', { p_limit: 40 }).then(function (r) {
@@ -478,6 +643,39 @@
     }
   }
 
+  /*
+   * The one line under the composer: what the next read costs and whether this
+   * balance covers it.
+   *
+   * Written from the balance and the catalogue price rather than from a
+   * sentence, because this is the only place on the page that can tell someone
+   * their next click will fail before they make it. When it will not cover,
+   * the line stops being information and becomes the top-up route.
+   */
+  function composerNote(balance) {
+    var note = $('acct-composer-note');
+    if (!note) return;
+    note.textContent = '';
+    var covered = balance >= REPORT_CREDITS;
+    note.appendChild(document.createTextNode(
+      'A full read is ' + REPORT_CREDITS.toLocaleString() + ' credits. '
+        + (covered
+            ? 'You have ' + balance.toLocaleString() + '.'
+            : 'You have ' + balance.toLocaleString() + ', so this one needs a top up. ')
+    ));
+    if (!covered) {
+      var add = elx('button', 'acct-link-btn', 'Add credits');
+      add.type = 'button';
+      add.addEventListener('click', function () {
+        showTab('settings');
+        $('acct-topup').click();
+        $('acct-credits').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      note.appendChild(add);
+    }
+    note.classList.toggle('is-short', !covered);
+  }
+
   function buyPack(id, btn) {
     btn.disabled = true;
     fetch('/.netlify/functions/create-checkout', {
@@ -520,18 +718,30 @@
   function initShopify() {
     var sec = $('acct-shopify');
     if (!sec || !window.HexaAuth.client) return;
-    sec.hidden = false;
 
     var form = $('acct-shop-form');
     var input = $('acct-shop-input');
+    var line = $('acct-shop-line');
     var state = $('acct-shop-state');
+    var open = $('acct-shop-open');
     var sub = $('acct-shop-sub');
     var dis = $('acct-shop-disconnect');
 
+    /* The Home line is one sentence and a link into the settings card. It used
+     * to be a full-width block with a form, second on the page, for a feature
+     * most accounts never turn on. */
+    line.hidden = false;
+    open.addEventListener('click', function () {
+      showTab('settings');
+      sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      input.focus();
+    });
+
     function paint(store) {
       if (store) {
-        state.textContent = store.store_name || store.store;
+        state.textContent = 'Store: ' + (store.store_name || store.store);
         state.classList.add('is-on');
+        open.textContent = 'Manage';
         sub.textContent = 'Connected to ' + store.store + '. We read your product catalogue and nothing else.';
         form.hidden = true;
         dis.hidden = false;
@@ -561,8 +771,9 @@
             });
         };
       } else {
-        state.textContent = 'Not connected';
+        state.textContent = 'No store connected.';
         state.classList.remove('is-on');
+        open.textContent = 'Connect your Shopify store';
         sub.textContent = 'Connect Shopify and pick products instead of pasting links. We only ever read your product catalogue.';
         form.hidden = false;
         dis.hidden = true;
@@ -650,12 +861,13 @@
     if (!user) { window.HexaAuth.requireAuth('/account.html'); return; }
 
     var fn = firstName(window.HexaAuth.name());
-    $('acct-greeting').textContent = fn ? 'Everything you have made, ' + fn : 'Everything you have made';
+    $('acct-greeting').textContent = fn ? 'What are we selling next, ' + fn + '?' : 'What are we selling next?';
     $('acct-user').textContent = window.HexaAuth.email() || '';
     // Prices first, so the action chips are drawn priced rather than filled in
     // a beat later. A failed fetch resolves too, and the chips just go bare.
     loadActionPrices().then(loadLibrary);
     initTabs();
+    initComposer();
     initSettings();
     initCredits();
     initShopify();

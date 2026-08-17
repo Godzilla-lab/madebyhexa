@@ -22,8 +22,27 @@
   var CODE_MINUTES = 15; // keep in sync with the Supabase OTP expiry setting
   var CODE_LEN = 8;       // Supabase mints 8 digit email codes for this project
 
+  /*
+   * The report this visitor left behind, if they came from the gate.
+   *
+   * Read-only here, and only for the title: the screen needs a name to put in
+   * front of somebody so the signup is visibly about their product rather
+   * than about our database. The claim token in the same entry is never read
+   * on this page and never goes anywhere near a URL; the exchange happens in
+   * auth.js the moment a session exists.
+   */
+  function pendingReport() {
+    var s;
+    try { s = JSON.parse(sessionStorage.getItem('hexa.report') || 'null'); }
+    catch (e) { return null; }
+    return s && s.id ? s : null;
+  }
+  var REPORT = pendingReport();
+
   var els = {
     kicker: $('auth-kicker'), title: $('auth-title'), sub: $('auth-sub'),
+    trust: $('auth-trust'),
+    visualKicker: $('auth-visual-kicker'), visualLine: $('auth-visual-line'),
     form: $('auth-form'), name: $('auth-name'), fieldName: $('field-name'),
     email: $('auth-email'), fieldEmail: $('field-email'),
     password: $('auth-password'), fieldPassword: $('field-password'),
@@ -42,9 +61,29 @@
   function showNote(msg) { els.error.hidden = true; els.note.textContent = msg; els.note.hidden = false; }
   function clearMsgs() { els.error.hidden = true; els.note.hidden = true; }
 
+  /*
+   * `signup-report` is a voice, not a seventh state.
+   *
+   * Everything about the mechanics is identical to `signup`: same fields, same
+   * Supabase call, same code screen. What changes is that this person did not
+   * come here wanting an account, they came here wanting an ad, and the screen
+   * has to say so. Layering it as copy rather than as another state keeps the
+   * six-way machine below untouched, which is where the bugs would be.
+   *
+   * The submit says "create", not "email me a link". A link opens wherever the
+   * mail app decides, and the report is held in tab-scoped sessionStorage: a
+   * link that lands in a different browser loses the exact thing this screen
+   * is promising to keep. The code arrives in the same tab.
+   */
   var COPY = {
     'signin':      { kicker: 'Welcome back', title: 'Sign in to Hexa', sub: 'Your films and photoshoots, all in one place.', submit: 'Sign in' },
     'signup':      { kicker: 'Get started', title: 'Create your account', sub: 'Start creating, and keep every film and photoshoot in one place.', submit: 'Create account' },
+    'signup-report': {
+      kicker: 'Almost there',
+      title: 'Create your free account',
+      sub: '',   // written from the product name below
+      submit: 'Create my free account',
+    },
     'signup-code': { kicker: 'Check your email', title: 'Enter your code', sub: '', submit: 'Verify and continue' },
     'forgot':      { kicker: 'Reset password', title: 'Get a reset code', sub: 'Tell us your account email and we send you a code.', submit: 'Send code' },
     'forgot-code': { kicker: 'Check your email', title: 'Enter your code', sub: '', submit: 'Verify code' },
@@ -54,14 +93,28 @@
   function setState(s) {
     state = s;
     clearMsgs();
-    var c = COPY[s];
+    var fromReport = REPORT && (s === 'signup' || s === 'signup-code');
+    var c = (s === 'signup' && REPORT) ? COPY['signup-report'] : COPY[s];
     els.kicker.textContent = c.kicker;
     els.title.textContent = c.title;
     els.sub.textContent = c.sub ||
       (s === 'signup-code' || s === 'forgot-code'
         ? 'We emailed a code to ' + codeEmail + '. It expires in ' + CODE_MINUTES + ' minutes.'
-        : c.sub);
+        : (s === 'signup' && REPORT
+            ? (REPORT.title
+                ? 'Your read of ' + REPORT.title + ' is saved. Make the account and we build the ad.'
+                : 'Your report is saved. Make the account and we build the ad.')
+            : c.sub));
     els.submit.textContent = c.submit;
+
+    /* The promises show while the account is being made and stay up on the
+     * code screen, which is the screen people abandon: it is the moment they
+     * most need reminding what the digits are for. */
+    if (els.trust) els.trust.hidden = !fromReport;
+    if (els.visualLine && REPORT) {
+      els.visualKicker.textContent = 'Hexa Research';
+      els.visualLine.textContent = 'The angle came from your buyers. The ad comes next.';
+    }
 
     var isCode = s === 'signup-code' || s === 'forgot-code';
     els.fieldName.hidden = s !== 'signup';

@@ -109,9 +109,10 @@ async function run() {
   await check(2, 'Positioning: H1, sub and microcopy', async (page) => {
     await go(page, '/');
     const h1 = await textOf(page, 'h1');
-    assert(/Turn your products/i.test(h1) && /into ads/i.test(h1), 'H1 is not the positioning line: ' + h1);
+    assert(/paste a link/i.test(h1) && /get the ad/i.test(h1), 'H1 is not the positioning line: ' + h1);
     const t = await textOf(page, '.c-hero-copy');
-    assert(/researches your product/i.test(t), 'sub missing the research promise');
+    assert(/we research your product/i.test(t), 'sub missing the research promise');
+    assert(/video or statics/i.test(t), 'sub does not say we make statics too');
     assert(/No prompting\. No video editing\. No marketing expertise required\./i.test(t), 'microcopy missing');
   });
 

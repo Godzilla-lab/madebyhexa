@@ -511,9 +511,9 @@
       const card = document.createElement('div');
       card.className = 'lead-claimed';
       card.innerHTML =
-        '<h3>You have already requested a free sample</h3>' +
-        '<p>It is on the way. Check your inbox, your sample lands within 48 hours of your request. ' +
-        'Ready for more than one? Grab a pack and ship in 48 hours.</p>' +
+        '<h3>You have already asked for a read</h3>' +
+        '<p>It is saved. Open it any time, and if you want the ad made from it, sign in and the ' +
+        'first one is free.</p>' +
         '<a class="btn btn-primary btn-lg" href="#pricing">See the packs</a>';
       sampleForm.replaceWith(card);
     }
@@ -713,162 +713,247 @@
     revealEls.forEach((n) => n.classList.add('in'));
   }
 
-  // ── Hero master monitor: cycles distinct Hexa renders, IO-gated + live HUD ──
-  const heroFilm = document.getElementById('hero-film');
-  const heroTc = document.getElementById('hero-tc');
-  const heroCap = document.querySelector('.c-monitor-cap');
-  if (heroFilm) {
-    // All three clips are local, re-encoded to ~2MB faststart with no audio
-    // track (the monitor is muted). The raw CDN renders were 6-7MB without
-    // faststart and buffered like a slideshow; never stream raws here.
-    // Product films only: every clip in the rotation shows a product being
-    // held, used or unboxed. No dance clips, no lifestyle filler.
-    const HERO_CLIPS = [
-      { src: 'assets/film/hero-loop.mp4', label: 'UGC unboxing' },
-      { src: 'assets/film/hero-kitchen.mp4', label: 'Kitchen demo' },
-      { src: 'assets/film/hero-luxury.mp4', label: 'Luxury unboxing' },
-    ];
-    let clipIdx = 0;
+  // ── Hero theatre: a fan of rendered variants, one of them playing ──
+  //
+  // Replaced the single hero monitor. The monitor could argue one thing at a
+  // time; the fan shows that a single read produces several different ads,
+  // which is the actual product. Only the card in front streams: five videos
+  // in a hero is a bandwidth bill, not a design, and the site has already been
+  // suspended once for shipping heavy media.
+  const theatre = document.getElementById('theatre');
+  if (theatre) {
+    const cards = [...theatre.querySelectorAll('.adcard')];
+    const N = cards.length;
+    // The middle card leads, so the fan is symmetrical on first paint.
+    let active = Math.floor(N / 2);
+    let visible = true;
+
     const two = (n) => String(n).padStart(2, '0');
-    const fmt = (t) => {
-      t = t || 0;
-      return two(Math.floor(t / 60)) + ':' + two(Math.floor(t % 60)) + '.' + Math.floor((t % 1) * 10);
-    };
-    const total = () => {
-      const d = heroFilm.duration;
-      return (d && isFinite(d)) ? two(Math.floor(d / 60)) + ':' + two(Math.round(d % 60)) : '00:15';
-    };
-    const setCap = () => { if (heroCap) heroCap.textContent = HERO_CLIPS[clipIdx].label + ' · rendered by Hexa'; };
-    setCap();
+    const fmt = (t) => '00:' + two(Math.floor(t % 60)) + '.' + Math.floor((t % 1) * 10);
 
-    if (reduceMotion) {
-      if (heroTc) heroTc.textContent = '00:15.0 / 00:15';
-    } else {
-      let ticking = false;
-      const tick = () => {
-        if (heroTc) heroTc.textContent = fmt(heroFilm.currentTime) + ' / ' + total();
-        if (!heroFilm.paused) requestAnimationFrame(tick);
-        else ticking = false;
-      };
-      // The film waits its turn: its megabytes must not race the CSS, fonts
-      // and product images for the connection (that race is what made first
-      // load feel slow). The poster holds the monitor until the page has
-      // painted, then the film starts. Visibility is tracked so a post-load
-      // start never plays an off-screen video.
-      let pageReady = document.readyState === 'complete';
-      let heroVisible = true;
-      const start = () => {
-        if (!pageReady || !heroVisible) return;
-        heroFilm.play().then(() => {
-          if (!ticking) { ticking = true; requestAnimationFrame(tick); }
-        }).catch(() => {});
-      };
-      if (!pageReady) {
-        window.addEventListener('load', () => { pageReady = true; start(); }, { once: true });
-      }
-      // when a clip finishes, cross-fade to the next distinct render. On a
-      // Data Saver / 2G connection the first clip loops instead: the other
-      // clips are megabytes this visitor asked us not to spend.
-      const conn = navigator.connection || {};
-      const dataTight = !!conn.saveData || /2g/.test(String(conn.effectiveType || ''));
-      heroFilm.addEventListener('ended', () => {
-        if (dataTight) { heroFilm.currentTime = 0; start(); return; }
-        clipIdx = (clipIdx + 1) % HERO_CLIPS.length;
-        heroFilm.classList.add('c-monitor-swap');
-        heroFilm.src = HERO_CLIPS[clipIdx].src;
-        setCap();
-        heroFilm.load();
-        start();
-      });
-      // the dim lifts the moment the new clip CAN play, and a failsafe lifts
-      // it regardless: a stuck dark monitor is worse than a visible cut
-      heroFilm.addEventListener('playing', () => heroFilm.classList.remove('c-monitor-swap'));
-      heroFilm.addEventListener('canplay', () => heroFilm.classList.remove('c-monitor-swap'));
-      // a clip that cannot load (CDN hiccup, dropped connection) is skipped,
-      // not mourned: move to the next one and keep the monitor alive
-      heroFilm.addEventListener('error', () => {
-        heroFilm.classList.remove('c-monitor-swap');
-        clipIdx = (clipIdx + 1) % HERO_CLIPS.length;
-        heroFilm.src = HERO_CLIPS[clipIdx].src;
-        setCap();
-        heroFilm.load();
-        start();
-      });
-      // warm the next clip's HTTP cache as soon as this one is playing, so
-      // the swap buffers from disk instead of a cold fetch. The old version
-      // only warmed http(s) URLs, which skipped these relative paths and left
-      // every swap cold: that was the visible beat between clips. Data Saver
-      // visitors loop the first clip and never swap, so nothing to warm.
-      let warmed = -1;
-      heroFilm.addEventListener('playing', () => {
-        if (dataTight) return;
-        const next = (clipIdx + 1) % HERO_CLIPS.length;
-        if (warmed === next) return;
-        warmed = next;
-        fetch(HERO_CLIPS[next].src).catch(() => {});
-      });
-      if ('IntersectionObserver' in window) {
-        new IntersectionObserver((entries) => {
-          entries.forEach((e) => {
-            heroVisible = e.intersectionRatio > 0.25;
-            if (heroVisible) start();
-            else heroFilm.pause();
-          });
-        }, { threshold: [0, 0.25] }).observe(heroFilm);
-      } else {
-        start();
-      }
+    // How far apart the cards sit, as a percentage of a card's width. A phone
+    // is barely wider than one card, so the desktop spread throws both
+    // neighbours off the screen and the fan reads as a single card with two
+    // slivers. Narrow screens overlap the cards more instead.
+    const spread = () => (window.innerWidth < 660 ? 52 : window.innerWidth < 980 ? 62 : 70);
 
-      heroFilm.addEventListener('hexa-resume', start);
-
-      // watchdog: one missed play() must never freeze the monitor. If it sits
-      // paused while clearly on screen (and the page flip is not open), kick it.
-      const pdpEl = document.getElementById('monitor-pdp');
-      setInterval(() => {
-        if (!heroFilm.paused || document.hidden) return;
-        if (pdpEl && !pdpEl.hidden) return;
-        const r = heroFilm.getBoundingClientRect();
-        const vh = window.innerHeight;
-        if (r.top < vh * 0.7 && r.bottom > vh * 0.3) start();
-      }, 3000);
+    function layout() {
+      const gap = spread();
+      cards.forEach((card, i) => {
+        const off = offsetOf(i);
+        const abs = Math.abs(off);
+        card.style.transform =
+          `translateX(${off * gap}%) translateZ(${-abs * 150}px) ` +
+          `rotateY(${off * -14}deg) scale(${1 - abs * 0.07})`;
+        card.style.zIndex = String(10 - abs);
+        card.style.opacity = abs > 2 ? '0' : String(1 - abs * 0.24);
+        card.style.filter = abs ? `brightness(${1 - abs * 0.24})` : 'none';
+        // A card nobody can see must not be tabbable or clickable, or the tab
+        // order walks through cards that are not on screen.
+        card.style.pointerEvents = abs > 2 ? 'none' : 'auto';
+        card.tabIndex = abs > 2 ? -1 : 0;
+        card.classList.toggle('is-active', off === 0);
+      });
+      mount();
     }
 
-    // ── Before/after flip: the boring product page vs the film it became ──
-    const pdp = document.getElementById('monitor-pdp');
-    const flip = document.getElementById('monitor-flip');
-    if (pdp && flip) {
-      flip.addEventListener('click', () => {
-        const showPage = pdp.hidden;
-        pdp.hidden = !showPage;
-        flip.textContent = showPage ? 'Watch the Hexa film' : 'The page it came from';
-        flip.classList.toggle('is-page', showPage);
-        if (showPage) heroFilm.pause();
-        else heroFilm.dispatchEvent(new Event('hexa-resume'));
+    // How far round the fan a card is from the one in front, taking the
+    // shorter way round.
+    function offsetOf(i) {
+      let off = i - active;
+      if (off > N / 2) off -= N;
+      if (off < -N / 2) off += N;
+      return off;
+    }
+
+    // Neither the posters nor the films are attached in the markup for cards
+    // you cannot see yet, and nothing is ever detached: once a card has been
+    // looked at its bytes are already spent, and re-setting src would refetch
+    // it on every pass through the fan.
+    function mount() {
+      cards.forEach((card, i) => {
+        const poster = card.querySelector('.adcard-poster');
+        // One card either side of what is visible, so browsing never lands on
+        // an empty frame.
+        if (poster && Math.abs(offsetOf(i)) <= 3 && !poster.getAttribute('src') && poster.dataset.poster) {
+          poster.setAttribute('src', poster.dataset.poster);
+        }
+        const film = card.querySelector('.adcard-film');
+        if (!film) return;
+        if (i !== active) {
+          film.pause();
+          card.classList.remove('is-playing');
+          return;
+        }
+        if (!film.getAttribute('src') && card.dataset.src) {
+          film.setAttribute('src', card.dataset.src);
+        }
+        if (!reduceMotion && visible) {
+          const p = film.play();
+          if (p && p.catch) p.catch(() => {});
+        }
       });
+      if (!ticking) { ticking = true; requestAnimationFrame(tick); }
+    }
+
+    // One loop for the whole fan rather than one per card: the HUD only ever
+    // describes the card in front.
+    let ticking = false;
+    function tick() {
+      const card = cards[active];
+      const film = card && card.querySelector('.adcard-film');
+      const tc = card && card.querySelector('.adcard-tc');
+      const bar = card && card.querySelector('.adcard-prog i');
+      if (film && tc && bar) {
+        const d = film.duration;
+        const t = film.currentTime || 0;
+        tc.textContent = fmt(t);
+        bar.style.width = (d && isFinite(d) ? (t / d) * 100 : 0).toFixed(1) + '%';
+        if (!film.paused && film.readyState > 2) card.classList.add('is-playing');
+      }
+      if (!reduceMotion && visible) requestAnimationFrame(tick);
+      else ticking = false;
+    }
+
+    function go(i) {
+      active = ((i % N) + N) % N;
+      layout();
+    }
+
+    cards.forEach((card, i) => {
+      card.addEventListener('click', () => { if (i !== active) go(i); });
+      // Keyboard focus follows the same rule as a click: the card you are on
+      // is the card in front, or the HUD describes something you cannot see.
+      card.addEventListener('focus', () => { if (i !== active) go(i); });
+      const film = card.querySelector('.adcard-film');
+      // A clip that will not load keeps its poster instead of going black.
+      if (film) film.addEventListener('error', () => card.classList.remove('is-playing'));
+    });
+
+    // Arrows drive the fan, but not while someone is typing a product link:
+    // left and right belong to the caret first.
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (!visible) return;
+      const t = e.target;
+      if (t && t.closest && t.closest('input, textarea, select, [contenteditable="true"]')) return;
+      go(active + (e.key === 'ArrowRight' ? 1 : -1));
+      e.preventDefault();
+    });
+
+    // Swipe, because on a phone there are no arrow keys and the side cards are
+    // small targets.
+    let x0 = null;
+    theatre.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+    theatre.addEventListener('touchend', (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) > 40) go(active + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          visible = e.intersectionRatio > 0.2;
+          if (visible) mount();
+          else cards.forEach((c) => {
+            const f = c.querySelector('.adcard-film');
+            if (f) f.pause();
+          });
+        });
+      }, { threshold: [0, 0.2] }).observe(theatre);
+    }
+
+    layout();
+
+    // A phone rotated into landscape crosses the spread breakpoints, and the
+    // fan is drawn with inline transforms, so nothing re-lays it out but this.
+    let relayout;
+    window.addEventListener('resize', () => {
+      clearTimeout(relayout);
+      relayout = setTimeout(layout, 150);
+    });
+
+    // ── The research strip: the chain, revealed in the order it runs ──
+    const chips = [...document.querySelectorAll('.rchip')];
+    if (chips.length) {
+      const show = () => chips.forEach((c, i) => {
+        if (reduceMotion) { c.classList.add('on'); return; }
+        setTimeout(() => c.classList.add('on'), 400 + i * 340);
+      });
+      if ('IntersectionObserver' in window) {
+        const cio = new IntersectionObserver((entries, obs) => {
+          if (entries.some((e) => e.isIntersecting)) { show(); obs.disconnect(); }
+        }, { threshold: 0.3 });
+        cio.observe(chips[0].parentElement);
+      } else {
+        show();
+      }
     }
   }
 
-  // ── Real-or-AI proof tiles: lazy-load loops in view, stamp on tap ──
-  const proofTiles = document.querySelectorAll('.c-proof-tile');
-  if (proofTiles.length) {
-    if ('IntersectionObserver' in window && !reduceMotion) {
-      const pio = new IntersectionObserver((entries) => {
+  // ── How it works: the rail lights as you scroll it ──
+  //
+  // The section claims a pipeline, so it runs one. Each pass lifts in as it
+  // arrives, the rail fills behind it, and the readout on the pinned left
+  // column says which pass you are looking at. Nothing here is decoration
+  // that repeats what the words already say: the rail is the only thing on
+  // the page that shows the six passes are ordered.
+  const pipeline = document.getElementById('how-pipeline');
+  if (pipeline) {
+    const passes = [...pipeline.querySelectorAll('.how-step')];
+    const gate = document.getElementById('how-gate');
+    const rail = document.getElementById('how-rail');
+    const posEl = document.getElementById('how-pos');
+    const meterEl = document.getElementById('how-meter');
+    const TOTAL = passes.length;
+
+    if (reduceMotion) {
+      // No fade, no crawl: everything lit, rail full, readout at the end.
+      passes.forEach((s) => s.classList.add('is-lit'));
+      if (gate) gate.classList.add('is-lit');
+      if (rail) rail.style.height = '100%';
+      if (posEl) posEl.textContent = String(TOTAL).padStart(2, '0');
+      if (meterEl) meterEl.style.width = '100%';
+    } else if ('IntersectionObserver' in window) {
+      const lio = new IntersectionObserver((entries) => {
         entries.forEach((e) => {
-          const v = e.target.querySelector('video');
-          if (!v) return;
-          if (e.intersectionRatio > 0.35) {
-            if (!v.src && v.dataset.src) v.src = v.dataset.src;
-            v.play().catch(() => {});
-          } else {
-            v.pause();
-          }
+          if (!e.isIntersecting) return;
+          e.target.classList.add('is-lit');
+          const n = e.target.dataset.n;
+          if (!n) return;
+          if (posEl) posEl.textContent = n;
+          if (meterEl) meterEl.style.width = (parseInt(n, 10) / TOTAL) * 100 + '%';
         });
-      }, { threshold: [0, 0.35] });
-      proofTiles.forEach((t) => pio.observe(t));
+      }, { threshold: 0.45 });
+      passes.forEach((s) => lio.observe(s));
+      if (gate) lio.observe(gate);
+
+      // The fill tracks scroll rather than the observer, so it moves
+      // continuously between passes instead of jumping a sixth at a time.
+      // 0.62 of the viewport is roughly where the eye sits while reading.
+      let queued = false;
+      const fill = () => {
+        queued = false;
+        if (!rail) return;
+        const r = pipeline.getBoundingClientRect();
+        const total = r.height - 52;   // the rail is inset by half a node at each end
+        const done = Math.min(Math.max(window.innerHeight * 0.62 - r.top, 0), total);
+        rail.style.height = done + 'px';
+      };
+      const onScroll = () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(fill);
+      };
+      fill();
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+    } else {
+      passes.forEach((s) => s.classList.add('is-lit'));
+      if (gate) gate.classList.add('is-lit');
     }
-    proofTiles.forEach((t) => {
-      t.addEventListener('click', () => t.classList.toggle('stamped'));
-    });
   }
 
   // ── Marquees: pause the CSS animation while offscreen (battery, main thread) ──
@@ -908,11 +993,13 @@
     }
   }
 
-  // ── Free clip entry on the offer page ──────────────────────────
-  // Composes the sample order and hands off to the render stage. No account
-  // asked here; the render page gates at the collect moment, after the
-  // visitor has watched their product get staged. Lives here (not inline)
-  // because the site CSP allows self-hosted scripts only.
+  // ── Free read entry on the offer page ──────────────────────────
+  // Was the free-clip entry: it composed a `product: 'sample'` order and sent
+  // the visitor to render.html?sample=1, an endpoint that has answered 410
+  // since the clip was retired. The free thing is the market read now, it
+  // needs no account either, and it ends by naming the angle before offering
+  // to make it. Lives here (not inline) because the site CSP allows
+  // self-hosted scripts only.
   const freeClipForm = document.getElementById('free-clip-form');
   if (freeClipForm) {
     freeClipForm.addEventListener('submit', (e) => {
@@ -921,16 +1008,8 @@
       if (raw && !/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
       let link;
       try { link = new URL(raw).href; } catch (err) { return; }
-      const order = {
-        product: 'sample',
-        title: 'Free sample',
-        price: 0,
-        selections: { link, aspect: '9:16' },
-        ts: new Date().toISOString(),
-      };
-      try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (err) {}
-      if (window.hexaTrack) window.hexaTrack('offer-sample', 'sample', 0);
-      window.location.href = '/render.html?sample=1';
+      if (window.hexaTrack) window.hexaTrack('gate-clicked', 'offer');
+      window.location.href = '/validate?url=' + encodeURIComponent(link);
     });
   }
 })();

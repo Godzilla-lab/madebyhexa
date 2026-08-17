@@ -100,16 +100,26 @@
       "margin_pct": 82,
       "eta": "~2 min"
     },
+    "report": {
+      "_note": "The market read. Priced in credits because that is what it charges: DEEP_REPORT_CREDITS in report-create.js, REPORT_CREDITS in report-status.js and the worker all read 1000, and this is the row the pages quote so a fourth copy never gets typed by hand. Only signed-in reads are charged; the free read runs the cheap legs only and stays free.",
+      "engine": "xai plan + read, apify ad library",
+      "cost_usd": 0.615,
+      "credits": 1000,
+      "retail_usd": 2,
+      "margin_pct": 69,
+      "eta": "1 to 3 min"
+    },
     "adsingle": {
+      "_entry_note": "adsingle is the way in: one creative at 500 credits, the cheapest thing on the menu. A new account's 2,500 welcome credits buy two full market reads at 1,000 each or five of these. It costs us 0.5 Higgsfield credits, about 2.6 cents, so it is also the highest margin item we sell. It exists to get a real ad, made from the customer's own product, in front of them before they are asked for money, which is why the first one off a report is comped outright.",
       "engine": "dtc-ads x1 creative",
       "cost_credits": 0.5,
       "cost_usd": 0.03,
+      "credits": 500,
       "retail_usd": 1,
       "margin_pct": 97,
       "eta": "~1 min"
     },
     "adpack": {
-      "_entry_note": "adsingle is the way in: one creative at $1, the cheapest thing on the menu and the only product a new account's 2,500 welcome credits can actually buy. It costs us 0.5 Higgsfield credits, about 2.6 cents, so it is also the highest margin item we sell. It exists to get a real ad, made from the customer's own product, in front of them before they are asked for money.",
       "engine": "dtc-ads x20 creatives",
       "cost_credits": 10,
       "cost_usd": 0.52,

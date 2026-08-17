@@ -75,6 +75,35 @@
     }
     .auth-sub { margin: 0 0 22px; color: var(--text-mute); font-size: 14.5px; }
 
+    /* The three promises, for a visitor arriving from a report. Ticks rather
+       than bullets because each line is a commitment being made, and the list
+       sits above the Google button so it is read before the first decision. */
+    .auth-trust {
+      list-style: none;
+      margin: -8px 0 20px;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+    .auth-trust li {
+      position: relative;
+      padding-left: 24px;
+      font-size: 13.5px;
+      line-height: 1.45;
+      color: var(--text-mute);
+    }
+    .auth-trust li::before {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 4px;
+      width: 5px;
+      height: 10px;
+      border: solid var(--accent);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
     .auth-google {
       width: 100%;
       display: inline-flex;
@@ -159,7 +188,7 @@
       border: none;
       border-radius: var(--radius-control);
       background: linear-gradient(92deg, var(--accent), var(--accent-deep));
-      color: #fff;
+      color: var(--on-accent);
       font-family: inherit;
       font-size: 15px;
       font-weight: 700;
@@ -199,6 +228,29 @@
     }
     .auth-legal { margin: 0; font-size: 12px; color: var(--text-faint); text-align: center; max-width: 400px; }
     .auth-legal a { color: var(--text-mute); }
+
+    /* Touch floors, matching the block in account.html. Sign-in is the one
+       page every returning customer passes through, and on a phone its five
+       secondary controls were 15 to 31px tall against a 44px thumb: the two
+       legal links at 15px, the forgot-password and create-account buttons at
+       20px, the brand mark at 31px. The links stay inline, so the height is
+       bought with padding rather than by turning them into blocks. */
+    @media (pointer: coarse) {
+      .auth-link,
+      .brand {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
+      /* inline-block, not inline-flex: these two sit inside the sentence
+         "By continuing you agree to our Terms and Privacy Policy", and a flex
+         box would break the line. 13px of padding clears 44px; 12px landed at
+         43 and measured as a fail, which is the right call by the rule. */
+      .auth-legal a {
+        display: inline-block;
+        padding: 13px 2px;
+      }
+    }
 
     .auth-visual { position: relative; overflow: hidden; }
     .auth-visual-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -263,6 +315,17 @@
         <h1 class="auth-title" id="auth-title">Sign in to Hexa</h1>
         <p class="auth-sub" id="auth-sub">Your films and photoshoots, all in one place.</p>
 
+        <!-- Shown only to somebody who arrived from a report gate. Three
+             promises, all of them checkable on the next screen: the report is
+             still there, the ad gets made, no card is asked for. A signup
+             screen that asks for an email without saying what is on the other
+             side of it is the highest-drop-off surface on any site. -->
+        <ul class="auth-trust" id="auth-trust" hidden>
+          <li>Your report stays exactly where you left it</li>
+          <li>Your first static ad, made from the angle you just read</li>
+          <li>No card, and nothing to cancel</li>
+        </ul>
+
         <button class="auth-google" id="auth-google" type="button">
           <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
           Continue with Google
@@ -317,12 +380,13 @@
       <video class="auth-visual-video" src="assets/film/login-visual-1080.mp4" muted loop playsinline autoplay preload="metadata"></video>
       <div class="auth-visual-shade"></div>
       <div class="auth-visual-copy">
-        <p class="auth-visual-kicker">Hexa Studio</p>
-        <p class="auth-visual-line">One product link becomes a film so real no one can tell.</p>
+        <p class="auth-visual-kicker" id="auth-visual-kicker">Hexa Studio</p>
+        <p class="auth-visual-line" id="auth-visual-line">One product link becomes a film so real no one can tell.</p>
       </div>
     </aside>
   </main>
 
+  <script src="funnel.js"></script>
   <script src="/vendor/supabase.js"></script>
   <script src="auth.js"></script>
   <script src="login.js"></script>

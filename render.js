@@ -533,14 +533,86 @@
             $('#render-sub').textContent = 'Rendering scene ' + Math.min(s.segmentsDone + 1, s.segmentsTotal) +
               ' of ' + s.segmentsTotal + ' of your ' + filmName + '.';
           }
-          if (s.status === 'completed' && s.result) { setPct(100); reveal(order, s.result, s); return; }
-          if (s.status === 'failed') { failState(s.message, s); return; }
+          if (s.status === 'completed' && s.result) {
+            setPct(100);
+            reveal(order, s.result, s);
+            if (order.freeReport && window.hexaTrack) window.hexaTrack('free-ad-viewed', 'report');
+            return;
+          }
+          if (s.status === 'failed') {
+            if (order.freeReport) { freeAdFailed(order, s); return; }
+            failState(s.message, s);
+            return;
+          }
           retry(3000);
         })
         // A 502 answers with an HTML body, so r.json() rejects and lands here.
         .catch(function () { onUnreadable(); });
     }
     tick();
+  }
+
+  /*
+   * The free ad died, and this is the first session of a new account.
+   *
+   * A first session that ends on the signup reward broken is a churn event,
+   * not a toast. The render costs 2.6 cents, so one silent retry is free by
+   * any measure worth having, and the trust is not: somebody who signed up
+   * because we promised an ad and got an error instead does not come back to
+   * try the paid tier.
+   *
+   * Exactly one retry, held in localStorage per report so a refresh cannot
+   * turn it into a loop, and matched by a hard budget of two attempts per
+   * report in render-create. The server guard is the real one; this only
+   * decides when to spend the second attempt.
+   *
+   * The card that follows a second failure promises nothing we cannot do with
+   * the mailer dark. lib/mailer.js is a sender-wide master switch, currently
+   * off, so "we will email it to you" would be a promise a kill switch eats,
+   * which is the never-resolving spinner moved into somebody's inbox. It
+   * promises the library, which is true either way.
+   */
+  function freeAdFailed(order) {
+    var key = 'hexa.freead.retried.' + (order.freeReport && order.freeReport.id);
+    var retried = false;
+    try { retried = !!localStorage.getItem(key); } catch (e) {}
+
+    if (retried) {
+      failState('The ad hit a snag on the way out. Nothing was charged, and nothing about your report '
+        + 'has changed.', { retryable: true, headline: 'That ad did not come out' });
+      var note = $('#render-note');
+      note.hidden = false;
+      note.textContent = 'It is back in the queue. It will appear here and in your library when it lands.';
+      return;
+    }
+
+    try { localStorage.setItem(key, '1'); } catch (e) {}
+    $('#render-kicker').textContent = 'Rendering';
+    $('#render-sub').textContent = 'Taking another run at it.';
+
+    var headers = { 'Content-Type': 'application/json' };
+    var token = window.HexaAuth && window.HexaAuth.accessToken && window.HexaAuth.accessToken();
+    if (token) headers.Authorization = 'Bearer ' + token;
+
+    fetch(CREATE_URL, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ order: order }),
+    })
+      .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject(d); }); })
+      .then(function (d) {
+        if (!d.jobs || !d.jobs.length) return Promise.reject(d);
+        var jobs = d.jobs.map(function (j) { return j.id; }).join(',');
+        history.replaceState(null, '', '/render.html?jobs=' + encodeURIComponent(jobs));
+        pollLive(order, jobs, null);
+      })
+      .catch(function () {
+        failState('The ad hit a snag on the way out. Nothing was charged, and nothing about your report '
+          + 'has changed.', { retryable: true, headline: 'That ad did not come out' });
+        $('#render-note').hidden = false;
+        $('#render-note').textContent =
+          'It is back in the queue. It will appear here and in your library when it lands.';
+      });
   }
 
   /* Paid arrival: ask the backend to create the jobs, then watch them. The
@@ -634,86 +706,20 @@
     else go();
   }
 
-  /* Free sample: no sign-in wall at the door. A signed-out visitor gets the
-   * whole creation experience first (their product on the stage, the steps
-   * running); the account is only asked for at the collect moment, when the
-   * clip is staged and they want it rendered and kept. Sign-in bounces back
-   * here and the claim picks up where it left off. 409 = already spent. */
-  function sampleGate(order) {
-    showProductGhost(order);
-    var name = order.selections && order.selections.productName;
-    $('#render-kicker').textContent = 'Free sample';
-    $('#render-title').textContent = 'Staging your free clip';
-    $('#render-sub').textContent = 'Reading ' + (name || 'the product page') + ' and planning the shoot. A few seconds.';
-    // the honest staging pass: reading the product (the peek is real work),
-    // planning the shoot. It stops where money starts: the render itself.
-    var pct = 0, step = 0;
-    setStep(0);
-    var timer = setInterval(function () {
-      pct += Math.random() * 3 + 2;
-      if (pct >= 30 && step < 1) { step = 1; setStep(1); }
-      if (pct >= 62) {
-        clearInterval(timer);
-        pct = 62;
-        setPct(pct);
-        setStep(2);
-        $('#render-title').textContent = 'Your free clip is staged';
-        $('#render-sub').textContent = (name ? name + ' is read and the shoot is planned. ' : 'Product read, shoot planned. ') +
-          'Create your free account and the render starts; the clip appears right here and saves to your library.';
-        $('#render-gate').hidden = false;
-        if (window.hexaTrack) window.hexaTrack('sample-gate', 'sample', 0);
-        return;
-      }
-      setPct(pct);
-    }, 180);
-  }
-
-  function createSample(order) {
-    var auth = window.HexaAuth;
-    var loginNext = '/login.html?next=' + encodeURIComponent('/render.html?sample=1');
-    (auth ? auth.ready() : Promise.resolve()).then(function () {
-      if (auth && !auth.user()) { sampleGate(order); return; }
-      $('#render-gate').hidden = true;
-      var headers = { 'Content-Type': 'application/json' };
-      if (auth && auth.accessToken()) headers.Authorization = 'Bearer ' + auth.accessToken();
-      fetch(CREATE_URL, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({ order: order }),
-      })
-        .then(function (r) { return r.json().then(function (d) { return r.ok ? d : Promise.reject({ status: r.status, body: d }); }); })
-        .then(function (d) {
-          if (!d.jobs || !d.jobs.length) return Promise.reject(d);
-          order.jobs = d.jobs;
-          if (d.creation) order.creation = d.creation;
-          try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
-          pollLive(order, d.jobs.map(function (j) { return j.id; }).join(','), null);
-        })
-        .catch(function (e) {
-          if (e && e.status === 401) { window.location.href = loginNext; return; }
-          if (e && e.status === 409) { sampleClaimedState(); return; }
-          console.error('sample create failed', e);
-          failState((e && e.body && e.body.error) || 'The sample could not start. Nothing was charged; try again in a minute.');
-        });
-    });
-  }
-
-  function sampleClaimedState() {
-    setStep(STEPS.length);
-    setPct(100);
-    $('#render-kicker').textContent = 'Free sample';
-    $('#render-title').textContent = 'Your free sample is already made';
-    /* No price in this sentence on purpose. It read "starts at $12", which was
-     * the ad pack's price, not a video's: the cheapest video in
-     * catalog/pricing.json is $9. index.html binds every number to data-price
-     * attributes for exactly this reason, but pricing.json is not public (see
-     * _redirects), so there is nothing here to bind to and a typed number just
-     * drifts again. The studio quotes the real price one click away. */
-    $('#render-sub').textContent = 'One per account, and yours lives in your library. The full video runs to any length, in the same look.';
-    var note = $('#render-note');
-    note.hidden = false;
-    note.innerHTML = '<a href="/account.html">Open your library</a> · <a href="/#styles">Make the full video</a>';
-  }
+  /*
+   * The free 5 second clip is retired, and this is where its three screens
+   * used to be: sampleGate, createSample and sampleClaimedState.
+   *
+   * It cost 80 engine credits, about $4.16 a head, against 2.6 cents for the
+   * static ad that replaced it. It also argued with the research: the report
+   * measures whether a category is won by video or by statics, and we were
+   * handing every visitor a video regardless of what we had just told them.
+   *
+   * render-create.js has refused `product: 'sample'` with a 410 since the
+   * server side of this was done, so every one of these screens has been a
+   * button that leads to an error. The free thing is now the market read,
+   * which needs no account at all, and the free ad it ends on.
+   */
 
   function paidQueuedState(order) {
     setStep(1);
@@ -874,12 +880,13 @@
       return;
     }
 
-    // Free sample arrival (?sample=1). A refresh mid-render carries jobs and
-    // is caught above; otherwise stage the claim. Sign-in is asked at the
-    // collect moment inside createSample, never at the door.
-    if (params.get('sample') && order.product === 'sample') {
-      setStep(0);
-      createSample(order);
+    /* An old ?sample=1 link, or an order left in localStorage from before the
+     * clip was retired. Sent to the read rather than to an error, which is
+     * what the server's 410 already says: the free thing is the research now,
+     * and the ad comes out of it. */
+    if (params.get('sample') || order.product === 'sample') {
+      try { localStorage.removeItem('hexa-studio-order'); } catch (e) {}
+      window.location.replace('/validate');
       return;
     }
 

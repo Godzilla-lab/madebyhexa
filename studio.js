@@ -414,26 +414,20 @@
     return amount + ' ' + pk.currency;
   }
 
-  /* The free taste, from anywhere on the page: compose the sample order and
-   * hand off to the render stage. No sign-in asked here; the render page
-   * gates at the collect moment instead. */
-  function startFreeSample(link) {
-    var order = {
-      product: 'sample',
-      title: 'Free sample',
-      price: 0,
-      selections: { link: link, aspect: '9:16' },
-      ts: new Date().toISOString(),
-    };
-    var pk = peekFor(link);
-    if (pk && pk.ok) {
-      if (pk.title) order.selections.productName = pk.title;
-      if (pk.webProductId) order.selections.webProductId = pk.webProductId;
-      if (pk.image) order.selections.productImage = pk.image;
-    }
-    try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
-    if (window.hexaTrack) window.hexaTrack('studio-sample', 'sample', 0);
-    window.location.href = 'render.html?sample=1';
+  /*
+   * The free taste, which is now the market read rather than a 5 second clip.
+   *
+   * startFreeSample() stood here and posted `product: 'sample'` to
+   * render-create, which has answered 410 since the clip was retired on the
+   * server. So the button that said "watch it move, free" led to an error.
+   *
+   * The read replaces it and is a better trade in both directions: it costs
+   * about 5 cents against $4.16, it needs no account, and it ends by telling
+   * the visitor what to say before offering to make it.
+   */
+  function startFreeRead(link) {
+    if (window.hexaTrack) window.hexaTrack('gate-clicked', 'studio');
+    window.location.href = '/validate?url=' + encodeURIComponent(link);
   }
 
   /* Peek fields matching the given link, or null. */
@@ -732,133 +726,81 @@
     });
   }
 
-  function renderModes(data) {
-    var rail = $('#mode-rail');
-
-    // Auto leads the rail: it's a real product, not a chooser-only option.
-    var auto = el('button', 'mode-tile mode-tile-auto');
-    auto.type = 'button';
-    auto.appendChild(el('div', 'mode-shade'));
-    auto.appendChild(el('span', 'mode-price', formatPrice('auto')));
-    var autoMeta = el('div', 'mode-meta');
-    autoMeta.appendChild(el('span', 'mode-name', 'Auto'));
-    autoMeta.appendChild(el('span', 'mode-kicker', 'We pick the format that sells your product best'));
-    auto.appendChild(autoMeta);
-    auto.addEventListener('click', function () { openConfig('auto'); });
-    rail.appendChild(auto);
-
-    data.modes.forEach(function (m) {
-      var t = el('button', 'mode-tile');
-      t.type = 'button';
-      if (m.poster) {
-        var img = el('img');
-        img.src = m.poster; img.alt = m.name; img.loading = 'lazy';
-        t.appendChild(img);
-      }
-      if (m.video) {
-        var v = el('video');
-        v.src = m.video; v.muted = true; v.loop = true;
-        v.playsInline = true; v.setAttribute('playsinline', '');
-        v.preload = 'none';
-        hoverVideo(t, v);
-        t.appendChild(v);
-      }
-      t.appendChild(el('div', 'mode-shade'));
-      if (MODE_CONFIG[m.id]) t.appendChild(el('span', 'mode-price', formatPrice('mode:' + m.id)));
-      var meta = el('div', 'mode-meta');
-      meta.appendChild(el('span', 'mode-name', m.name));
-      if (MODE_CONFIG[m.id]) meta.appendChild(el('span', 'mode-kicker', MODE_CONFIG[m.id].kicker));
-      t.appendChild(meta);
-      var chip = el('span', 'tile-open', 'Create →');
-      chip.addEventListener('click', function (e) {
-        e.stopPropagation();
-        openMode(m.id);
+  /*
+   * The three cells under the style shelf.
+   *
+   * Replaced renderModes, renderMarquee and renderHooks, which drew a rail
+   * each: ten mode tiles, an eighty-item avatar marquee and nine hook cards.
+   * That was most of the page's height spent asking the visitor to browse
+   * three catalogues, on a page whose whole argument is that the read picks
+   * these for them. The counts are the point; the browsing lives in the
+   * studio, behind one link per cell.
+   */
+  function renderExecCells(data) {
+    var fmt = $('#format-chips');
+    if (fmt) {
+      // Auto leads, and is marked: it is a real product, not a chooser-only
+      // option, and it is what happens if you touch none of this.
+      var auto = el('span', 'chip chip-auto', 'Auto · we pick');
+      fmt.appendChild(auto);
+      var modes = data.modes || [];
+      modes.slice(0, 5).forEach(function (m) {
+        fmt.appendChild(el('span', 'chip', m.name));
       });
-      t.appendChild(chip);
-      t.addEventListener('click', function () {
-        var items = modeExamples(m);
-        if (VIEWER && items.length) {
-          VIEWER.open({
-            kicker: 'Format',
-            title: m.name,
-            tag: (MODE_CONFIG[m.id] && MODE_CONFIG[m.id].kicker) || '',
-            items: items,
-            cta: { label: 'Create · ' + (MODE_CONFIG[m.id] ? formatPrice('mode:' + m.id) : formatPrice('auto')), run: function () { openMode(m.id); } },
-          });
-        } else {
-          openMode(m.id);
-        }
+      if (modes.length > 5) fmt.appendChild(el('span', 'chip', '+' + (modes.length - 5)));
+    }
+
+    var hooks = $('#hook-chips');
+    if (hooks) {
+      (data.hooks || []).slice(0, 4).forEach(function (h) {
+        hooks.appendChild(el('span', 'chip', h.name));
       });
-      rail.appendChild(t);
-    });
+      if ((data.hooks || []).length > 4) {
+        hooks.appendChild(el('span', 'chip', '+' + ((data.hooks || []).length - 4)));
+      }
+    }
   }
 
-  function renderMarquee(data) {
-    var half = Math.ceil(data.avatars.length / 2);
-    [{ id: '#marquee-a', list: data.avatars.slice(0, half) },
-     { id: '#marquee-b', list: data.avatars.slice(half) }].forEach(function (row) {
-      var band = $(row.id);
-      if (!band || !row.list.length) return;
-      // duplicate for seamless -50% loop; every tile opens UGC with that creator
-      row.list.concat(row.list).forEach(function (a) {
-        var item = el('button', 'mq-item');
-        item.type = 'button';
-        item.setAttribute('aria-label', 'Create a UGC ad with ' + a.name);
-        var img = el('img');
-        img.src = a.local; img.alt = a.name; img.loading = 'lazy';
-        item.appendChild(img);
-        item.appendChild(el('span', null, a.name));
-        item.addEventListener('click', function () {
-          openMode('ugc', { avatar: { id: a.id, name: a.name } });
-        });
-        band.appendChild(item);
-      });
-    });
-  }
+  /*
+   * The style shelf scrolls sideways. The arrows exist because a horizontal
+   * scroller with no visible scrollbar is invisible to anyone on a mouse; the
+   * shelf itself stays keyboard scrollable and the arrows are just a second
+   * way in.
+   */
+  function initStyleShelf() {
+    var shelf = $('#style-grid');
+    var prev = $('#styles-prev');
+    var next = $('#styles-next');
+    if (!shelf || !prev || !next) return;
 
-  function renderHooks(data) {
-    var rail = $('#hook-rail');
-    data.hooks.forEach(function (h) {
-      var c = el('button', 'hook-card');
-      c.type = 'button';
-      if (h.thumb) {
-        var img = el('img');
-        img.src = h.thumb; img.alt = h.name; img.loading = 'lazy';
-        c.appendChild(img);
-      }
-      if (h.video) {
-        var v = el('video');
-        v.src = h.video; v.muted = true; v.loop = true;
-        v.playsInline = true; v.setAttribute('playsinline', '');
-        v.preload = 'metadata';
-        if (railAutoplay) railAutoplay.observe(c);
-        else hoverVideo(c, v);
-        c.appendChild(v);
-      }
-      c.appendChild(el('div', 'hook-shade'));
-      c.appendChild(el('span', 'hook-name', h.name));
-      var chip = el('span', 'tile-open', 'Use →');
-      chip.addEventListener('click', function (e) {
-        e.stopPropagation();
-        openMode('ugc', { hook: { id: h.id, name: h.name } });
-      });
-      c.appendChild(chip);
-      c.addEventListener('click', function () {
-        var use = function () { openMode('ugc', { hook: { id: h.id, name: h.name } }); };
-        if (VIEWER && h.video) {
-          VIEWER.open({
-            kicker: 'Viral hook',
-            title: h.name,
-            tag: h.prompt || '',
-            items: [{ video: h.video, thumb: h.thumb, label: h.name }],
-            cta: { label: 'Use this hook · ' + formatPrice('mode:ugc'), run: use },
-          });
-        } else {
-          use();
-        }
-      });
-      rail.appendChild(c);
+    // Measured off a real tile rather than hardcoded, because the tile width
+    // changes at two breakpoints and a fixed step drifts out of alignment.
+    function step() {
+      var tile = shelf.querySelector('.style-tile');
+      var w = tile ? tile.getBoundingClientRect().width : 200;
+      return Math.round((w + 12) * 2);
+    }
+    prev.addEventListener('click', function () {
+      shelf.scrollBy({ left: -step(), behavior: 'smooth' });
     });
+    next.addEventListener('click', function () {
+      shelf.scrollBy({ left: step(), behavior: 'smooth' });
+    });
+
+    // Grey out an arrow that cannot do anything, so the control tells the
+    // truth about where you are in the shelf.
+    function sync() {
+      var max = shelf.scrollWidth - shelf.clientWidth - 2;
+      prev.disabled = shelf.scrollLeft <= 2;
+      next.disabled = shelf.scrollLeft >= max;
+    }
+    shelf.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    sync();
+    // The tiles arrive from a fetch, so the first sync runs against an empty
+    // shelf and would leave both arrows dead.
+    if (window.requestAnimationFrame) requestAnimationFrame(sync);
+    setTimeout(sync, 400);
   }
 
   /* ── Step renderers ── */
@@ -2158,6 +2100,40 @@
         : chooserIntroText(pk)));
     body.appendChild(head);
 
+    /*
+     * The read, offered before the making, and offered hardest to somebody who
+     * has not signed in.
+     *
+     * This is the fix for the wall at the end. An anonymous visitor could pick
+     * a style, a creator, a hook, a scene, a duration, a quality, an aspect and
+     * write their notes, and only then be told to make an account: eight
+     * decisions, then a bounce. The account is not the problem, the ordering
+     * is. The read costs about 5 cents, needs nothing, and answers the question
+     * every one of those eight decisions is downstream of.
+     *
+     * Not drawn when they already arrived from a read, because then it has
+     * happened and the angle is loaded.
+     */
+    if (state.composerLink && !fromRead) {
+      var read = el('button', 'chooser-sample');
+      read.type = 'button';
+      var readCopy = el('span', 'chooser-sample-copy');
+      var readStrong = document.createElement('strong');
+      readStrong.textContent = (window.HexaAuth && window.HexaAuth.user())
+        ? 'Read the market first.'
+        : 'Not sure what to say yet? Read the market first, free.';
+      readCopy.appendChild(readStrong);
+      readCopy.appendChild(document.createTextNode(
+        ' What your buyers complain about, what they wish existed, and whether your category is won ' +
+        'by video or by statics. Everything below is easier once that is answered.'));
+      read.appendChild(el('span', 'chooser-sample-badge', 'Free'));
+      read.appendChild(readCopy);
+      read.appendChild(el('span', 'chooser-sample-arrow', '→'));
+      read.addEventListener('click', function () { startFreeRead(state.composerLink); });
+      body.appendChild(read);
+      if (window.hexaTrack) window.hexaTrack('gate-seen', 'studio');
+    }
+
     /* Goals first. Every one of these opens a product we already build; the
      * mapping is ours to know and the merchant's to never think about. */
     var goals = el('div', 'goal-grid');
@@ -2203,24 +2179,9 @@
 
     var grid = el('div', 'chooser-grid');
 
-    // The free taste: a 5 second grounded clip, one per account. Only offered
-    // when a real link is in play; an ungrounded sample sells nothing.
-    if (state.composerLink) {
-      var sample = el('button', 'chooser-sample');
-      sample.type = 'button';
-      var sampleCopy = el('span', 'chooser-sample-copy');
-      var strong = document.createElement('strong');
-      strong.textContent = 'Not ready to pay? Watch it move, free.';
-      sampleCopy.appendChild(strong);
-      sampleCopy.appendChild(document.createTextNode(
-        ' A 5 second clip of ' + (pk && pk.title ? pk.title : 'your product') +
-        ' in a creator’s hands. One per account, no card.'));
-      sample.appendChild(el('span', 'chooser-sample-badge', 'Free'));
-      sample.appendChild(sampleCopy);
-      sample.appendChild(el('span', 'chooser-sample-arrow', '→'));
-      sample.addEventListener('click', function () { startFreeSample(state.composerLink); });
-      grid.appendChild(sample);
-    }
+    /* The free-clip tile stood here, at the top of a collapsed disclosure. It
+     * is the read now, and it moved above the goals: an offer that answers the
+     * first question is not a footnote to the answers. */
 
     var used = {};
     CHOOSER_GROUPS.forEach(function (group) {
@@ -2760,20 +2721,24 @@
       } else { open(); }
     };
     renderStyles(state.presets);
-    renderModes(data);
-    renderMarquee(data);
-    renderHooks(data);
+    renderExecCells(data);
+    initStyleShelf();
 
-    // rail counters (editorial heads)
-    var counts = [
-      ['#styles-count', state.presets.length, 'presets'],
-      ['#modes-count', (data.modes || []).length + 1, 'modes'],
-      ['#hooks-count', (data.hooks || []).length, 'hooks'],
-    ];
-    counts.forEach(function (c) {
-      var n = $(c[0]);
-      if (n && c[1]) n.textContent = String(c[1]).padStart(2, '0') + ' ' + c[2];
+    // "Meet the cast", "All formats", "See the openers": all three land in the
+    // same place, because all three are chosen in the same place.
+    $all("[data-open-choose]").forEach(function (btn) {
+      btn.addEventListener("click", function () { openChooser(); });
     });
+
+    /* The style shelf is the only one of these left as tiles. Modes, avatars
+     * and hooks used to own a rail each; they are three cells in one section
+     * now, so their renderers went with the rails. */
+    var sc = $('#styles-count');
+    if (sc) sc.textContent = state.presets.length + ' briefs, already written and shot';
+    var mc = $('#modes-count');
+    if (mc) mc.textContent = String((data.modes || []).length + 1);
+    var hc = $('#hooks-count');
+    if (hc) hc.textContent = String((data.hooks || []).length);
 
     /*
      * The two ways in.
@@ -2786,20 +2751,47 @@
      */
     (function initEntrySwitch() {
       var SHOP = 2;
+      /* Each pane owns its own action button, so hiding the pane hides the
+       * button and nothing here has to toggle them. foot is the one shared
+       * slot: one sentence per source, in a fixed place on the shell. */
       var tabs = [
-        { btn: $('#entry-tab-link'), pane: $('#entry-link'), focus: '#composer-link' },
-        { btn: $('#entry-tab-photos'), pane: $('#entry-photos'), focus: null },
-        { btn: $('#entry-tab-shopify'), pane: $('#entry-shopify'), focus: '#shop-domain' },
+        { btn: $('#entry-tab-link'), pane: $('#entry-link'), focus: '#composer-link',
+          /* Deliberately not the free-read line: the .composer-free block
+             directly below already says that, and saying it twice inside 40px
+             read as filler. Each footer answers "will this work for me?" for
+             its own source instead. */
+          foot: '<b>Any store, any platform.</b> Paste the page you would send a customer to.' },
+        { btn: $('#entry-tab-photos'), pane: $('#entry-photos'), focus: null,
+          foot: '<b>No product page needed.</b> We read the product from your photos.' },
+        { btn: $('#entry-tab-shopify'), pane: $('#entry-shopify'), focus: '#shop-domain',
+          foot: '<b>Catalogue only.</b> We read your products and nothing else, then you pick one.' },
       ];
       if (tabs.some(function (t) { return !t.btn || !t.pane; })) return;
 
+      /* The thumb is measured off the live button rather than given fixed
+       * widths, because the labels shorten at narrow widths and a hardcoded
+       * offset would sit under the wrong tab. */
+      var thumb = $('#entry-thumb');
+      var current = 0;
+      function moveThumb(i) {
+        if (!thumb) return;
+        var b = tabs[i].btn;
+        if (!b.offsetWidth) return;
+        thumb.style.width = b.offsetWidth + 'px';
+        thumb.style.transform = 'translateX(' + b.offsetLeft + 'px)';
+      }
+
       function show(i, focus) {
+        current = i;
         tabs.forEach(function (t, k) {
           var on = k === i;
           t.btn.classList.toggle('is-on', on);
           t.btn.setAttribute('aria-selected', on ? 'true' : 'false');
           t.pane.hidden = !on;
         });
+        var foot = $('#composer-foot');
+        if (foot) foot.innerHTML = tabs[i].foot;
+        moveThumb(i);
         if (focus && tabs[i].focus) {
           var target = $(tabs[i].focus);
           if (target) target.focus();
@@ -2808,6 +2800,13 @@
       tabs.forEach(function (t, i) {
         t.btn.addEventListener('click', function () { show(i, true); });
       });
+      moveThumb(0);
+      // Web fonts change the label widths after first paint, and so does a
+      // resize that swaps the long labels for the short ones.
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () { moveThumb(current); });
+      }
+      window.addEventListener('resize', function () { moveThumb(current); });
 
       /*
        * Photos, for people who have a product but no page for it yet.
@@ -2921,10 +2920,16 @@
     /*
      * Guess the angle.
      *
-     * The one part of this page that does not argue, it demonstrates. A real
-     * product, three real themes, and the two wrong answers are the ones
+     * The only section on the page that demonstrates instead of asserting. A
+     * real product, three real claims, and the wrong answers are the ones
      * competitors actually advertise. Most people pick a crowded lane, and
      * feeling that happen is worth more than any headline claiming it would.
+     *
+     * The reveal happens in place now. It used to tear the stage down and
+     * rebuild it as a different list, which threw away the one moment worth
+     * animating: the claim you just picked is the same row that then grows
+     * its evidence underneath it. Rebuilding also meant the answer arrived
+     * fully formed, so nothing ever felt measured.
      *
      * Frozen data, deliberately: it has to be instant, it has to cost nothing
      * per visitor, and every number in it has to be one we actually measured.
@@ -2937,6 +2942,8 @@
       if (!stage) return;
       var rounds = [];
       var at = 0;
+      var locked = false;
+      var current = null;
 
       fetch('/catalog/guess-angles.json')
         .then(function (r) { return r.json(); })
@@ -2951,104 +2958,220 @@
           if (sec) sec.hidden = true;
         });
 
+      /* Both metrics share one scale, so the bars can be compared to each
+       * other rather than each to itself. That comparison IS the finding: the
+       * lane with nine buyers behind it and no ads, next to the lane with two
+       * buyers and eleven ads. Two independent scales would draw those the
+       * same length and delete the point. */
+      function scaleOf(r) {
+        return r.options.reduce(function (m, o) {
+          return Math.max(m, o.people, o.ads);
+        }, 1);
+      }
+
+      function meter(cls, n, noun, nouns, width) {
+        var row = el('span', 'guess-meter' + (cls ? ' ' + cls : ''));
+        var label = el('span', 'guess-meter-label');
+        label.appendChild(el('b', null, String(n)));
+        label.appendChild(document.createTextNode(' ' + (n === 1 ? noun : nouns)));
+        row.appendChild(label);
+        var bar = el('span', 'guess-bar');
+        var fill = el('i');
+        fill.dataset.w = width;
+        bar.appendChild(fill);
+        row.appendChild(bar);
+        return row;
+      }
+
       function draw() {
         var r = rounds[at % rounds.length];
+        current = r;
+        locked = false;
         stage.textContent = '';
+
+        var slip = el('div', 'guess-slip');
 
         var head = el('div', 'guess-product');
         head.appendChild(el('span', 'guess-product-label', 'The product'));
         head.appendChild(el('span', 'guess-product-name', r.product));
         head.appendChild(el('span', 'guess-product-price', r.price));
-        stage.appendChild(head);
+        /* What the read behind these three claims actually covered. It is the
+         * only number on the slip before you pick, and it is there to say the
+         * answer is measured rather than editorial. */
+        head.appendChild(el('span', 'guess-product-read',
+          r.read.comments + ' comments · ' + r.read.communities +
+          ' communities · ' + r.read.ads + ' competitor ads read'));
+        slip.appendChild(head);
 
+        var scale = scaleOf(r);
         var group = el('div', 'guess-options');
         group.setAttribute('role', 'radiogroup');
         group.setAttribute('aria-label', 'Which would you run?');
 
         r.options.forEach(function (o, i) {
+          var row = el('div', 'guess-row');
+
           var b = el('button', 'guess-option');
           b.type = 'button';
           b.setAttribute('role', 'radio');
           b.setAttribute('aria-checked', 'false');
-          b.appendChild(el('span', 'guess-option-mark'));
-          b.appendChild(el('span', 'guess-option-claim', o.claim));
-          b.addEventListener('click', function () { reveal(r, i); });
-          group.appendChild(b);
+
+          var tag = el('span', 'guess-tag');
+          b.appendChild(tag);
+
+          var top = el('span', 'guess-option-top');
+          top.appendChild(el('span', 'guess-key', String(i + 1)));
+          top.appendChild(el('span', 'guess-option-claim', o.claim));
+          b.appendChild(top);
+
+          /* The receipt is a 0fr -> 1fr grid row rather than a height
+           * animation, because the evidence is a different height for every
+           * option and nothing here should have to know it in advance. */
+          var receipt = el('span', 'guess-receipt');
+          var clip = el('span');
+          var inner = el('span', 'guess-receipt-inner');
+          inner.appendChild(meter('', o.people, 'customer raised it', 'customers raised it',
+            Math.round((o.people / scale) * 100)));
+          inner.appendChild(meter('is-ads', o.ads, 'competitor ad says it', 'competitor ads say it',
+            Math.round((o.ads / scale) * 100)));
+          inner.appendChild(el('span', 'guess-note', o.note));
+          clip.appendChild(inner);
+          receipt.appendChild(clip);
+          b.appendChild(receipt);
+
+          b.addEventListener('click', function () { reveal(i); });
+          row.appendChild(b);
+
+          /* Quotes live outside the button. A <button> may only contain
+           * phrasing content, and an .ev-card is a blockquote in a div, so
+           * nesting them made the row invalid and unreadable to a screen
+           * reader that flattens button labels. */
+          if ((o.quotes || []).length) {
+            var quotes = el('div', 'guess-quotes');
+            /* The clip has to be one wrapper, not the cards themselves. With
+             * the cards as the grid items, a 0fr row still painted them: each
+             * card clipped its own content and nothing clipped the row, so
+             * the winner's receipts were legible before anyone had picked,
+             * which gives the answer away. */
+            var qclip = el('div');
+            var qinner = el('div', 'guess-quotes-inner');
+            o.quotes.forEach(function (q) {
+              var card = el('div', 'ev-card');
+              card.appendChild(el('blockquote', null, q.text));
+              var meta = el('div', 'ev-meta');
+              meta.appendChild(el('span', 'ev-src', 'r/' + q.sub));
+              meta.appendChild(el('span', 'ev-score', q.score + ' points'));
+              card.appendChild(meta);
+              qinner.appendChild(card);
+            });
+            qclip.appendChild(qinner);
+            quotes.appendChild(qclip);
+            row.appendChild(quotes);
+          }
+
+          group.appendChild(row);
         });
-        stage.appendChild(group);
-        stage.appendChild(el('p', 'guess-hint', 'Pick one. Nothing is submitted anywhere.'));
+        slip.appendChild(group);
+
+        var verdict = el('div', 'guess-verdict');
+        var vclip = el('div');
+        var vinner = el('div', 'guess-verdict-inner');
+        vinner.appendChild(el('p', 'guess-close-line'));
+        var actions = el('div', 'guess-close-actions');
+        var go = el('a', 'btn btn-primary', 'Read my market, free');
+        go.href = '/validate';
+        var again = el('button', 'guess-again', 'Try another product');
+        again.type = 'button';
+        again.addEventListener('click', function () { at += 1; draw(); });
+        actions.appendChild(go);
+        actions.appendChild(again);
+        vinner.appendChild(actions);
+        vclip.appendChild(vinner);
+        verdict.appendChild(vclip);
+        slip.appendChild(verdict);
+
+        stage.appendChild(slip);
+
+        var hint = el('p', 'guess-hint');
+        hint.appendChild(document.createTextNode('Pick one. '));
+        ['1', '2', '3'].forEach(function (k) {
+          hint.appendChild(el('kbd', null, k));
+          hint.appendChild(document.createTextNode(' '));
+        });
+        hint.appendChild(document.createTextNode('work too. Nothing is submitted anywhere.'));
+        stage.appendChild(hint);
       }
 
-      function reveal(r, picked) {
+      function reveal(picked) {
+        if (locked || !current) return;
+        locked = true;
+        var r = current;
         var winner = r.options.reduce(function (best, o, i) {
           return o.people > r.options[best].people ? i : best;
         }, 0);
         var right = picked === winner;
 
-        stage.textContent = '';
+        var slip = stage.querySelector('.guess-slip');
+        var rows = stage.querySelectorAll('.guess-row');
+        slip.classList.add('is-done');
 
-        var head = el('div', 'guess-product');
-        head.appendChild(el('span', 'guess-product-label', right ? 'You got it' : 'What the evidence says'));
-        head.appendChild(el('span', 'guess-product-name', r.product));
-        head.appendChild(el('span', 'guess-product-price', r.price));
-        stage.appendChild(head);
+        rows.forEach(function (row, i) {
+          row.classList.add('guess-result');
+          row.classList.toggle('is-winner', i === winner);
+          row.classList.toggle('is-picked', i === picked);
+          row.classList.toggle('is-dim', i !== winner && i !== picked);
 
-        var list = el('div', 'guess-options is-revealed');
-        r.options.forEach(function (o, i) {
-          var row = el('div', 'guess-result' + (i === winner ? ' is-winner' : '') + (i === picked ? ' is-picked' : ''));
+          var b = row.querySelector('.guess-option');
+          b.setAttribute('aria-checked', i === picked ? 'true' : 'false');
+          b.disabled = true;
 
-          var top = el('div', 'guess-result-top');
-          top.appendChild(el('span', 'guess-result-claim', o.claim));
-          var tag = el('span', 'guess-tag', i === picked ? 'Your pick' : '');
-          if (i === picked) top.appendChild(tag);
-          row.appendChild(top);
+          var tag = row.querySelector('.guess-tag');
+          tag.textContent = i === picked ? 'Your pick' : (i === winner ? 'The angle' : '');
 
-          var stats = el('div', 'guess-stats');
-          var people = el('span', 'guess-stat');
-          people.appendChild(el('b', null, String(o.people)));
-          people.appendChild(document.createTextNode(o.people === 1 ? ' customer raised it' : ' customers raised it'));
-          stats.appendChild(people);
-          var ads = el('span', 'guess-stat');
-          ads.appendChild(el('b', null, String(o.ads)));
-          ads.appendChild(document.createTextNode(o.ads === 1 ? ' competitor ad says it' : ' competitor ads say it'));
-          stats.appendChild(ads);
-          row.appendChild(stats);
-
-          row.appendChild(el('p', 'guess-note', o.note));
-
-          (o.quotes || []).forEach(function (q) {
-            var card = el('div', 'ev-card');
-            card.appendChild(el('blockquote', null, q.text));
-            var meta = el('div', 'ev-meta');
-            meta.appendChild(el('span', 'ev-src', 'r/' + q.sub));
-            meta.appendChild(el('span', 'ev-score', q.score + ' points'));
-            card.appendChild(meta);
-            row.appendChild(card);
+          // Next frame, so the bars animate from zero instead of being born
+          // at their final width.
+          requestAnimationFrame(function () {
+            row.querySelectorAll('.guess-bar i').forEach(function (fill) {
+              fill.style.width = fill.dataset.w + '%';
+            });
           });
-
-          list.appendChild(row);
         });
-        stage.appendChild(list);
 
-        var close = el('div', 'guess-close');
-        close.appendChild(el('p', 'guess-close-line', right
-          ? 'You picked the one the evidence backs. Now do it for a product where you do not already know the answer.'
-          : 'That is the lane most brands are already in. We read ' + r.read.comments +
-            ' customer comments and ' + r.read.ads + ' competitor ads before answering.'));
+        /* The winner keeps its own tag even when it is also the pick, because
+         * "Your pick" alone would leave the evidence-backed row unmarked. */
+        if (right) {
+          var w = stage.querySelector('.guess-row.is-winner .guess-tag');
+          if (w) w.textContent = 'Your pick, and the angle';
+        }
 
-        var again = el('button', 'guess-again', 'Try another product');
-        again.type = 'button';
-        again.addEventListener('click', function () { at += 1; draw(); });
+        var label = stage.querySelector('.guess-product-label');
+        if (label) label.textContent = right ? 'You got it' : 'What the evidence says';
 
-        var go = el('a', 'btn btn-primary', 'Read my market, free');
-        go.href = '/validate';
-
-        var row2 = el('div', 'guess-close-actions');
-        row2.appendChild(go);
-        row2.appendChild(again);
-        close.appendChild(row2);
-        stage.appendChild(close);
+        var line = stage.querySelector('.guess-close-line');
+        if (line) {
+          line.textContent = right
+            ? 'You picked the one the evidence backs. Now do it for a product where you do not already know the answer.'
+            : 'That is the lane most brands are already in. We read ' + r.read.comments +
+              ' customer comments and ' + r.read.ads + ' competitor ads before answering.';
+        }
       }
+
+      /* 1, 2 and 3 pick, the way they would in any list you are meant to
+       * choose from. Not while someone is typing a product link, and not
+       * while the section is off screen, or the page answers a question the
+       * visitor cannot see. */
+      document.addEventListener('keydown', function (e) {
+        if (locked || !current) return;
+        if (e.key !== '1' && e.key !== '2' && e.key !== '3') return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        var t = e.target;
+        if (t && t.closest && t.closest('input, textarea, select, [contenteditable="true"]')) return;
+        var sec = stage.closest('.guess');
+        var box = sec && sec.getBoundingClientRect();
+        if (!box || box.bottom < 0 || box.top > window.innerHeight) return;
+        var i = Number(e.key) - 1;
+        if (i < current.options.length) { reveal(i); e.preventDefault(); }
+      });
     })();
 
     // composer
@@ -3315,9 +3438,9 @@
     });
 
     // more tiles: wire clicks and fill prices from PRODUCTS (one source of truth)
-    $all('.more-tile').forEach(function (tile) {
+    $all('.still').forEach(function (tile) {
       var id = tile.getAttribute('data-product');
-      var priceEl = tile.querySelector('.more-price');
+      var priceEl = tile.querySelector('.still-price');
       if (priceEl && PRODUCTS[id]) priceEl.textContent = formatPrice(id);
       tile.addEventListener('click', function () {
         openConfig(id);
@@ -3497,10 +3620,9 @@
   /* Skeleton tiles while the catalog loads; a real error state if it fails. */
   function showSkeletons() {
     var grid = $('#style-grid');
-    var rail = $('#mode-rail');
-    for (var i = 0; i < 4; i++) {
-      if (grid) grid.appendChild(el('div', 'tile-skeleton tile-skeleton-style'));
-      if (rail) rail.appendChild(el('div', 'tile-skeleton tile-skeleton-mode'));
+    if (!grid) return;
+    for (var i = 0; i < 6; i++) {
+      grid.appendChild(el('div', 'tile-skeleton tile-skeleton-style'));
     }
   }
   function clearSkeletons() {
@@ -3508,7 +3630,7 @@
   }
   function catalogError() {
     clearSkeletons();
-    ['#style-grid', '#mode-rail'].forEach(function (sel) {
+    ['#style-grid'].forEach(function (sel) {
       var host = $(sel);
       if (!host) return;
       var box = el('div', 'rail-error');

@@ -56,6 +56,67 @@
     return token ? { Authorization: 'Bearer ' + token } : {};
   }
 
+  /*
+   * Where every gate on this page sends people, in one place because three of
+   * them exist and they used to disagree.
+   *
+   * Both parameters do work. `mode=signup` puts login.html in its create-an
+   * account state rather than its sign-in state, which is what somebody who
+   * has never been here needs to see. `next` brings them back HERE rather than
+   * to the account page, because the report is on this screen and the payoff
+   * for signing up unlocks in place: no celebration interstitial between a
+   * visitor and the thing they just signed up for.
+   *
+   * The claim token is deliberately absent. It is a bearer credential, and a
+   * URL is the one place text ends up in history, referrers and screenshots.
+   */
+  function signupHref() {
+    return '/login.html?mode=signup&next=' + encodeURIComponent('/validate');
+  }
+
+  /*
+   * Funnel counters. Four of them across the flow, so "the free ad converts
+   * better than the old clip did" can be settled with a number instead of a
+   * conviction. Fired at most once per kind per page load: a gate that scrolls
+   * in and out of view has still only been seen once.
+   */
+  var gatesSeen = {};
+  function gateSeen(kind) {
+    if (gatesSeen[kind]) return;
+    gatesSeen[kind] = true;
+    if (window.hexaTrack) window.hexaTrack('gate-seen', kind);
+  }
+  function gateClicked(kind) {
+    if (window.hexaTrack) window.hexaTrack('gate-clicked', kind);
+  }
+
+  /*
+   * The angle a free ad would actually be built from, or null.
+   *
+   * Checked before the gate promises an ad, because a warm read can come back
+   * with an empty `angles` array: it has happened on real data, when 698
+   * records produced no angles at all because the format brief was missing.
+   * Promising an ad we cannot make is worse than not offering one.
+   *
+   * The fallback is the strongest customer theme, which is a real finding with
+   * its own receipts rather than an invention, and reads as a headline on its
+   * own. Only when there is not even that does the offer come off the page.
+   */
+  function usableAngle(report) {
+    var a = (report.angles || [])[0];
+    if (a && (a.headline || a.claim)) return a;
+    var top = byReceipts(report.pains)[0] || byReceipts(report.wishes)[0];
+    if (!top) return null;
+    return {
+      claim: top.claim,
+      headline: top.claim,
+      hook: '',
+      format: 'static',
+      persona: '',
+      evidence: top.evidence || [],
+    };
+  }
+
   /* House style: no em dashes or en dashes in copy we author. Models reach for
    * them constantly, so it is enforced at the render layer rather than asked
    * for in a prompt. Quoted evidence is never passed through here: a quote that
@@ -408,19 +469,20 @@
   }
 
   /*
-   * Render the recommended angle as a real ad, free, right here.
+   * Render the recommended angle as a real ad, free.
    *
    * Posts the same order shape the studio would build, plus the report id and
-   * its claim token, which is what buys the free render server side. On success
-   * it hands off to the render page with the job id, so the visitor watches it
-   * being made rather than waiting on a spinner with no explanation.
+   * its claim token, which is what buys the free render server side.
+   *
+   * Split in two because it now has two callers with opposite needs. A visitor
+   * who presses the button wants to watch it being made, so that path hands
+   * off to the render page. A visitor who has just come back from signing up
+   * wants the report they came back for, so that path starts the same job and
+   * says so in the band without moving them anywhere.
    */
-  function makeFreeAd(angle, report, btn) {
-    var saved;
-    try { saved = JSON.parse(sessionStorage.getItem('hexa.report') || 'null'); }
-    catch (e) { saved = null; }
-
-    var order = {
+  function freeAdOrder(angle, report) {
+    var saved = stored();
+    return {
       product: 'adsingle',
       title: 'Your first ad',
       freeReport: { id: report.id, claim: (saved && saved.claim) || '' },
@@ -433,11 +495,10 @@
       },
       ts: new Date().toISOString(),
     };
+  }
 
-    btn.disabled = true;
-    btn.textContent = 'Making it…';
-
-    fetch('/.netlify/functions/render-create', {
+  function startFreeAd(order) {
+    return fetch('/.netlify/functions/render-create', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
       body: JSON.stringify({ order: order }),
@@ -447,8 +508,17 @@
         if (!d.jobs || !d.jobs.length) return Promise.reject(d);
         // The render page reads the order back out of localStorage.
         try { localStorage.setItem('hexa-studio-order', JSON.stringify(order)); } catch (e) {}
-        window.location.href = '/render.html?jobs='
-          + encodeURIComponent(d.jobs.map(function (j) { return j.id; }).join(','));
+        return d.jobs.map(function (j) { return j.id; }).join(',');
+      });
+  }
+
+  function makeFreeAd(angle, report, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Making it…';
+
+    startFreeAd(freeAdOrder(angle, report))
+      .then(function (jobs) {
+        window.location.href = '/render.html?jobs=' + encodeURIComponent(jobs);
       })
       .catch(function (d) {
         btn.disabled = false;
@@ -514,10 +584,34 @@
    */
   function unlockCard(report) {
     var sec = el('section', 'vd-section vd-unlock');
-    sec.appendChild(el('h2', null, 'Now let us read your competition'));
-    sec.appendChild(el('p', 'vd-lede',
-      'Everything above came from your customers. What we have not done yet is look at what your ' +
-      'competitors are already saying, which is what turns a good angle into an unclaimed one.'));
+    var angle = usableAngle(report);
+
+    /*
+     * Led by the ad, not by the credits.
+     *
+     * This card used to open on the competition read and close on "2,500
+     * credits", and credits are the wrong currency for somebody who has never
+     * bought anything here: nobody can price a credit until they have seen
+     * what one buys. The ad is the same offer stated as an object. It costs us
+     * about 2.6 cents, it is made from the angle already on their screen, and
+     * it turns a signup from a promise into a delivery.
+     */
+    if (angle) {
+      sec.appendChild(el('h2', null, 'Sign in free and we make this ad'));
+      sec.appendChild(el('p', 'vd-lede',
+        'We take the angle above and build you a real static ad from your own product. No card, ' +
+        'nothing to cancel, and your report stays exactly where it is.'));
+      var line = el('div', 'unlock-angle');
+      line.appendChild(el('b', null, 'The line it runs'));
+      line.appendChild(el('q', null, voice(angle.headline || angle.claim)));
+      sec.appendChild(line);
+      sec.appendChild(el('h3', 'unlock-more', 'And your welcome credits cover the competition read'));
+    } else {
+      sec.appendChild(el('h2', null, 'Now let us read your competition'));
+      sec.appendChild(el('p', 'vd-lede',
+        'Everything above came from your customers. What we have not done yet is look at what your ' +
+        'competitors are already saying, which is what turns a good angle into an unclaimed one.'));
+    }
 
     var list = el('ul', 'unlock-list');
     [
@@ -533,15 +627,26 @@
     });
     sec.appendChild(list);
 
-    /* The grant, in what it buys. "2,500 credits" is a number nobody can price
-     * until they have seen what one costs. */
+    /*
+     * The grant, said in what it buys and in the right order.
+     *
+     * Two corrections live in this sentence. The number: 2,500 credits is two
+     * full reads at 1,000 each, not the five single ads the catalogue note
+     * still claims. And the sequence: signing in does not retroactively add
+     * the competitor legs to THIS report, because those legs never ran and a
+     * finished row cannot grow them. A full read is a second run against the
+     * welcome credits. Saying "unlock" would be a small lie, and the four
+     * lines above would be the thing it was lying about.
+     */
     sec.appendChild(el('p', 'unlock-credits',
-      'A free account also starts with 2,500 credits, which is two more of these reports or five ' +
-      'static ad creatives. Your report is saved, so signing in picks it up exactly where you left it.'));
+      'A free account starts with 2,500 credits, which covers two full reads. This report is saved to ' +
+      'the account either way, so nothing here has to be pasted twice.'));
 
-    var cta = el('a', 'btn btn-primary', 'Read my competition, free');
-    cta.href = '/login.html';
+    var cta = el('a', 'btn btn-primary', angle ? 'Make this ad, free' : 'Read my competition, free');
+    cta.href = signupHref();
+    cta.addEventListener('click', function () { gateClicked('report'); });
     sec.appendChild(cta);
+    gateSeen('report');
     return sec;
   }
 
@@ -828,15 +933,27 @@
     var wantsStatic = top.format === 'static';
 
     /*
-     * The free one. Offered to everybody, because the point is to end the
-     * report with the thing itself rather than with a price: they have just
-     * been told what to say, and the next click shows it made. One per report,
-     * enforced server side.
+     * The free one, and what it costs depends only on whether they have an
+     * account: nothing either way, but an anonymous visitor signs in first.
+     *
+     * The report itself is the free thing that needs nothing, and it is the
+     * larger half: everything above this line was computed and given away
+     * without an email. The ad is what the account buys, which is why this
+     * button changes shape rather than disappearing. Same promise, same words,
+     * one extra step, and the report is waiting when they come back.
      */
-    var free = el('button', 'is-primary', 'Make this ad, free →');
-    free.type = 'button';
-    free.addEventListener('click', function () { makeFreeAd(top, report, free); });
-    act.appendChild(free);
+    if (isSignedIn()) {
+      var free = el('button', 'is-primary', 'Make this ad, free →');
+      free.type = 'button';
+      free.addEventListener('click', function () { makeFreeAd(top, report, free); });
+      act.appendChild(free);
+    } else {
+      var gate = el('a', 'is-primary', 'Make this ad, free →');
+      gate.href = signupHref();
+      gate.addEventListener('click', function () { gateClicked('recommendation'); });
+      act.appendChild(gate);
+      gateSeen('recommendation');
+    }
 
     /* Not "make this as a video": the studio now asks what the ad should do
      * before it picks a format, so naming one here would answer that question
@@ -946,6 +1063,7 @@
     }
 
     if (!signedIn) out.appendChild(unlockCard(report));
+    else if (resumed) welcomeBand(report);
     out.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -985,9 +1103,7 @@
     var p = res.payload || {};
     var index = p.evidence || {};
     var read = p.read || {};
-    var saved;
-    try { saved = JSON.parse(sessionStorage.getItem('hexa.report') || 'null'); }
-    catch (e) { saved = null; }
+    var saved = stored();
     return {
       // From the poll where possible, from the handle we stored at creation
       // otherwise, because a resumed page may render before anything else knows
@@ -1040,6 +1156,9 @@
     if (cta) {
       var a = el('a', 'btn btn-primary vd-notice-cta', cta.label);
       a.href = cta.href;
+      if (cta.track) {
+        a.addEventListener('click', function () { gateClicked(cta.track); });
+      }
       card.appendChild(a);
     }
     box.appendChild(card);
@@ -1049,16 +1168,65 @@
 
   /* ── run ─────────────────────────────────────────────────── */
 
-  /* A report id plus its claim token is the only way an anonymous visitor gets
+  /*
+   * A report id plus its claim token is the only way an anonymous visitor gets
    * back to work we already paid to do. Kept so a refresh, or a sign-in that
-   * reloads the page, does not silently start the whole thing again. */
-  function remember(id, claim) {
-    try { sessionStorage.setItem('hexa.report', JSON.stringify({ id: id, claim: claim || '' })); }
-    catch (e) { /* private mode: the report still works, it just will not resume */ }
+   * reloads the page, does not silently start the whole thing again.
+   *
+   * The title rides along because the signup screen needs a name to put in
+   * its context band, and the report row is not readable from there. `ts`
+   * rides along because this used to have no expiry at all: opening /validate
+   * hours later in the same tab silently re-attached to whatever was last
+   * read, so the page filled with a report the visitor had not asked for and
+   * could not explain. Six hours is long enough to cover a sign-in round trip
+   * and a distraction, short enough that it never surprises anybody.
+   *
+   * Since report-claim.js landed, this is the fast path rather than the only
+   * copy: a claimed report is on the account, so losing this costs a lookup.
+   */
+  var RESUME_TTL_MS = 6 * 60 * 60 * 1000;
+
+  function remember(id, claim, title) {
+    try {
+      sessionStorage.setItem('hexa.report', JSON.stringify({
+        id: id, claim: claim || '', title: title || '', ts: Date.now(),
+      }));
+    } catch (e) { /* private mode: the report still works, it just will not resume */ }
+  }
+
+  /* The one reader. Entries written before this had a ts are dropped rather
+   * than trusted, which is the same call as expiry: an unexplained report is
+   * the bug being fixed. */
+  function stored() {
+    var s;
+    try { s = JSON.parse(sessionStorage.getItem('hexa.report') || 'null'); }
+    catch (e) { return null; }
+    if (!s || !s.id) return null;
+    if (!s.ts || Date.now() - s.ts > RESUME_TTL_MS) { forget(); return null; }
+    return s;
+  }
+
+  function forget() {
+    try { sessionStorage.removeItem('hexa.report'); } catch (e) {}
+  }
+
+  /* The title only exists once the worker has read the page, which is after
+   * the handle was stored. Folded in rather than rewritten so the claim token
+   * is never touched by a code path that does not have it. */
+  function rememberTitle(title) {
+    var s = stored();
+    if (!s || !title || s.title === title) return;
+    remember(s.id, s.claim, title);
   }
 
   var POLL_MS = 2500;
   var POLL_CEILING_MS = 6 * 60 * 1000;   // a cold harvest runs minutes, not seconds
+
+  /* Which read this page is currently watching. A poll belonging to an
+   * abandoned run answers into a page that has moved on, so it checks its
+   * generation before drawing anything. Without this, dismissing a resumed
+   * report clears the screen and then the in-flight poll paints it back. */
+  var runId = 0;
 
   function finish(tick) {
     clearInterval(tick);
@@ -1066,7 +1234,8 @@
     button.disabled = false;
   }
 
-  function poll(id, claim, tick, startedAt) {
+  function poll(id, claim, tick, startedAt, gen) {
+    if (gen !== runId) return;
     var qs = '?id=' + encodeURIComponent(id) + (claim ? '&claim=' + encodeURIComponent(claim) : '');
     // Signed-in reports carry no claim token, so ownership is proved by the
     // bearer token instead. Sent on every poll because a session can refresh
@@ -1074,23 +1243,26 @@
     fetch('/.netlify/functions/report-status' + qs, { cache: 'no-store', headers: authHeaders() })
       .then(function (r) { return r.json(); })
       .then(function (res) {
+        if (gen !== runId) return;
         if (res.status === 'building') {
           // The worker names its own stage, so the bar tracks work rather than
           // time. The local ticker below is only a fallback for the seconds
           // before the first step is written.
           var at = STEP_INDEX[res.stepKey];
           if (at != null) advance(at);
+          if (res.title) rememberTitle(res.title);
           if (Date.now() - startedAt > POLL_CEILING_MS) {
             finish(tick);
             notice('This one is taking longer than it should.',
               'Your report is still building and it is saved. Reload this page in a few minutes and it will be here.');
             return;
           }
-          setTimeout(function () { poll(id, claim, tick, startedAt); }, POLL_MS);
+          setTimeout(function () { poll(id, claim, tick, startedAt, gen); }, POLL_MS);
           return;
         }
 
         finish(tick);
+        if (res.title) rememberTitle(res.title);
 
         if (res.status === 'failed') {
           notice('We could not read enough about this product to say anything honest.',
@@ -1105,10 +1277,11 @@
           return;
         }
         if (p.gated) {
+          gateSeen('cold');
           notice('Nobody has studied this market with us yet.',
             p.message || 'Create a free account and we will go and read it properly, then save the report to your library. ' +
-              'New accounts start with 2,500 credits, so the angles we find come out as real ads without you paying anything.',
-            { label: 'Read my market free', href: '/login.html' });
+              'A free account also makes your first static ad, from whichever angle the read lands on.',
+            { label: 'Read my market free', href: signupHref(), track: 'cold' });
           return;
         }
         if (p.pending_harvest) {
@@ -1126,8 +1299,10 @@
   }
 
   function run(url) {
+    var gen = ++runId;
     button.disabled = true;
     out.hidden = true;
+    hideBand();
     startSteps();
 
     // Fallback ticker only. Real stage names arrive from report-status and
@@ -1152,9 +1327,10 @@
       })
       .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
       .then(function (r) {
+        if (gen !== runId) return;
         if (!r.ok) throw new Error(r.body && r.body.error ? r.body.error : 'could not start');
-        remember(r.body.id, r.body.claimToken);
-        poll(r.body.id, r.body.claimToken, tick, Date.now());
+        remember(r.body.id, r.body.claimToken, r.body.title);
+        poll(r.body.id, r.body.claimToken, tick, Date.now(), gen);
       })
       .catch(function (e) {
         finish(tick);
@@ -1172,20 +1348,195 @@
     run(url);
   });
 
+  /* ── the band that says why a report is on screen ──────────── */
+
+  /*
+   * A report used to appear here with no explanation at all.
+   *
+   * The resume below reattaches to whatever this tab last read, so opening
+   * /validate could fill with a progress bar and then a finished report for a
+   * product the visitor had not typed, in a session they did not remember
+   * starting. The report was correct. The page simply never said where it came
+   * from, which reads as the site making things up.
+   *
+   * So a resumed report always arrives with a sentence naming it and a way
+   * out, and a signed-in visitor gets the version that names the account.
+   */
+  var band = null;
+
+  function showBand(cls, strongText, restText, action) {
+    hideBand();
+    var b = el('div', 'vd-band ' + cls);
+    // Its text changes under the reader while an ad renders, so it announces.
+    b.setAttribute('aria-live', 'polite');
+    var p = el('p', 'vd-band-txt');
+    p.appendChild(el('strong', null, strongText));
+    if (restText) p.appendChild(document.createTextNode(' ' + restText));
+    b.appendChild(p);
+    if (action) {
+      var btn = el('button', 'vd-band-act', action.label);
+      btn.type = 'button';
+      btn.addEventListener('click', action.onClick);
+      b.appendChild(btn);
+    }
+    progress.parentNode.insertBefore(b, progress);
+    band = b;
+    return b;
+  }
+
+  function hideBand() {
+    if (band) { band.remove(); band = null; }
+  }
+
+  /* Back to an empty page. Bumping the generation matters: without it the
+   * in-flight poll for the report they just dismissed answers a second later
+   * and paints it straight back. */
+  function startOver() {
+    runId++;
+    forget();
+    hideBand();
+    /* ?report= would reopen the same read on the next refresh, which is the
+     * "why is this here" bug again with a different cause. */
+    try { window.history.replaceState(null, '', window.location.pathname); } catch (e) {}
+    progress.hidden = true;
+    out.hidden = true;
+    out.textContent = '';
+    button.disabled = false;
+    input.value = '';
+    input.focus();
+  }
+
+  /*
+   * The returning band: what somebody sees on the first load after signing up
+   * from the gate.
+   *
+   * This is the whole post-signup screen, and it is deliberately not a separate
+   * page. They signed up to get an ad made from the angle on this report, so
+   * the payoff belongs on the report, with nothing between them and it.
+   *
+   * The ad starts here rather than on a click. It is the thing that was
+   * promised, it costs us about 2.6 cents, and a visitor who has just handed
+   * over an email should not have to ask twice for what they were told they
+   * had already earned.
+   */
+  function welcomeBand(report) {
+    var angle = usableAngle(report);
+    if (!angle) {
+      showBand('vd-band-welcome', 'Your report is right where you left it.',
+        'It is saved to your account now, so you can close this tab.');
+      return;
+    }
+
+    /* The client half of "once per report". The server half is the real one,
+     * a Netlify Blob keyed on the report id that render-create checks before
+     * any engine call; this only saves the round trip on a refresh. */
+    var already = false;
+    try { already = !!localStorage.getItem('hexa.freead.' + report.id); } catch (e) {}
+    if (already) {
+      showBand('vd-band-welcome', 'Your report is right where you left it.',
+        'This report already had its free ad, and it is in your library.');
+      return;
+    }
+    try { localStorage.setItem('hexa.freead.' + report.id, String(Date.now())); } catch (e) {}
+
+    var b = showBand('vd-band-welcome', 'Your report is right where you left it.',
+      'Making your free ad now.');
+
+    startFreeAd(freeAdOrder(angle, report))
+      .then(function (jobs) {
+        bandSays(b, 'Your free ad is being made.',
+          'It takes about a minute. The report stays here while it renders.',
+          { label: 'Watch it', href: '/render.html?jobs=' + encodeURIComponent(jobs) });
+      })
+      .catch(function (d) {
+        /* Already spent is a success from the visitor's side: the ad exists,
+         * it is just not new. Anything else is said plainly and does not
+         * promise an email, because the sender is behind a master switch that
+         * is currently off and a promise it would swallow is worse than
+         * silence. */
+        try { localStorage.removeItem('hexa.freead.' + report.id); } catch (e) {}
+        if (d && /already had its free ad/i.test(d.error || '')) {
+          bandSays(b, 'Your report is right where you left it.',
+            'This report already had its free ad. It is in your library.',
+            { label: 'Open my library', href: '/account.html' });
+          return;
+        }
+        bandSays(b, 'Your report is right where you left it.',
+          'The ad hit a snag on the way out. It is back in the queue and it will appear in your ' +
+          'library when it lands.');
+      });
+  }
+
+  /* Rewrite a band in place. The band is one line that changes three times in
+   * ten seconds, so replacing the node would move the page under the reader. */
+  function bandSays(b, strongText, restText, link) {
+    b.textContent = '';
+    var p = el('p', 'vd-band-txt');
+    p.appendChild(el('strong', null, strongText));
+    if (restText) p.appendChild(document.createTextNode(' ' + restText));
+    b.appendChild(p);
+    if (link) {
+      var a = el('a', 'vd-band-act', link.label);
+      a.href = link.href;
+      b.appendChild(a);
+    }
+  }
+
   /*
    * Resume. Someone who signs in from the gate comes back on a fresh page load
    * with a finished report already sitting in the database; making them paste
    * the link again would be asking them to pay for the same work twice.
    */
+  /* An explicit id in the URL is an instruction; a resume is a guess. Read
+   * before either runs so they cannot both start a poll. */
+  var OPEN_ID = (function () {
+    try { return new URLSearchParams(window.location.search).get('report') || ''; }
+    catch (e) { return ''; }
+  })();
+
   var resumed = (function resume() {
-    var saved;
-    try { saved = JSON.parse(sessionStorage.getItem('hexa.report') || 'null'); }
-    catch (e) { saved = null; }
-    if (!saved || !saved.id) return false;
+    if (OPEN_ID) return false;
+    var saved = stored();
+    if (!saved) return false;
+    var gen = ++runId;
     button.disabled = true;
     startSteps();
+    showBand('vd-band-resume', 'Picking up where you left off.',
+      saved.title ? 'Your read of ' + saved.title + ' is still here.'
+                  : 'The read you started is still here.',
+      { label: 'Read something else', onClick: startOver });
     var tick = setInterval(function () {}, 60000);
-    authReady().then(function () { poll(saved.id, saved.claim, tick, Date.now()); });
+    authReady().then(function () {
+      if (gen !== runId) return;
+      poll(saved.id, saved.claim, tick, Date.now(), gen);
+    });
+    return true;
+  })();
+
+  /*
+   * Opened from the Reports tab: /validate?report=<id>.
+   *
+   * The id alone, with no claim token, which is the point. The row belongs to
+   * an account by then, so report-status authorises it off the bearer token
+   * instead, and the link stays safe to paste anywhere. A share link carrying
+   * a claim token would let whoever received it take the report into their own
+   * account, so no URL on this site ever carries one.
+   *
+   * This wins over the tab's stored report, because an explicit id is an
+   * instruction and a resume is a guess.
+   */
+  var opened = (function fromId() {
+    if (!OPEN_ID) return false;
+    var gen = ++runId;
+    button.disabled = true;
+    startSteps();
+    showBand('vd-band-resume', 'Opened from your reports.', 'Nothing is being re-read, and nothing is charged.',
+      { label: 'Read something else', onClick: startOver });
+    var tick = setInterval(function () {}, 60000);
+    authReady().then(function () {
+      if (gen !== runId) return;
+      poll(OPEN_ID, '', tick, Date.now(), gen);
+    });
     return true;
   })();
 
@@ -1198,7 +1549,7 @@
    * A report already resuming wins, because that one is paid for and finished.
    */
   (function fromLink() {
-    if (resumed) return;
+    if (resumed || opened) return;
     var url = '';
     try { url = new URLSearchParams(window.location.search).get('url') || ''; }
     catch (e) { return; }

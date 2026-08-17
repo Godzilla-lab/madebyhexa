@@ -36,24 +36,126 @@
     .brand-dot { color: var(--accent); }
     .acct-nav-right { display: inline-flex; align-items: center; gap: 14px; }
     .acct-user { font-size: 13.5px; color: var(--text-mute); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .acct-new {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 9px 16px; border-radius: 999px;
-      background: linear-gradient(92deg, var(--accent), var(--accent-deep));
-      color: var(--on-accent); text-decoration: none; font-size: 14px; font-weight: 700;
-      transition: transform 160ms var(--ease), box-shadow 160ms var(--ease);
-    }
-    .acct-new:hover { transform: translateY(-1px); box-shadow: var(--glow-accent); }
+    /* .acct-new is gone with the "New creation" button it styled. That button
+       was the only way to start work from this page and it left for the home
+       page to do it; the composer on Home replaced both. */
     .acct-signout { background: none; border: none; color: var(--text-faint); font-family: inherit; font-size: 13px; cursor: pointer; transition: color 160ms var(--ease); }
     .acct-signout:hover { color: var(--text); }
 
     .acct-main { max-width: var(--max-w); margin: 0 auto; padding: 20px 28px 80px; position: relative; z-index: 1; }
-    .acct-head { margin: 18px 0 26px; }
-    .acct-kicker {
-      margin: 0 0 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 600;
-      letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-soft);
+    .acct-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
     }
-    .acct-title { margin: 0; font-family: var(--font-display); font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.03em; }
+
+    /* The balance, as chrome. */
+    .acct-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 8px 14px; border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-mute);
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      transition: border-color 160ms var(--ease), color 160ms var(--ease);
+    }
+    .acct-pill:hover { border-color: var(--text-faint); color: var(--text); }
+    .acct-pill #acct-balance-num { color: var(--text); }
+
+    /* ── The composer, which is what Home is for ── */
+    .acct-composer { margin: 18px 0 34px; }
+    .acct-composer-sub { margin: 10px 0 18px; color: var(--text-mute); font-size: 15px; max-width: 62ch; }
+    .acct-composer-form { display: flex; gap: 10px; flex-wrap: wrap; max-width: 680px; }
+    .acct-composer-form input {
+      flex: 1 1 320px; min-width: 0;
+      padding: 14px 16px;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--border-strong);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text);
+      font-family: inherit; font-size: 15px;
+      transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+    }
+    .acct-composer-form input::placeholder { color: rgba(255, 255, 255, 0.28); }
+    .acct-composer-form input:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.18);
+    }
+    .acct-composer-form button { flex: none; }
+    .acct-composer-note {
+      margin: 12px 0 0; font-size: 13px; color: var(--text-faint);
+      font-variant-numeric: tabular-nums;
+    }
+    .acct-composer-note.is-short { color: var(--accent-soft); }
+    .acct-link-btn {
+      background: none; border: 0; padding: 0;
+      color: var(--accent-soft); font: inherit; font-size: inherit; font-weight: 600;
+      text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+    }
+    .acct-link-btn:hover { color: var(--text); }
+
+    /* ── Rows on Home ── */
+    .acct-row { margin: 34px 0 0; }
+    .acct-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .acct-row-head {
+      margin: 0 0 14px; font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-faint);
+    }
+    .acct-row-more {
+      background: none; border: 0; padding: 0;
+      color: var(--text-mute); font: inherit; font-size: 13px; cursor: pointer;
+      transition: color 160ms var(--ease);
+    }
+    .acct-row-more:hover { color: var(--text); }
+
+    .acct-shop-line {
+      margin: 40px 0 0; padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      font-size: 13.5px; color: var(--text-faint);
+    }
+    .acct-shop-line .acct-link-btn { font-size: 13.5px; }
+
+    /* ── Reports ──
+     * A read is a document, so it is drawn as a row of text rather than as a
+     * tile: there is no image to show, and a card with a grey rectangle where
+     * the picture should be reads as a broken tile rather than a report. */
+    .acct-reports { display: grid; gap: 12px; }
+    .acct-report {
+      display: block; padding: 18px 20px;
+      border-radius: var(--tile-radius);
+      border: 1px solid var(--border-strong);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+      text-decoration: none; color: var(--text);
+      transition: border-color 180ms var(--ease), transform 180ms var(--ease);
+    }
+    .acct-report:hover { border-color: rgba(255, 255, 255, 0.24); transform: translateY(-2px); }
+    .acct-report-top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .acct-report-title { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.3; min-width: 0; }
+    .acct-report-when {
+      flex: none; font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.04em; color: var(--text-faint);
+    }
+    .acct-report-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .acct-tag {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 5px 9px; border-radius: 999px;
+      border: 1px solid var(--border); color: var(--text-mute);
+    }
+    .acct-tag.is-work { border-color: rgba(255, 77, 109, 0.4); color: var(--accent-soft); }
+    .acct-tag.is-off { border-color: var(--border); color: var(--text-faint); }
+    .acct-tag.is-free { border-color: rgba(255, 255, 255, 0.22); color: var(--text); }
+    .acct-report-verdict {
+      margin: 12px 0 0; font-size: 14px; line-height: 1.5; color: var(--text-mute);
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
 
     .acct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
 
@@ -132,7 +234,7 @@
     .acct-empty-badge svg { width: 26px; height: 26px; }
     .acct-empty h2 { margin: 0 0 10px; font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
     .acct-empty p { margin: 0 auto 24px; color: var(--text-mute); font-size: 15px; max-width: 380px; }
-    .acct-empty .acct-new { padding: 12px 22px; font-size: 15px; }
+    .acct-empty .acct-btn { padding: 12px 22px; font-size: 15px; }
 
     .acct-state { text-align: center; padding: 60px 20px; color: var(--text-faint); font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; }
 
@@ -162,12 +264,10 @@
     }
     .acct-welcome h2 { margin: 0 0 10px; font-family: var(--font-display); font-size: clamp(26px, 3.6vw, 38px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.08; }
     .acct-welcome > p { margin: 0 0 26px; color: var(--text-mute); font-size: 15.5px; max-width: 520px; line-height: 1.55; }
-    .acct-progress { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; }
-    /* the bar spans the step cards below it, so bar and cards read as one unit */
-    .acct-progress-bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
-    .acct-progress-fill { display: block; width: 33%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-deep)); }
-    .acct-progress-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
-    .acct-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0 0 28px; }
+    /* The "1 of 3 done" bar came out with the checklist it belonged to. It was
+       drawn at a fixed 33% regardless of what the account had actually done,
+       which is a progress bar that measures nothing. */
+    .acct-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; }
     .acct-step {
       padding: 18px 18px 20px; border-radius: 16px;
       background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.09);
@@ -185,22 +285,13 @@
     .acct-step h3 { margin: 0 0 5px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
     .acct-step p { margin: 0; font-size: 13.5px; color: rgba(255, 255, 255, 0.7); line-height: 1.5; }
     .acct-step.is-done h3 { color: var(--text-mute); text-decoration: line-through; text-decoration-color: rgba(255, 77, 109, 0.5); text-decoration-thickness: 1.5px; }
-    .acct-welcome-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-    .acct-welcome-cta .acct-new { padding: 13px 24px; font-size: 15px; }
-    .acct-welcome-alt { color: var(--text-mute); font-size: 14px; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 1px; transition: color 160ms var(--ease); }
-    .acct-welcome-alt:hover { color: var(--text); }
-    /* onboarding keeps one path: no competing nav CTA, no tabs yet */
-    body.acct-onboarding .acct-nav .acct-new { display: none; }
-    body.acct-onboarding .acct-tabs { display: none; }
-    .acct-inspo { margin-top: 34px; }
-    .acct-inspo-label { margin: 0 0 12px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
-    .acct-inspo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-    .acct-inspo-grid a { display: block; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); transition: transform 180ms var(--ease), border-color 180ms var(--ease); }
-    .acct-inspo-grid a:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.25); }
-    .acct-inspo-grid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
+    /* The "Make your first ad" button and the "see what others made" strip both
+       left this page, and the second of them pointed at /#reel, a section that
+       was deleted when the execution layer was merged. The composer above the
+       welcome panel is the one way in now, so the panel explains rather than
+       competing with it. */
     @media (max-width: 720px) {
       .acct-steps { grid-template-columns: 1fr; }
-      .acct-inspo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     /* ── Settings ── */
@@ -233,27 +324,16 @@
     .acct-btn-danger { background: rgba(255, 60, 60, 0.12); border-color: rgba(255, 80, 80, 0.35); color: #ff9d9d; }
     .acct-btn-danger:hover { background: rgba(255, 60, 60, 0.22); }
     /* ── Credits ──
-       The balance is the number that decides what they can do next, so it is
-       sized like a headline and paired with what it actually buys. A five
-       figure number on its own means nothing to someone seeing it first time. */
-    .acct-credits {
-      margin: 0 0 26px;
-      padding: 20px 22px;
-      border-radius: 18px;
-      border: 1px solid var(--border-strong);
-      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
-    }
-    .acct-credits-top { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
-    .acct-credits-label {
-      margin: 0 0 4px; font-size: 11px; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint);
-    }
+       The balance used to be a 38px numeral at the top of the page, which made
+       the first thing anybody read on signing in a number they cannot act on.
+       It is a nav pill now; this is the card you open to audit it and buy more,
+       so the numeral is sized for a settings card rather than a headline. */
     .acct-credits-num {
-      margin: 0; font-size: 38px; font-weight: 700; line-height: 1;
+      margin: 0; font-size: 30px; font-weight: 700; line-height: 1;
       letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
     }
     .acct-credits-unit { font-size: 15px; font-weight: 600; color: var(--text-mute); letter-spacing: 0; }
-    .acct-credits-sub { margin: 8px 0 0; font-size: 13px; color: var(--text-mute); }
+    .acct-credits-sub { margin: 8px 0 16px; font-size: 13px; color: var(--text-mute); }
     .acct-btn-primary { background: var(--accent); border-color: transparent; color: var(--on-accent); font-weight: 700; }
     .acct-btn-primary:hover { background: var(--accent); filter: brightness(1.08); }
 
@@ -308,22 +388,16 @@
     .acct-ledger-delta.is-up { color: #7ddb9a; }
     .acct-ledger-when { font-size: 12px; color: var(--text-faint); }
 
-    /* ── Shopify connection ── */
-    .acct-shopify {
-      margin: 0 0 26px;
-      padding: 20px 22px;
-      border-radius: 18px;
-      border: 1px solid var(--border-strong);
-      background: rgba(255, 255, 255, 0.025);
-    }
-    .acct-shop-head { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; justify-content: space-between; }
-    .acct-shop-state { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+    /* ── Shopify connection ──
+       A settings card now, with one line on Home pointing at it. It used to be
+       a full-width block second on the page, which is a lot of room for a
+       setting most accounts never turn on. */
     .acct-shop-state.is-on::before {
       content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 9px;
       border-radius: 50%; background: #7ddb9a; vertical-align: middle;
     }
-    .acct-shop-sub { margin: 7px 0 0; font-size: 13px; color: var(--text-mute); max-width: 52ch; line-height: 1.5; }
-    .acct-shop-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .acct-shop-sub { margin: 0 0 14px; font-size: 13px; color: var(--text-mute); max-width: 52ch; line-height: 1.5; }
+    .acct-shop-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
     .acct-shop-form input {
       flex: 1 1 280px; min-width: 0;
       padding: 11px 14px; font: inherit; font-size: 14px; color: var(--text);
@@ -346,26 +420,37 @@
       .acct-user { display: none; }
       .acct-nav { padding: 14px 16px; gap: 10px; }
       .acct-nav-right { gap: 10px; }
-      .acct-nav .acct-new { padding: 8px 13px; font-size: 13px; }
       .acct-main { padding: 14px 16px 60px; }
       .acct-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+      .acct-composer-form button { width: 100%; }
     }
 
     /* Touch floors, same 44px rule the studio and the report already keep.
      * Measured 2026-08-15, first audit run that could reach this page while
      * signed in: "Add credits" and "Connect Shopify" were 34px (.acct-btn is
      * 9px of padding on a 13.5px line), and "See what others made first" was
-     * 24px, being a bare text link. Desktop keeps the compact sizing. */
+     * 24px, being a bare text link. Desktop keeps the compact sizing.
+     *
+     * The new controls join the same list rather than being sized by hand: the
+     * balance pill, the two row links, the Shopify line and the "Add credits"
+     * link inside the composer note are all real targets. */
     @media (pointer: coarse) {
       .acct-btn,
       .acct-tab,
-      .acct-welcome-alt,
+      .acct-pill,
+      .acct-row-more,
+      .acct-link-btn,
       .cr-act {
         min-height: 44px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
       }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .acct-pill, .acct-report, .acct-row-more, .acct-link-btn { transition: none; }
+      .acct-report:hover { transform: none; }
     }
   </style>
 </head>
@@ -379,85 +464,62 @@
       <span>Hexa<span class="brand-dot">·</span>AI</span>
     </a>
     <div class="acct-nav-right">
+      <!-- The balance, demoted. It used to be a 48px numeral at the top of the
+           page, which made the first thing anyone read on signing in a number
+           they cannot act on. It belongs in the chrome: visible always,
+           competing with nothing, one press from the top-up sheet. -->
+      <button class="acct-pill" id="acct-balance" type="button" hidden>
+        <span id="acct-balance-num">0</span> credits
+      </button>
       <span class="acct-user" id="acct-user"></span>
-      <a class="acct-new" href="/#composer">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        New creation
-      </a>
       <button class="acct-signout" id="acct-signout" type="button">Sign out</button>
     </div>
   </header>
 
   <main class="acct-main">
-    <div class="acct-head" id="acct-head">
-      <p class="acct-kicker">Your library</p>
-      <h1 class="acct-title" id="acct-greeting">Everything you have made</h1>
-    </div>
-
-    <!-- Credits. Above the tabs on purpose: it is the number that decides what
-         they can do next, so it should never be a thing you have to go and
-         find. The statement below it is what makes the balance auditable, which
-         is the whole reason the ledger is a ledger. -->
-    <section class="acct-credits" id="acct-credits" hidden>
-      <div class="acct-credits-top">
-        <div>
-          <p class="acct-credits-label">Credit balance</p>
-          <p class="acct-credits-num"><span id="acct-credits-value">0</span> <span class="acct-credits-unit">credits</span></p>
-          <p class="acct-credits-sub" id="acct-credits-sub"></p>
-        </div>
-        <button class="acct-btn acct-btn-primary" id="acct-topup" type="button">Add credits</button>
-      </div>
-
-      <div class="acct-packs" id="acct-packs" hidden><!-- filled by account.js --></div>
-
-      <details class="acct-ledger">
-        <summary>Where your credits went</summary>
-        <div class="acct-ledger-rows" id="acct-ledger-rows">
-          <p class="acct-note">Loading…</p>
-        </div>
-      </details>
-    </section>
-
-    <!-- Shopify. Sits with credits because both are account plumbing: the
-         things you set up once and then stop thinking about. -->
-    <section class="acct-shopify" id="acct-shopify" hidden>
-      <div class="acct-shop-head">
-        <div>
-          <p class="acct-credits-label">Your store</p>
-          <p class="acct-shop-state" id="acct-shop-state">Not connected</p>
-          <p class="acct-shop-sub" id="acct-shop-sub">Connect Shopify and pick products instead of pasting links. We only ever read your product catalogue.</p>
-        </div>
-        <button class="acct-btn" id="acct-shop-disconnect" type="button" hidden>Disconnect</button>
-      </div>
-      <form class="acct-shop-form" id="acct-shop-form">
-        <label class="sr-only" for="acct-shop-input">Your Shopify store address</label>
-        <input id="acct-shop-input" type="text" autocomplete="off" spellcheck="false"
-               placeholder="your-store.myshopify.com" />
-        <button class="acct-btn acct-btn-primary" type="submit">Connect Shopify</button>
-      </form>
-      <p class="acct-note" id="acct-shop-note" aria-live="polite"></p>
-    </section>
-
+    <!-- Four sections, in the order somebody actually uses them. Home is where
+         work starts, so it leads; Reports and Library are what has been made;
+         Settings is everything you touch once. The balance and the Shopify
+         connection used to sit above all of this, full width, which put two
+         pieces of plumbing in front of the only thing anyone signs in to do. -->
     <div class="acct-tabs" role="tablist" aria-label="Account sections">
-      <button class="acct-tab is-active" id="tab-library" type="button" role="tab" aria-selected="true">Library</button>
-      <button class="acct-tab" id="tab-settings" type="button" role="tab" aria-selected="false">Settings</button>
+      <button class="acct-tab is-active" id="tab-home" type="button" role="tab" aria-selected="true" aria-controls="panel-home">Home</button>
+      <button class="acct-tab" id="tab-reports" type="button" role="tab" aria-selected="false" aria-controls="panel-reports">Reports</button>
+      <button class="acct-tab" id="tab-library" type="button" role="tab" aria-selected="false" aria-controls="panel-library">Library</button>
+      <button class="acct-tab" id="tab-settings" type="button" role="tab" aria-selected="false" aria-controls="panel-settings">Settings</button>
     </div>
 
-    <div id="panel-library">
+    <!-- ── Home ────────────────────────────────────────────────── -->
+    <div id="panel-home" role="tabpanel" aria-labelledby="tab-home">
 
+      <!-- The composer, first. This page had no way to start anything on it at
+           all: the only route to work was a "New creation" button in the nav
+           that left for the home page. A signed-in customer arrives wanting the
+           next thing, so the next thing is the first field they see. -->
+      <section class="acct-composer">
+        <h1 class="acct-title" id="acct-greeting">What are we selling next?</h1>
+        <p class="acct-composer-sub">Paste a product link. We read what your buyers actually say first, then build the ad out of what they said.</p>
+        <form class="acct-composer-form" id="acct-composer-form">
+          <label class="sr-only" for="acct-composer-url">Your product link</label>
+          <input id="acct-composer-url" type="url" inputmode="url" autocomplete="url" spellcheck="false"
+                 placeholder="https://yourstore.com/products/…" required />
+          <button class="acct-btn acct-btn-primary" type="submit">Read my market</button>
+        </form>
+        <p class="acct-composer-note" id="acct-composer-note"></p>
+      </section>
+
+      <!-- The cold welcome: somebody who made an account without reading
+           anything first. No report to restore, so this is a promise attached
+           to their first read rather than a report band. -->
       <section class="acct-welcome" id="acct-welcome" hidden>
         <p class="acct-welcome-kicker">Welcome to Hexa</p>
-        <h2 id="welcome-title">You are in. Let's make your first ad.</h2>
-        <p>Three steps between you and an ad built from what your market actually wants. The first one is already done.</p>
-        <div class="acct-progress" aria-hidden="true">
-          <span class="acct-progress-bar"><span class="acct-progress-fill"></span></span>
-          <span class="acct-progress-label">1 of 3 done</span>
-        </div>
+        <h2 id="welcome-title">You are in. Run your first read and the first ad is on us.</h2>
+        <p>Paste a link above. We read what your buyers say about products like yours, then make you a static ad from the angle that comes back. The ad costs you nothing.</p>
         <div class="acct-steps">
           <div class="acct-step is-done">
             <span class="acct-step-num" aria-hidden="true">&#10003;</span>
             <h3>Create your account</h3>
-            <p>Done. Every read, ad and photoshoot you make lives here.</p>
+            <p>Done. Every read and every ad you make lives here.</p>
           </div>
           <div class="acct-step is-next">
             <span class="acct-step-num" aria-hidden="true">2</span>
@@ -466,26 +528,51 @@
           </div>
           <div class="acct-step">
             <span class="acct-step-num" aria-hidden="true">3</span>
-            <h3>Watch it render</h3>
-            <p>We call the angle the research found, and your ad is ready in minutes, not weeks.</p>
-          </div>
-        </div>
-        <div class="acct-welcome-cta">
-          <a class="acct-new" href="/#composer">Make your first ad</a>
-          <a class="acct-welcome-alt" href="/#reel">See what others made first</a>
-        </div>
-        <div class="acct-inspo">
-          <p class="acct-inspo-label">Made with Hexa</p>
-          <div class="acct-inspo-grid">
-            <a href="/#reel"><img src="assets/reel-thumbs/43a72eb58f.webp" alt="Hexa ad still" loading="lazy" /></a>
-            <a href="/#reel"><img src="assets/reel-thumbs/20c70d0755.webp" alt="Hexa ad still" loading="lazy" /></a>
-            <a href="/#reel"><img src="assets/reel-thumbs/21776f5939.webp" alt="Hexa ad still" loading="lazy" /></a>
-            <a href="/#reel"><img src="assets/reel-thumbs/2b4354ce31.webp" alt="Hexa ad still" loading="lazy" /></a>
+            <h3>Get the ad</h3>
+            <p>We build a static ad from the angle the research found, free, and it lands in your library.</p>
           </div>
         </div>
       </section>
 
+      <!-- Work in flight, in its own row. It used to be mixed into the library
+           grid in date order, so the thing that is happening right now sat
+           wherever the calendar put it. -->
+      <section class="acct-row" id="acct-inflight" hidden>
+        <h2 class="acct-row-head">Still rendering</h2>
+        <div class="acct-grid" id="acct-inflight-grid"></div>
+      </section>
+
+      <section class="acct-row" id="acct-recent" hidden>
+        <div class="acct-row-top">
+          <h2 class="acct-row-head">Recent work</h2>
+          <button class="acct-row-more" id="acct-see-all" type="button">See all</button>
+        </div>
+        <div class="acct-grid" id="acct-recent-grid"></div>
+      </section>
+
       <div class="acct-state" id="acct-loading">Loading your creations…</div>
+
+      <!-- Shopify, reduced to one line. It was a full-width block with a form,
+           second on the page, for a feature most accounts never use. -->
+      <p class="acct-shop-line" id="acct-shop-line" hidden>
+        <span id="acct-shop-state">Not connected</span>
+        <button class="acct-link-btn" id="acct-shop-open" type="button">Connect your Shopify store</button>
+      </p>
+    </div>
+
+    <!-- ── Reports ─────────────────────────────────────────────── -->
+    <div id="panel-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
+      <div class="acct-state" id="acct-reports-loading">Loading your reports…</div>
+      <div class="acct-reports" id="acct-reports-list" hidden></div>
+      <div class="acct-empty" id="acct-reports-empty" hidden>
+        <h2>No reads yet</h2>
+        <p>Every product link you paste becomes a report: what your buyers say, which competitor ads have run longest, and the angle to lead with. They all land here.</p>
+        <button class="acct-btn acct-btn-primary" id="acct-reports-start" type="button">Read a market</button>
+      </div>
+    </div>
+
+    <!-- ── Library ─────────────────────────────────────────────── -->
+    <div id="panel-library" role="tabpanel" aria-labelledby="tab-library" hidden>
       <div class="acct-grid" id="acct-grid" hidden></div>
 
       <div class="acct-empty" id="acct-empty" hidden>
@@ -493,17 +580,48 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8h.01M12.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7.5"/><path d="m3 16 5-5c.9-.9 2.1-.9 3 0l4 4"/><path d="M14 14l1-1c.9-.9 2.1-.9 3 0l3 3"/><path d="M19 16v6M22 19h-6"/></svg>
         </span>
         <h2>Your first creation is one link away</h2>
-        <p>Paste a product link in the studio and watch it become an ad built from what your market actually wants. Everything you make lands here.</p>
-        <a class="acct-new" href="/#composer">Start creating</a>
+        <p>Paste a product link on Home and watch it become an ad built from what your market actually wants. Everything you make lands here.</p>
+        <button class="acct-btn acct-btn-primary" id="acct-empty-start" type="button">Start creating</button>
       </div>
     </div>
 
-    <section class="acct-settings" id="acct-settings" hidden>
+    <section class="acct-settings" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
       <div class="acct-settings-head">
         <h2>Account settings</h2>
         <p>Your profile, security and data. Changes apply to this account only.</p>
       </div>
       <div class="acct-cards">
+
+        <!-- Credits. Moved off the top of the page and into settings, where the
+             rest of the account plumbing lives. The number itself is always in
+             the nav; this is where you audit it and buy more. The ledger below
+             is what makes a balance checkable rather than asserted. -->
+        <div class="acct-card-set" id="acct-credits">
+          <h3>Credits</h3>
+          <p class="acct-credits-num"><span id="acct-credits-value">0</span> <span class="acct-credits-unit">credits</span></p>
+          <p class="acct-credits-sub" id="acct-credits-sub"></p>
+          <button class="acct-btn acct-btn-primary" id="acct-topup" type="button">Add credits</button>
+          <div class="acct-packs" id="acct-packs" hidden><!-- filled by account.js --></div>
+          <details class="acct-ledger">
+            <summary>Where your credits went</summary>
+            <div class="acct-ledger-rows" id="acct-ledger-rows">
+              <p class="acct-note">Loading…</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="acct-card-set" id="acct-shopify">
+          <h3>Your store</h3>
+          <p class="acct-shop-sub" id="acct-shop-sub">Connect Shopify and pick products instead of pasting links. We only ever read your product catalogue.</p>
+          <form class="acct-shop-form" id="acct-shop-form">
+            <label class="sr-only" for="acct-shop-input">Your Shopify store address</label>
+            <input id="acct-shop-input" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="your-store.myshopify.com" />
+            <button class="acct-btn acct-btn-primary" type="submit">Connect Shopify</button>
+          </form>
+          <button class="acct-btn" id="acct-shop-disconnect" type="button" hidden>Disconnect</button>
+          <p class="acct-note" id="acct-shop-note" aria-live="polite"></p>
+        </div>
 
         <!-- Brand memory. Filled in once, applied to everything afterwards.
              Shapes how things are said; never what is claimed. -->
@@ -589,6 +707,7 @@
     </section>
   </main>
 
+  <script src="funnel.js"></script>
   <script src="/vendor/supabase.js"></script>
   <script src="auth.js"></script>
   <script src="account.js"></script>

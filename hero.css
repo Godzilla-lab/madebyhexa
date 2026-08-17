@@ -1,0 +1,631 @@
+/* ─────────────────────────────────────────────────────────────
+ * hero.css: the centred stage
+ *
+ * Loaded after studio.css and scoped to .stage-hero, so it restyles the
+ * composer for this one surface without touching the drawer, the report or
+ * the studio, which share those class names.
+ *
+ * The hero used to be a split grid: copy on the left, one video monitor on
+ * the right. A single monitor can only argue one thing at a time, and the
+ * thing it argued was "here is a nice film", which is not what is being
+ * sold. The stage puts the entry point in the middle of the screen and the
+ * deliverable behind it as a fan of variants, so the first paint says "one
+ * read, many ads" before any sentence has to claim it.
+ * ───────────────────────────────────────────────────────────── */
+
+.stage-hero {
+  position: relative;
+  padding: 0;
+  overflow: clip;
+}
+
+.stage-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 44px 24px 66px;
+  text-align: center;
+  position: relative;
+}
+
+/* Stage light from above. The page already carries .bg-glow, but that is a
+   whole-document wash; this one is anchored to the top of the hero so the
+   headline sits in the brightest part of it and the theatre falls away. */
+.stage-wrap::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(980px, 118%);
+  height: 620px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(48% 44% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 70%),
+    radial-gradient(60% 50% at 50% 6%, rgba(255, 77, 109, 0.1), transparent 72%);
+}
+
+.stage-wrap > * { position: relative; z-index: 1; }
+
+.stage-hero .c-hero-copy { max-width: 900px; margin: 0 auto; }
+
+/* ───── eyebrow ───── */
+
+.stage-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stage-eyebrow i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: stage-pulse 2s infinite;
+}
+
+@keyframes stage-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(255, 77, 109, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0); }
+}
+
+/* ───── headline ───── */
+
+.stage-h1 {
+  margin: 20px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 5.2vw, 64px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+/* The second line is dimmed rather than accented. Accent on the payoff line
+   read as a highlighter; dimming it makes the pair sequential, which is what
+   the sentence is: do this, get that. */
+.stage-h1-dim {
+  display: block;
+  color: var(--text-faint);
+}
+
+.stage-sub {
+  margin: 15px auto 0;
+  max-width: 58ch;
+  color: var(--text-mute);
+  font-size: 16.5px;
+  line-height: 1.55;
+}
+
+.stage-sub strong { color: var(--text); font-weight: 500; }
+
+.stage-micro {
+  margin: 9px 0 0;
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+
+/* ───── the ask, and the source tabs ───── */
+
+.stage-hero .entry-ask {
+  margin: 26px 0 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* The shell is gone. On a centred stage a bordered panel around the tabs and
+   the field draws a second box inside the first, and the bar is already a
+   strong enough object to stand on its own. */
+.stage-hero .composer {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 14px auto 0;
+  max-width: 680px;
+}
+
+.stage-hero .composer:focus-within { border: 0; box-shadow: none; }
+
+.stage-hero .composer-source {
+  display: flex;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  margin: 0 0 12px;
+  background: none;
+}
+
+.stage-hero .composer-source-label { display: none; }
+
+.stage-hero .entry-switch {
+  position: relative;
+  display: inline-flex;
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  border-radius: 999px;
+}
+
+/* The sliding thumb belonged to a segmented control on a solid shell. Here the
+   selected tab carries its own outline, which survives the tabs wrapping onto
+   two lines at narrow widths; the thumb could not. studio.js still measures
+   and moves it, so it is hidden rather than removed. */
+.stage-hero .entry-thumb { display: none; }
+
+.stage-hero .entry-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 8px 15px;
+  min-height: 34px;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.stage-hero .entry-tab:hover { color: var(--text-mute); }
+
+.stage-hero .entry-tab.is-on {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.stage-hero .entry-tab svg { opacity: 0.75; }
+.stage-hero .entry-tab.is-on svg { opacity: 1; }
+
+/* 44px is the floor on a touch screen, and only there: a mouse hits a 34px
+   pill without complaint, and forcing 44px on desktop makes the row look like
+   a toolbar. */
+@media (pointer: coarse) {
+  .stage-hero .entry-tab { min-height: 44px; padding: 8px 16px; }
+}
+
+/* ───── the command bar ───── */
+
+.stage-hero .composer-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 8px 8px 8px 18px;
+  box-shadow:
+    0 24px 48px -24px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition: border-color 0.15s ease, box-shadow 0.2s ease;
+}
+
+.stage-hero .composer-bar:focus-within {
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow:
+    0 24px 48px -24px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 0 4px rgba(255, 255, 255, 0.045);
+}
+
+.stage-hero .composer-ico {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  color: var(--text-faint);
+}
+
+.stage-hero .composer-bar input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  font-size: 15px;
+  text-align: left;
+}
+
+.stage-hero .composer-go {
+  flex: none;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 10px 24px -10px rgba(255, 77, 109, 0.55);
+  transition: filter 0.15s ease, transform 0.12s ease;
+}
+
+.stage-hero .composer-go:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.stage-hero .composer-go:active { transform: none; }
+
+/* The photo row and the shop row are the same bar with a different middle. */
+.stage-hero .photo-row,
+.stage-hero .shop-bar { flex-wrap: wrap; row-gap: 8px; }
+
+.stage-hero .photo-add,
+.stage-hero .photo-add-hint { font-size: 13.5px; }
+.stage-hero .photo-add-hint { color: var(--text-faint); }
+.stage-hero .shop-suffix { color: var(--text-faint); font-size: 14px; }
+
+.stage-hero .shop-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.stage-hero .composer-try {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.stage-hero .composer-try-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* The shell's footer used to be a bar across the bottom of a panel, with its
+   own rule, its own tint and the shell's bottom radius. There is no panel any
+   more, so all three have to go or they draw a line across open space. */
+.stage-hero .composer-foot {
+  margin: 9px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.stage-hero .composer-foot b { color: var(--text-mute); font-weight: 500; }
+
+.stage-note {
+  margin: 10px auto 0;
+  max-width: 74ch;
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+
+.stage-note b { color: var(--text-mute); font-weight: 500; }
+
+.stage-hero .composer-store { margin-top: 18px; }
+
+/* ───── the theatre ───── */
+
+.theatre {
+  position: relative;
+  height: 486px;
+  margin-top: 30px;
+  perspective: 1500px;
+}
+
+.adcard {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 272px;
+  margin-left: -136px;
+  aspect-ratio: 9 / 15.4;
+  border-radius: 18px;
+  border: 1px solid var(--border-strong);
+  overflow: hidden;
+  background: var(--surface-media);
+  cursor: pointer;
+  padding: 0;
+  transform-style: preserve-3d;
+  box-shadow: 0 40px 70px -35px rgba(0, 0, 0, 0.95);
+  transition:
+    transform 0.55s var(--ease),
+    opacity 0.55s ease,
+    filter 0.55s ease;
+}
+
+/* Until the controller runs, every card sits at the same coordinates, stacked.
+   This is the same fan the script draws, hardcoded around the middle card of
+   a fourteen card deck, so a blocked or failed script leaves a readable
+   spread rather than one card with fifteen hidden behind it. The eleven that
+   would be off the fan are held back rather than piled up. Keep these in step
+   with the deck length: the lead is the middle card, index 8 of 16. */
+.adcard { opacity: 0; }
+.adcard:nth-child(7)  { opacity: 0.52; transform: translateX(-140%) translateZ(-300px) rotateY(28deg)  scale(0.86); }
+.adcard:nth-child(8)  { opacity: 0.76; transform: translateX(-70%)  translateZ(-150px) rotateY(14deg)  scale(0.93); }
+.adcard:nth-child(9)  { opacity: 1;    z-index: 10; }
+.adcard:nth-child(10) { opacity: 0.76; transform: translateX(70%)   translateZ(-150px) rotateY(-14deg) scale(0.93); }
+.adcard:nth-child(11) { opacity: 0.52; transform: translateX(140%)  translateZ(-300px) rotateY(-28deg) scale(0.86); }
+
+.adcard-poster,
+.adcard-film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The film fades up over the poster once it can play, so a slow connection
+   shows a still rather than a black box. */
+.adcard-film { opacity: 0; transition: opacity 0.4s ease; }
+.adcard.is-playing .adcard-film { opacity: 1; }
+
+.adcard-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 30%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.72), transparent 46%);
+}
+
+.adcard-angle {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 4px 10px;
+  backdrop-filter: blur(6px);
+}
+
+.adcard-tc {
+  position: absolute;
+  top: 15px;
+  right: 12px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.adcard.is-active .adcard-tc { opacity: 1; }
+
+.adcard-hook {
+  position: absolute;
+  left: 13px;
+  right: 13px;
+  bottom: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.adcard-hook mark {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 5px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.adcard-meta {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.adcard-prog {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.16);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.adcard.is-active .adcard-prog { opacity: 1; }
+
+.adcard-prog i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+}
+
+.stage-hint {
+  margin: 22px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.stage-hint kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--text-mute);
+}
+
+/* On a touch screen there are no arrow keys and the cards are swiped or
+   tapped, so the hint names the gesture that exists. */
+@media (pointer: coarse) {
+  .stage-hint kbd { display: none; }
+}
+
+/* ───── the research strip ───── */
+
+.research {
+  margin-top: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.research-head {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-right: 4px;
+}
+
+.rchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-mute);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
+  padding: 8px 14px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.rchip.on { opacity: 1; transform: none; }
+.rchip::before { content: "\2713"; color: var(--accent); font-weight: 600; }
+.rchip b { color: var(--text); font-weight: 500; }
+
+.rchip.is-free {
+  color: var(--accent-soft);
+  border-color: rgba(255, 77, 109, 0.35);
+  background: rgba(255, 77, 109, 0.12);
+}
+
+.rchip.is-free::before { content: "\25CB"; }
+
+/* No JS, no reveal: the chips are content, not decoration. */
+html:not(.js) .rchip { opacity: 1; transform: none; }
+
+/* ───── the proof line ───── */
+
+.stage-proof {
+  list-style: none;
+  margin: 38px 0 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.stage-proof li { display: flex; align-items: center; gap: 9px; }
+
+.stage-proof li::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.stage-proof li.is-hot { color: var(--accent); }
+.stage-proof li.is-hot::before { background: var(--accent); }
+
+/* ───── narrower ───── */
+
+@media (max-width: 900px) {
+  .stage-wrap { padding: 48px 20px 60px; }
+  .theatre { height: 440px; margin-top: 44px; }
+  .adcard { width: 226px; margin-left: -113px; }
+}
+
+@media (max-width: 640px) {
+  .stage-h1 { font-size: clamp(36px, 11vw, 50px); }
+  .stage-sub { font-size: 15.5px; }
+  .stage-hero .entry-switch { flex-wrap: wrap; justify-content: center; }
+  .stage-hero .composer-bar { padding: 8px; }
+  .stage-hero .composer-bar input { font-size: 16px; } /* iOS zooms below 16 */
+  .stage-hero .photo-row,
+  .stage-hero .shop-bar,
+  .stage-hero #entry-link .composer-bar { flex-wrap: wrap; }
+  .stage-hero .composer-go { width: 100%; justify-content: center; }
+  .theatre { height: 400px; margin-top: 36px; }
+  .adcard { width: 202px; margin-left: -101px; }
+  .adcard-hook { font-size: 13px; bottom: 40px; }
+  .research { gap: 8px; }
+  .stage-proof { gap: 18px; font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adcard { transition: none; }
+  .stage-eyebrow i { animation: none; }
+  .rchip { opacity: 1; transform: none; transition: none; }
+}

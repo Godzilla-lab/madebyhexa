@@ -1515,17 +1515,34 @@ exports.handler = async (event) => {
     }
     if (!owns) return json(404, { error: 'no such report' });
 
-    // Once per report. Checked and claimed before any engine call, so a double
-    // click cannot buy two.
+    /*
+     * A budget of two attempts per report, not one.
+     *
+     * One was right while this was purely a click, but the free ad is now what
+     * a signup buys, so the first thing a new account ever sees can be a
+     * render that failed. render.js spends the second attempt automatically
+     * and exactly once, which is why the ceiling is two rather than unlimited:
+     * a retry loop against a deterministic failure (a tripped safety filter
+     * refuses the same brief every time) would spend forever and land in the
+     * same place.
+     *
+     * Checked and claimed before any engine call, so a double click still
+     * cannot buy two, and the count lives here rather than in the browser
+     * because the browser is the thing being guarded against.
+     */
     try {
       const { getStore } = require('@netlify/blobs');
       const store = getStore('free-ads');
-      if (await store.get('report:' + rep.id)) {
+      const prior = Number((await store.get('report:' + rep.id)) || 0);
+      // Entries written before this were a timestamp; anything that parses as
+      // a large number is one of those and counts as a single spent attempt.
+      const used = prior > 2 ? 1 : prior;
+      if (used >= 2) {
         return json(409, {
-          error: 'This report already had its free ad. Sign in and your welcome credits make three more.',
+          error: 'This report already had its free ad. Sign in and your welcome credits make more.',
         });
       }
-      await store.set('report:' + rep.id, String(Date.now()));
+      await store.set('report:' + rep.id, String(used + 1));
     } catch (e) {
       console.error('free ad guard unavailable:', e.message);
       return json(503, { error: 'could not start the free ad' });

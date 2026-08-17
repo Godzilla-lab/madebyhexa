@@ -203,7 +203,12 @@
 }
 .vd-call-line q { font-size: 16px; line-height: 1.45; font-style: italic; }
 .vd-call-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: 20px; }
-.vd-call-actions button {
+/* An anchor sits in this row now: for an anonymous reader the free ad is a
+ * sign-up, and a navigation has to be a link so Cmd-click and middle-click
+ * behave. It is styled with the buttons rather than beside them, because to
+ * the reader it is the same control. */
+.vd-call-actions button,
+.vd-call-actions a {
   padding: 13px 22px;
   border-radius: var(--radius-control);
   font: inherit;
@@ -211,9 +216,13 @@
   font-weight: 700;
   border: 0;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
   transition: transform 0.2s var(--ease);
 }
-.vd-call-actions button:hover { transform: translateY(-1px); }
+.vd-call-actions button:hover,
+.vd-call-actions a:hover { transform: translateY(-1px); }
 .vd-call-actions .is-primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--glow-accent); }
 .vd-call-actions .is-ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
 .vd-call-actions button:disabled { opacity: 0.6; cursor: default; transform: none; }
@@ -491,6 +500,79 @@
   color: var(--text-mute);
 }
 
+/* The angle, quoted inside the offer. The gate promises a specific ad, so it
+ * shows the specific line that ad would carry. */
+.unlock-angle {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 var(--s-5);
+  padding: 14px 16px;
+  border-radius: var(--radius-control);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+}
+.unlock-angle b {
+  font-family: var(--font-mono, inherit);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.unlock-angle q { font-size: 16px; line-height: 1.45; font-style: italic; }
+.unlock-more {
+  margin: 0 0 var(--s-3);
+  font-size: 15px;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+/* ───── The band above the report ─────
+ *
+ * One line that explains why a report is on this screen. It exists because a
+ * resumed report used to appear with no explanation at all, which reads as the
+ * page inventing work nobody asked for. Placed above the progress list so it
+ * is the first thing read, and marked aria-live because its text changes
+ * underneath a reader while an ad renders. */
+.vd-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  max-width: 860px;
+  margin: var(--s-5) auto 0;
+  padding: 14px 18px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.035);
+}
+.vd-band-txt { margin: 0; min-width: 0; font-size: 14.5px; line-height: 1.5; color: var(--text-mute); }
+.vd-band-txt strong { color: var(--text); font-weight: 700; }
+.vd-band-welcome {
+  border-color: rgba(255, 77, 109, 0.45);
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(255, 77, 109, 0.12), transparent 62%),
+    rgba(255, 255, 255, 0.035);
+}
+.vd-band-act {
+  flex: none;
+  padding: 9px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.vd-band-act:hover { border-color: var(--text); }
+
 /* ───── Empty and honest states ───── */
 
 /* "We do not have enough evidence to call this" is a real answer and gets a
@@ -511,9 +593,11 @@
 .vd-notice-cta { display: inline-flex; margin-top: var(--s-4); }
 
 @media (prefers-reduced-motion: reduce) {
-  .angle-card, .vd-form button, .angle-actions a, .angle-actions button { transition: none; }
+  .angle-card, .vd-form button, .angle-actions a, .angle-actions button,
+  .vd-call-actions button, .vd-call-actions a, .vd-band-act { transition: none; }
   .angle-card:hover, .vd-form button:hover, .angle-actions a:hover,
-  .angle-actions button:hover { transform: none; }
+  .angle-actions button:hover, .vd-call-actions button:hover,
+  .vd-call-actions a:hover { transform: none; }
 }
 
 /* ═════ Answers before working ═════
@@ -696,6 +780,8 @@
   .angle-actions button,
   .angle-actions a,
   .vd-call-actions button,
+  .vd-call-actions a,
+  .vd-band-act,
   .str-det > summary,
   .call-why > summary {
     min-height: 44px;

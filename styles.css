@@ -7,6 +7,11 @@ html, body { margin: 0; padding: 0; }
    which put a white ring around the report's primary action. Neutralise it
    once here; every rule that wants a border still declares one and wins. */
 button { border: 0; background: none; color: inherit; font: inherit; }
+/* [hidden] is only a UA display:none, so any rule setting display outranks it.
+   That is how the composer briefly rendered all three of its primary actions
+   with two of them marked hidden: .composer-go declares display:flex. Settle
+   it once, here, rather than per component. */
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 :root {
