@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0a0608" />
 
   <meta property="og:title" content="Hexa Studio · Turn your products into ads" />
-  <meta property="og:description" content="Hexa researches your product, figures out what customers care about, and creates a high-quality ad around it." />
+  <meta property="og:description" content="Hexa researches your market, finds the angles that matter, and creates the ads around your product." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://madebyhexa.co/" />
   <meta property="og:image" content="https://madebyhexa.co/assets/brand/og-card.jpg" />
@@ -16,7 +16,7 @@
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Hexa Studio · Turn your products into ads" />
-  <meta name="twitter:description" content="Hexa researches your product, figures out what customers care about, and creates a high-quality ad around it." />
+  <meta name="twitter:description" content="Hexa researches your market, finds the angles that matter, and creates the ads around your product." />
   <meta name="twitter:image" content="https://madebyhexa.co/assets/brand/og-card.jpg" />
 
   <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
@@ -28,7 +28,7 @@
   <link rel="dns-prefetch" href="https://d8j0ntlcm91z4.cloudfront.net" />
   <link rel="preconnect" href="https://v1.pinimg.com" crossorigin />
   <link rel="dns-prefetch" href="https://v1.pinimg.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@600&family=Inter:wght@300..900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=JetBrains+Mono:wght@400;500&amp;family=Public+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
   <!-- The card in the middle of the fan is the first thing anyone looks at,
        and it is a poster until its film can play. -->
   <link rel="preload" as="image" href="assets/hf/settings/gym_thumb.webp" />
@@ -45,12 +45,13 @@
        names and must keep the studio.css versions. -->
   <link rel="stylesheet" href="hero.css" />
   <script src="pixels.js"></script>
+  <script src="funnel.js"></script>
 
   <!-- The reveal system hides elements until JS un-hides them, so the hiding
        must only ever apply when JS is genuinely running. Setting this class
        inline, before first paint, means a blocked or failed script leaves the
        page fully visible instead of permanently blank. -->
-  <script>document.documentElement.className += ' js';</script>
+  <script src="js-flag.js"></script>
 
   <script src="/vendor/supabase.js" defer></script>
   <script src="auth.js" defer></script>
@@ -71,11 +72,10 @@
     </a>
     <nav class="nav-links">
       <a href="#how">How it works</a>
-      <a href="#styles">Styles</a>
+      <a href="#work">Work</a>
       <a href="/validate">Research</a>
       <a href="#pricing">Pricing</a>
       <a href="/login.html" id="nav-account">Sign in</a>
-      <a href="#composer" class="nav-cta">Create</a>
     </nav>
   </header>
 
@@ -95,16 +95,29 @@
 
             <span class="stage-eyebrow"><i aria-hidden="true"></i>Hexa Studio · for anyone selling a product</span>
 
-            <!-- The instruction, not the boast. Two lines, the second dimmed:
-                 what you do, then what you get, in that order. -->
-            <h1 class="stage-h1">Paste a link.<span class="stage-h1-dim">Get the ad.</span></h1>
+            <!-- Says the outcome first, because the previous headline said the
+                 METHOD first ("First, find out what to say. Then we make the
+                 ad.") and a visitor who does not already know what we sell has
+                 to finish two clauses before learning they get an ad out of it.
+                 The research is still the thing that makes ours different, so
+                 it leads the paragraph directly underneath rather than the
+                 headline.
+
+                 Note for whoever edits this next: "The ad is the last step. Not
+                 the first." still sits further down this page. That section is
+                 about the ORDER OF WORK, and this headline is about the
+                 outcome, so they are not saying opposite things. They are close
+                 enough that changing one without reading the other will make
+                 the page argue with itself, which is what happened before. -->
+            <h1 class="stage-h1">Turn your products into ads that sell.</h1>
 
             <!-- "high-quality" is gone and stays gone. The Reddit corpus ranks
                  generic quality claims as the thing this market discounts on
                  sight, and ranks "the AI warped my product" as the complaint we
                  actually beat, so the claim is the specific one. -->
-            <p class="stage-sub">We research your product, read what its buyers say and which competitor ads are proven, then build the ad around what we found. Video or statics, whichever the read calls for, with <strong>your product shown exactly as it is.</strong></p>
-            <p class="stage-micro">Shopify, Amazon, Etsy, your own site, or just photos. No prompting. No video editing. No marketing expertise required.</p>
+            <p class="stage-sub">We research your market, find the angles that matter, and create the ads for you.</p>
+            <p class="stage-micro">No prompting. No creative briefs. No video editing. Just give us the product and get ready-to-run ads.</p>
+            <p class="stage-micro">Shopify, Amazon, Etsy, your own site, or just photos.</p>
 
             <!-- The one question a merchant who has never run an ad can answer
                  without knowing any of our vocabulary. It is also the field's
@@ -179,7 +192,14 @@
                     <img id="composer-product-img" alt="" />
                     <span class="composer-product-name" id="composer-product-name"></span>
                   </span>
-                  <button type="button" class="composer-go" id="composer-go">Create my ad <span aria-hidden="true">&rarr;</span></button>
+                  <!-- "Create my ad" was a promise this button does not keep. Pressing it
+                       peeks the product and hands off to the read; the ad is several
+                       steps and an approval away. The angle IS what this click
+                       produces, and the word is taught twice above it, in the
+                       sub-line and in the note below the composer. The photos tab
+                       keeps "Create my ad" on purpose: that path skips the research
+                       and opens the format chooser, so it has no angle to find. -->
+                  <button type="button" class="composer-go" id="composer-go">Find my angle <span aria-hidden="true">&rarr;</span></button>
                 </div>
                 <div class="composer-try" aria-label="Try an example product">
                   <span class="composer-try-label">Try one:</span>
@@ -222,10 +242,11 @@
                as you browse to them. -->
           <div class="theatre" id="theatre" aria-label="Rendered ad variants. Use the left and right arrow keys to browse.">
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/kitchen.mp4" aria-label="Variant: problem and solution, kitchen demo">
+            <button type="button" data-type="ugc" class="adcard" data-src="assets/hf/settings/kitchen.mp4" aria-label="Variant: problem and solution, kitchen demo">
               <img class="adcard-poster" data-poster="assets/hf/settings/kitchen_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">Problem / solution</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>dinner used to take 40 minutes.</mark> <mark>tonight it took 9.</mark></span>
@@ -233,10 +254,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_34hPp7fXOu4gkTrKKk2ESqFSfG1/hf_20260413_124545_9ae0acdc-4d0e-4c03-a065-b572bf9c66cf.mp4" aria-label="Variant: a packshot, the product alone in frame">
+            <button type="button" data-type="product_shot" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_34hPp7fXOu4gkTrKKk2ESqFSfG1/hf_20260413_124545_9ae0acdc-4d0e-4c03-a065-b572bf9c66cf.mp4" aria-label="Variant: a packshot, the product alone in frame">
               <img class="adcard-poster" data-poster="assets/reel-thumbs/b5641bbba6.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback crossorigin="anonymous"></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">Product shot</span>
               <span class="adcard-angle">Packshot</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>no hands, no talking,</mark> <mark>just the can</mark></span>
@@ -244,10 +266,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/in_car.mp4" aria-label="Variant: unboxing, first look">
+            <button type="button" data-type="ugc" class="adcard" data-src="assets/hf/settings/in_car.mp4" aria-label="Variant: unboxing, first look">
               <img class="adcard-poster" data-poster="assets/hf/settings/in_car_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">Unboxing</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>it finally turned up.</mark> <mark>let us see if the hype is real</mark></span>
@@ -255,10 +278,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3CIezRC2bfkh5fn1Cl8MjaHdSlp/hf_20260415_012608_2c21b2ad-368a-4199-bde3-e2c648d78186.mp4" aria-label="Variant: the product held to camera as the hero shot">
+            <button type="button" data-type="product_shot" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3CIezRC2bfkh5fn1Cl8MjaHdSlp/hf_20260415_012608_2c21b2ad-368a-4199-bde3-e2c648d78186.mp4" aria-label="Variant: the product held to camera as the hero shot">
               <img class="adcard-poster" data-poster="assets/reel-thumbs/8723d696d5.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback crossorigin="anonymous"></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">Product shot</span>
               <span class="adcard-angle">The hero shot</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>every colourway,</mark> <mark>one take</mark></span>
@@ -266,10 +290,49 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/roofing.mp4" aria-label="Variant: scroll stopper, rooftop">
+            <!--
+              Statics, in the fan with the films.
+
+              The theatre argued one thing: we make video. The read decides
+              between video and statics on the evidence (research/lib/ads.mjs
+              weights competitor ads by how long they have survived), and in
+              plenty of categories it says statics. A hero that only shows film
+              contradicts the section three screens down that tells you the
+              format is not yours to pick.
+
+              A static card carries no .adcard-film, .adcard-tc or
+              .adcard-prog. script.js guards on all three (`if (!film) return`
+              at :782, `if (film && tc && bar)` at :810), so these ride the same
+              fan with no driver changes. The meta says the ratio instead of a
+              running time, because a still has no running time and inventing
+              one is the kind of fake HUD this codebase keeps deleting.
+
+              These are Higgsfield format samples, so they are labelled as what
+              the format looks like, never as work we did for a client.
+            -->
+            <button type="button" data-type="ads" class="adcard adcard-still" aria-label="Static format: before and after">
+              <img class="adcard-poster" data-poster="assets/hf/ad-formats/then_vs_now_ad65db31.webp" alt="" width="1080" height="1080" decoding="async" />
+              <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">Ads</span>
+              <span class="adcard-angle">Before and after</span>
+              <span class="adcard-hook"><mark>the change, in one frame</mark></span>
+              <span class="adcard-meta"><span>Static format</span><span>1:1</span></span>
+            </button>
+
+            <button type="button" data-type="posters" class="adcard adcard-still" aria-label="Static format: bold statement">
+              <img class="adcard-poster" data-poster="assets/hf/ad-formats/bold_statement_bccb652b.webp" alt="" width="1080" height="1080" decoding="async" />
+              <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">Posters</span>
+              <span class="adcard-angle">Bold statement</span>
+              <span class="adcard-hook"><mark>one line, nowhere to look away</mark></span>
+              <span class="adcard-meta"><span>Static format</span><span>1:1</span></span>
+            </button>
+
+            <button type="button" data-type="motion" class="adcard" data-src="assets/hf/settings/roofing.mp4" aria-label="Variant: scroll stopper, rooftop">
               <img class="adcard-poster" data-poster="assets/hf/settings/roofing_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">Motion</span>
               <span class="adcard-angle">Scroll stopper</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>testing this thirty floors up</mark> <mark>so you do not have to</mark></span>
@@ -277,10 +340,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_34hPp7fXOu4gkTrKKk2ESqFSfG1/hf_20260413_122237_e843f6d5-8248-4488-a7ec-d4cc8f7f3c60.mp4" aria-label="Variant: a product demonstration to camera">
+            <button type="button" data-type="ugc" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_34hPp7fXOu4gkTrKKk2ESqFSfG1/hf_20260413_122237_e843f6d5-8248-4488-a7ec-d4cc8f7f3c60.mp4" aria-label="Variant: a product demonstration to camera">
               <img class="adcard-poster" data-poster="assets/reel-thumbs/30f7380f5a.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback crossorigin="anonymous"></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">The demo</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>showing you the bit</mark> <mark>the box never explains</mark></span>
@@ -288,10 +352,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/street.mp4" aria-label="Variant: reviews read on camera">
+            <button type="button" data-type="ugc" class="adcard" data-src="assets/hf/settings/street.mp4" aria-label="Variant: reviews read on camera">
               <img class="adcard-poster" src="assets/hf/settings/street_thumb.webp" data-poster="assets/hf/settings/street_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">Reviews on camera</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>reading the five star reviews</mark> <mark>out loud, all of them</mark></span>
@@ -299,10 +364,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/bathroom.mp4" aria-label="Variant: the product in frame, unchanged">
+            <button type="button" data-type="product_shot" class="adcard" data-src="assets/hf/settings/bathroom.mp4" aria-label="Variant: the product in frame, unchanged">
               <img class="adcard-poster" src="assets/hf/settings/bathroom_thumb.webp" data-poster="assets/hf/settings/bathroom_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">Product shot</span>
               <span class="adcard-angle">Product in frame</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>your bottle, your label,</mark> <mark>nothing invented</mark></span>
@@ -310,10 +376,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/gym.mp4" aria-label="Variant: the objection, fit test">
+            <button type="button" data-type="ugc" class="adcard" data-src="assets/hf/settings/gym.mp4" aria-label="Variant: the objection, fit test">
               <img class="adcard-poster" src="assets/hf/settings/gym_thumb.webp" data-poster="assets/hf/settings/gym_thumb.webp" alt="" width="600" height="1066" decoding="async" fetchpriority="high" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">The objection</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>the squat test</mark> <mark>most leggings fail</mark></span>
@@ -321,10 +388,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3CIjqzTsrKEUr8OzFBaYO4ux3nG/hf_20260413_131601_e29e767d-fe44-4b42-a751-01b178692f67.mp4" aria-label="Variant: a slow reveal, opening the box on camera">
+            <button type="button" data-type="ugc" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3CIjqzTsrKEUr8OzFBaYO4ux3nG/hf_20260413_131601_e29e767d-fe44-4b42-a751-01b178692f67.mp4" aria-label="Variant: a slow reveal, opening the box on camera">
               <img class="adcard-poster" src="assets/reel-thumbs/43a72eb58f.webp" data-poster="assets/reel-thumbs/43a72eb58f.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback crossorigin="anonymous"></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">The reveal</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>no music, no jump cuts,</mark> <mark>just the box opening</mark></span>
@@ -332,10 +400,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/office.mp4" aria-label="Variant: before and after, desk demo">
+            <button type="button" data-type="ugc" class="adcard" data-src="assets/hf/settings/office.mp4" aria-label="Variant: before and after, desk demo">
               <img class="adcard-poster" src="assets/hf/settings/office_thumb.webp" data-poster="assets/hf/settings/office_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">Before and after</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>my whole setup used to</mark> <mark>live in six open tabs</mark></span>
@@ -343,10 +412,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3BuPFKmNsBjkEgZ5LeOvNlL8ShO/hf_20260414_213926_7e9ec0e7-418c-487a-b7a9-c244e238bc7f.mp4" aria-label="Variant: a close detail shot of the product being worn">
+            <button type="button" data-type="product_shot" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3BuPFKmNsBjkEgZ5LeOvNlL8ShO/hf_20260414_213926_7e9ec0e7-418c-487a-b7a9-c244e238bc7f.mp4" aria-label="Variant: a close detail shot of the product being worn">
               <img class="adcard-poster" data-poster="assets/reel-thumbs/fa34f13690.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback crossorigin="anonymous"></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">Product shot</span>
               <span class="adcard-angle">Close on the detail</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>the weight of it</mark> <mark>is the whole pitch</mark></span>
@@ -354,10 +424,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/bedroom.mp4" aria-label="Variant: repeat purchase, morning routine">
+            <button type="button" data-type="ugc" class="adcard" data-src="assets/hf/settings/bedroom.mp4" aria-label="Variant: repeat purchase, morning routine">
               <img class="adcard-poster" data-poster="assets/hf/settings/bedroom_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">Repeat purchase</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>I went back and bought</mark> <mark>the same set in three colours</mark></span>
@@ -365,10 +436,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3CIezRC2bfkh5fn1Cl8MjaHdSlp/hf_20260415_004832_55fa9735-9ad0-4d97-902f-7bcb6722e131.mp4" aria-label="Variant: the product being used, shot outdoors">
+            <button type="button" data-type="ugc" class="adcard" data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3CIezRC2bfkh5fn1Cl8MjaHdSlp/hf_20260415_004832_55fa9735-9ad0-4d97-902f-7bcb6722e131.mp4" aria-label="Variant: the product being used, shot outdoors">
               <img class="adcard-poster" data-poster="assets/reel-thumbs/5f1b4d11d9.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback crossorigin="anonymous"></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">In use</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>three sets in</mark> <mark>and it has not moved</mark></span>
@@ -376,10 +448,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/nature.mp4" aria-label="Variant: the wear test, outdoors">
+            <button type="button" data-type="ugc" class="adcard" data-src="assets/hf/settings/nature.mp4" aria-label="Variant: the wear test, outdoors">
               <img class="adcard-poster" data-poster="assets/hf/settings/nature_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">UGC</span>
               <span class="adcard-angle">The wear test</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>day nine of wearing this</mark> <mark>and it still holds its shape</mark></span>
@@ -387,10 +460,11 @@
               <span class="adcard-prog" aria-hidden="true"><i></i></span>
             </button>
 
-            <button type="button" class="adcard" data-src="assets/hf/settings/car_roof.mp4" aria-label="Variant: product in the wild, road trip">
+            <button type="button" data-type="product_shot" class="adcard" data-src="assets/hf/settings/car_roof.mp4" aria-label="Variant: product in the wild, road trip">
               <img class="adcard-poster" data-poster="assets/hf/settings/car_roof_thumb.webp" alt="" width="600" height="1066" decoding="async" />
               <video class="adcard-film" muted loop playsinline preload="none" disableremoteplayback></video>
               <span class="adcard-scrim" aria-hidden="true"></span>
+              <span class="adcard-kind">Product shot</span>
               <span class="adcard-angle">Product in the wild</span>
               <span class="adcard-tc" aria-hidden="true">00:00.0</span>
               <span class="adcard-hook"><mark>the one thing that lives</mark> <mark>in my glovebox</mark></span>
@@ -424,6 +498,38 @@
       </section>
     </div>
 
+    <!-- ───── The work ─────
+         Was a parts catalogue: a style shelf, three cells counting our cast,
+         our formats and our openers, then a four-button price list. It
+         inventoried the machine on a page whose whole argument is that the
+         research decides. It was also quietly broken: the format and opener
+         chips rendered as <span>, while .chip:hover recoloured them and
+         .chip:active scaled them to 0.97, so they lit up under the cursor and
+         did nothing. All three "browse" buttons called openChooser() with no
+         argument, which made three different promises resolve to one screen.
+
+         Now it shows the output and the chips are real buttons that filter it.
+         Statics come from catalog/showcase.json carrying the argument each one
+         makes; formats and openers come from the same catalogue the studio
+         runs on, so this shelf cannot drift from what we can actually make. -->
+    <section class="work" id="work">
+      <div class="c-wrap">
+        <div class="c-head" data-reveal>
+          <p class="c-kicker">The output</p>
+          <h2 class="c-display c-display-l">Every ad starts with a finding.</h2>
+          <p class="c-sub">The research comes first. We look at what customers care about, what they complain about, and what competing ads are already proving.</p>
+          <p class="c-sub">Then we turn one useful finding into one clear advertising angle.</p>
+          <p class="c-sub">These aren't examples of what AI can generate. They're ads built around something the market actually said.</p>
+        </div>
+
+        <div class="work-bar" data-reveal>
+          <div class="work-filters" id="work-filters" role="group" aria-label="Filter the examples"><!-- studio.js --></div>
+          <p class="work-note"><b>You choose none of this.</b> The read does. Browsing it is optional.</p>
+        </div>
+
+        <div class="work-grid" id="work-grid" aria-live="polite"><!-- studio.js --></div>
+      </div>
+    </section>
     <!-- ───── The chain: what actually happens to a link ─────
          This sits directly under the hero because it is the product.
 
@@ -431,9 +537,15 @@
          cannot say "pipeline": every pass looked equally important, nothing
          showed sequence, and step three handed off to step four by wrapping
          onto a new row. It is now a rail. The argument stays put on the left
-         while the six passes run down the right, and the gate before the last
-         one draws the line the pricing actually has: everything above it is
-         free and needs no account. -->
+         while the passes run down the right, and the gate before the last one
+         draws the line the pricing actually has: everything above it is free
+         and needs no account.
+
+         Six passes became three. The six were honest but they were six
+         paragraphs of the same verb: four of them opened "We read". Reading
+         the product, the buyers and the competitors is one pass to a customer,
+         because it is one wait. The count now matches what the buyer
+         experiences rather than what our pipeline does internally. -->
     <section class="chain" id="how">
       <div class="c-wrap how-grid">
 
@@ -445,18 +557,26 @@
           <!-- Broken by hand. Left to wrap, the narrow column orphans "step."
                on a line of its own. -->
           <h2 class="c-display c-display-l">The ad is<br />the last step.<span class="hl-line">Not the first.</span></h2>
-          <p class="c-sub">Every other tool starts at "describe your video", which just moves the guess from you to a prompt box. We start at your product page and <strong>write nothing until we know what your market already responds to.</strong> One link, six passes, a couple of minutes.</p>
+          <p class="c-sub">Most AI ad tools start with "describe your video". That puts the strategy back on you.</p>
+          <p class="c-sub">Hexa starts with your product. We research what your market already cares about, find an opportunity competitors aren't answering, and <strong>turn it into the ad.</strong></p>
 
           <div class="how-cta">
             <a class="btn btn-primary btn-lg" href="/validate">Read my market, free</a>
-            <p class="how-cta-note"><b>Steps 1 to 5 cost nothing</b> and need no account. The first ad is free too.</p>
+            <!-- Careful with this line. "No account required, your research is
+                 free" was the obvious phrasing and it is not true: a market
+                 already in the corpus is read free and anonymously, but a
+                 market nobody has studied yet is gated behind a free sign-in
+                 and costs credits, which the welcome grant covers. Most
+                 visitors hit the second case today, so the simpler sentence
+                 would be false for most of the people reading it. -->
+            <p class="how-cta-note"><b>The read is free.</b> A market nobody has studied yet needs a free account, and your welcome credits cover it. The first ad is free too.</p>
           </div>
 
           <!-- Where you are in the pipeline, mirrored from the rail. Desktop
                only: on a phone the pitch is not pinned, so a readout of a
                thing scrolled off the screen would be describing nothing. -->
           <div class="how-readout" aria-hidden="true">
-            <span>Pass <span class="how-readout-n" id="how-pos">01</span> / 06</span>
+            <span>Pass <span class="how-readout-n" id="how-pos">01</span> / 03</span>
             <span class="how-meter"><i id="how-meter"></i></span>
           </div>
         </div>
@@ -468,37 +588,21 @@
 
           <li class="how-step" data-n="01">
             <span class="how-node" aria-hidden="true">01</span>
-            <h3><span class="how-verb">We read</span> your product</h3>
-            <p>Paste the link and we take the page apart: what it is, what it costs, what it already claims, and which images it is selling on today.</p>
-            <span class="how-out">Your product, in plain terms</span>
+            <h3><span class="how-verb">We read</span> your market</h3>
+            <p>We start with your product page, then look outward.</p>
+            <p><strong>What are buyers saying?</strong> The conversations, complaints, questions and patterns around your category, written by people who had no idea a brand was listening.</p>
+            <p><strong>What is already working?</strong> Every ad running in your market, and how long each one has survived. <strong>An ad still running after six months is proven. One that lasted four days was somebody's guess.</strong></p>
+            <p class="how-formula">What buyers care about <b>+</b> what competitors have proven <b>=</b> where the opportunity is</p>
+            <span class="how-out">What your buyers say. What already works.</span>
           </li>
 
           <li class="how-step" data-n="02">
             <span class="how-node" aria-hidden="true">02</span>
-            <h3><span class="how-verb">We read</span> your buyers</h3>
-            <p>Then the communities where your category actually gets discussed. Thousands of real comments, written by people <strong>who had no idea a brand was listening.</strong></p>
-            <span class="how-out">What people say unprompted</span>
-          </li>
-
-          <li class="how-step" data-n="03">
-            <span class="how-node" aria-hidden="true">03</span>
-            <h3><span class="how-verb">We read</span> your competitors</h3>
-            <p>Every ad running in your category in the public ad library, with the date each one went live. <strong>An ad still running after six months is proven. One that lasted four days was somebody's guess.</strong></p>
-            <span class="how-out">What is proven, not what is loud</span>
-          </li>
-
-          <li class="how-step" data-n="04">
-            <span class="how-node" aria-hidden="true">04</span>
-            <h3><span class="how-verb">We call</span> the format</h3>
-            <p>Video or statics, decided by which one is surviving longest in your category. If your market is won by still images we will tell you so, even though the video is the thing we sell.</p>
-            <span class="how-out">The format your category rewards</span>
-          </li>
-
-          <li class="how-step" data-n="05">
-            <span class="how-node" aria-hidden="true">05</span>
             <h3><span class="how-verb">We find</span> the angle</h3>
-            <p>The complaint your buyers keep raising that no competitor ad is answering. Ranked by how many separate people raised it, and every one arrives with its receipts attached.</p>
-            <span class="how-out">What to say, and why</span>
+            <p>We identify the strongest thing your market is saying that competitors are not properly answering, ranked by how many separate people raised it, every one with its receipts attached.</p>
+            <p>Then we decide how to say it, static or video, based on what is actually surviving in your category. If your market is won by still images we say so, even though video is the more expensive thing we sell.</p>
+            <p>You do not have to choose the format, write the hook, or come up with the concept. <strong>The research makes the call.</strong></p>
+            <span class="how-out">What to say. And how to say it.</span>
           </li>
 
           <!-- The gate is where the money starts, drawn where it actually is
@@ -508,37 +612,18 @@
             <span class="how-gate-rule" aria-hidden="true"></span>
           </li>
 
-          <li class="how-step is-final" data-n="06">
-            <span class="how-node" aria-hidden="true">06</span>
+          <li class="how-step is-final" data-n="03">
+            <span class="how-node" aria-hidden="true">03</span>
             <h3><span class="how-verb">We make</span> the ad</h3>
-            <p>Same link, same evidence, no brief for you to write. The opening line comes straight out of the research, so the ad argues something <strong>your market has already said it cares about.</strong></p>
-            <span class="how-out">The file, ready to run</span>
+            <p>Same product, same evidence, no brief for you to write.</p>
+            <p>The hook comes from the finding. The concept comes from the angle. The creative is built around the argument, so the ad argues something <strong>your market has already said it cares about.</strong></p>
+            <span class="how-out">The finished file, ready to run.</span>
           </li>
 
         </ol>
       </div>
     </section>
 
-    <!-- ───── Guess the angle ─────
-         Every other line on this page ASSERTS that you are guessing. This is
-         the only one that lets you find out. The two wrong answers are the
-         themes competitors actually advertise, which is the real finding: the
-         confident, well-funded consensus is usually the thing customers care
-         least about. Data is frozen from real reads in catalog/guess-angles.json;
-         nothing in it is invented, and no "x% of people picked wrong" line
-         appears until we have actually counted picks. -->
-    <section class="guess" id="guess">
-      <div class="c-wrap">
-        <div class="c-head c-head-center" data-reveal>
-          <p class="c-kicker">Your turn</p>
-          <!-- "Probably" carries the whole section, so it gets the accent line
-               to itself rather than trailing the end of a longer one. -->
-          <h2 class="c-display c-display-l">You already know what to say.<span class="hl-line">Probably.</span></h2>
-          <p class="c-sub">A real product, and three things you could say about it. One is what its buyers actually keep raising, unprompted. Pick the one you would put budget behind.</p>
-        </div>
-        <div class="guess-stage" id="guess-stage" aria-live="polite"><!-- studio.js --></div>
-      </div>
-    </section>
 
     <section id="reviews" class="reviews">
       <div class="reviews-inner">
@@ -559,88 +644,6 @@
         </div>
         <div class="review-marquee" aria-label="What clients say">
           <div class="review-track" id="review-strip" aria-busy="true"></div>
-        </div>
-      </div>
-    </section>
-    <!-- ───── The execution layer ─────
-         Was five sections: a style grid, a mode rail, a 40-avatar marquee, a
-         hook rail and a "beyond video" grid. Together they were the longest
-         stretch of the page and they all asked the same question in a
-         different shape, which is what made the page ambiguous: a visitor
-         could not tell whether picking any of it was their job. It is one
-         section now. Styles get the shelf because they are the only part with
-         something to look at; everything else states its capacity and links
-         into the studio, where the choosing actually happens. -->
-    <section class="exec" id="styles">
-      <div class="c-wrap">
-        <div class="exec-head" data-reveal>
-          <div class="exec-head-main">
-            <p class="c-kicker">The execution layer</p>
-            <h2 class="c-display c-display-l">The read decides what to say. <span class="exec-dim">This is everything it can say it with.</span></h2>
-          </div>
-          <p class="exec-auto"><b>Choosing is optional.</b> Leave any of this alone and the angle picks it for you.</p>
-        </div>
-
-        <div class="shelf-head" data-reveal>
-          <p class="shelf-title"><b>Styles</b><span id="styles-count"></span></p>
-          <div class="shelf-nav">
-            <button class="snav" type="button" id="styles-prev" aria-label="Scroll styles left" aria-controls="style-grid">&larr;</button>
-            <button class="snav" type="button" id="styles-next" aria-label="Scroll styles right" aria-controls="style-grid">&rarr;</button>
-          </div>
-        </div>
-
-        <!-- studio.js fills this. It keeps the id it had as a grid, so
-             renderStyles() needs no knowledge of the shelf. -->
-        <div class="shelf" id="style-grid" tabindex="0" role="group" aria-label="Style presets, scrollable"><!-- studio.js --></div>
-
-        <div class="exec-row">
-          <div class="cell" data-reveal>
-            <div class="cell-top"><span class="cell-n">40</span><span class="cell-label">Cast</span></div>
-            <p class="cell-sub">Consistent creators. The same face carries a whole campaign, so a run of ads reads as one brand. Or train your own with Soul.</p>
-            <div class="faces" aria-hidden="true">
-              <img class="face" src="assets/hf/faces/adriana.webp" alt="" width="96" height="96" loading="lazy" decoding="async" />
-              <img class="face" src="assets/hf/faces/jayden.webp" alt="" width="96" height="96" loading="lazy" decoding="async" />
-              <img class="face" src="assets/hf/faces/mei.webp" alt="" width="96" height="96" loading="lazy" decoding="async" />
-              <img class="face" src="assets/hf/faces/clara.webp" alt="" width="96" height="96" loading="lazy" decoding="async" />
-              <img class="face" src="assets/hf/faces/maria.webp" alt="" width="96" height="96" loading="lazy" decoding="async" />
-              <img class="face" src="assets/hf/faces/sofia.webp" alt="" width="96" height="96" loading="lazy" decoding="async" />
-              <span class="face face-more">+34</span>
-            </div>
-            <button class="browse" type="button" data-open-choose>Meet the cast</button>
-          </div>
-
-          <div class="cell" data-reveal data-reveal-delay="70">
-            <div class="cell-top"><span class="cell-n" id="modes-count">10</span><span class="cell-label">Formats</span></div>
-            <p class="cell-sub">One angle, ten shapes to run it in. Any of them ships at any length, 15 seconds to a 2 minute film.</p>
-            <div class="chips" id="format-chips"><!-- studio.js --></div>
-            <button class="browse" type="button" data-open-choose>All formats</button>
-          </div>
-
-          <div class="cell" data-reveal data-reveal-delay="140">
-            <div class="cell-top"><span class="cell-n" id="hooks-count">9</span><span class="cell-label">Openers</span></div>
-            <p class="cell-sub">The first line, which is the only one most people hear. Your read writes yours <em>out of what your buyers actually said</em>; these are the shapes it writes in.</p>
-            <div class="chips" id="hook-chips"><!-- studio.js --></div>
-            <button class="browse" type="button" data-open-choose>See the openers</button>
-          </div>
-        </div>
-
-        <!-- Stills. One line rather than the four-tile grid it used to be:
-             it is a different deliverable, not a different pitch, and the
-             prices come off catalog/pricing.json like every other number. -->
-        <div class="stills" data-reveal>
-          <span class="stills-lead">Beyond video</span>
-          <button class="still" type="button" data-product="photoshoot">
-            <span class="still-name">Product photoshoot</span><span class="still-price"></span>
-          </button>
-          <button class="still" type="button" data-product="adpack">
-            <span class="still-name">Static ad pack</span><span class="still-price"></span>
-          </button>
-          <button class="still" type="button" data-product="soul">
-            <span class="still-name">Soul character</span><span class="still-price"></span>
-          </button>
-          <button class="still" type="button" data-product="cinematic">
-            <span class="still-name">Cinematic spot</span><span class="still-price"></span>
-          </button>
         </div>
       </div>
     </section>

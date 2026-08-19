@@ -99,8 +99,12 @@ export function createCostMeter(label) {
       return usd;
     },
 
-    /* An LLM call: usage(model, {input_tokens, output_tokens}). */
-    usage(model, u = {}) {
+    /* An LLM call: usage(model, {input_tokens, output_tokens}, provider).
+     *
+     * `provider` is recorded because a row naming only the model cannot answer
+     * "who actually billed us for this". Settling that once took a live report
+     * and a hand-checked price calculation. */
+    usage(model, u = {}, provider) {
       const rate = RATES[model];
       note(model, rate);
       const inTok = (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0);
@@ -117,6 +121,7 @@ export function createCostMeter(label) {
         : 0;
       calls.push({
         key: model,
+        provider: provider || null,
         kind: 'llm',
         in: inTok,
         out: outTok,
@@ -135,7 +140,7 @@ export function createCostMeter(label) {
     breakdown() {
       const byKey = new Map();
       for (const c of calls) {
-        const cur = byKey.get(c.key) || { key: c.key, kind: c.kind, n: 0, in: 0, out: 0, usd: 0, verified: c.verified };
+        const cur = byKey.get(c.key) || { key: c.key, provider: c.provider || null, kind: c.kind, n: 0, in: 0, out: 0, usd: 0, verified: c.verified };
         cur.n += c.count || 1;
         cur.in += c.in || 0;
         cur.out += c.out || 0;

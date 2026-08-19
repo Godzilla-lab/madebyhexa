@@ -175,7 +175,32 @@ function audit() {
    * colour stops are parseable, so they get measured. A gradient over a photo
    * or a video still returns null, and that is a real hole rather than a pass.
    */
+  /*
+   * A translucent layer used to end the walk with null, and null means the
+   * caller skips the element entirely. That excused more than it looks like:
+   * --text is rgba(255,255,255,0.94), so *every* control backgrounded with the
+   * site's own text token measured nothing. A filter pill written white-on-
+   * white scored 1:1 and this audit reported zero findings over it.
+   *
+   * Translucent layers are resolvable, they just have to be composited rather
+   * than surrendered to. Stack them up while walking towards the first opaque
+   * thing, then fold them back down onto it, furthest first.
+   */
+  const over = (layers, base) => {
+    let out = base;
+    for (let i = layers.length - 1; i >= 0; i--) {
+      const l = layers[i];
+      out = {
+        r: l.a * l.r + (1 - l.a) * out.r,
+        g: l.a * l.g + (1 - l.a) * out.g,
+        b: l.a * l.b + (1 - l.a) * out.b,
+        a: 1,
+      };
+    }
+    return out;
+  };
   const backdrop = (el) => {
+    const layers = [];
     for (let n = el; n && n !== document.documentElement.parentElement; n = n.parentElement) {
       const s = getComputedStyle(n);
       const img = s.backgroundImage;
@@ -184,12 +209,12 @@ function audit() {
         if (!/gradient\(/.test(img) || /url\(/.test(img)) return null;
         const stops = (img.match(/rgba?\([^)]*\)/g) || []).map(parse)
           .filter((c) => c && c.a >= 0.95);
-        if (stops.length) return stops;
+        if (stops.length) return stops.map((c) => over(layers, c));
         return null; // a translucent gradient over something unknown
       }
       const c = parse(s.backgroundColor);
-      if (c && c.a >= 0.95) return [c];
-      if (c && c.a > 0) return null; // a translucent layer we cannot resolve
+      if (c && c.a >= 0.95) return [over(layers, c)];
+      if (c && c.a > 0) layers.push(c);
     }
     return null;
   };
@@ -366,9 +391,40 @@ const RENDER_ORDER = encodeURIComponent(JSON.stringify({
  * client.rpc is part of that surface. Without it initCredits returns early and
  * the whole credits panel, balance, ledger and top-up, goes unmeasured.
  */
-function session({ emptyLibrary = false } = {}) {
+/* A pending report and nothing else. login.html has no session (a signed-in
+ * visitor is redirected straight out of it), so this cannot go through
+ * session() and needs its own two lines. */
+function seedReport() {
+  return async function pending(page) {
+    await page.evaluateOnNewDocument(() => {
+      sessionStorage.setItem('hexa.report', JSON.stringify({
+        id: 'stub-1', claim: 'tok', title: 'Portable Blender', ts: Date.now(),
+      }));
+    });
+  };
+}
+
+function session({ emptyLibrary = false, report = false } = {}) {
   return async function signedIn(page) {
   await page.setRequestInterception(true);
+  /*
+   * The post-signup report screen only draws for a visitor who has a stored
+   * report handle, because that is the only population that has one: the
+   * resume is what tells validate.js this is somebody coming back from the
+   * gate rather than somebody pasting a new link.
+   *
+   * The free-ad flag is cleared on every load for the same reason the library
+   * is stubbed: three widths share one browser, so without this the first
+   * capture spends the ad and the other two measure "already made".
+   */
+  if (report) {
+    await page.evaluateOnNewDocument(() => {
+      sessionStorage.setItem('hexa.report', JSON.stringify({
+        id: 'stub-1', claim: 'tok', title: 'Portable Blender', ts: Date.now(),
+      }));
+      localStorage.removeItem('hexa.freead.stub-1');
+    });
+  }
   page.on('request', (r) => {
     const u = r.url();
     if (u.endsWith('/auth.js') || u.includes('/vendor/supabase.js')) return r.abort();
@@ -397,13 +453,21 @@ function session({ emptyLibrary = false } = {}) {
       onChange: () => {},
       /* initBrand builds a supabase query chain off client.from(...). Without a
        * chainable stub it throws during boot, and because that throw is inside
-       * a promise the page looks fine while a section quietly never inits. */
+       * a promise the page looks fine while a section quietly never inits.
+       *
+       * The Reports tab reads through this same chain, so the stub has to
+       * answer with rows rather than null: a table that renders its empty
+       * state at every width measures the empty state and ships the populated
+       * one unmeasured, which is the failure this audit exists to catch. */
       client: {
         rpc,
-        from: () => {
+        from: (table) => {
           const q = {};
           for (const m of ['select', 'is', 'eq', 'order', 'limit', 'upsert', 'insert', 'update', 'maybeSingle', 'single']) q[m] = () => q;
-          q.then = (fn) => Promise.resolve({ data: null, error: null }).then(fn);
+          q.then = (fn) => (table === 'reports'
+            ? fetch("/__reports").then((r) => r.json()).then((data) => ({ data, error: null }))
+            : Promise.resolve({ data: null, error: null })
+          ).then(fn);
           return q;
         },
       },
@@ -424,13 +488,38 @@ const PAGES = [
   ['/validate?url=https://example-store.com/products/portable-blender', 'report'],
   [`/render.html?order=${RENDER_ORDER}&jobs=job-1`, 'render'],
   ['/account.html', 'account', session()],
-  ['/account.html?welcome=1', 'account-welcome', session({ emptyLibrary: true })],
+  /*
+   * Both welcome screens, captured separately.
+   *
+   * There are two of them and they share a URL. A signup that came from a
+   * report lands on /validate with the report restored; a cold signup lands
+   * here on the composer variant. One entry could only ever measure one of
+   * them, so the other shipped unmeasured at all three widths.
+   */
+  ['/account.html?welcome=1', 'account-welcome-cold', session({ emptyLibrary: true })],
+  ['/validate', 'report-unlocked', session({ report: true })],
+  ['/account.html', 'account-reports', session(), async (page) => {
+    await page.click('#nav-reports');
+    await page.waitForSelector('.ws-report, .ws-state', { timeout: 5000 }).catch(() => {});
+  }],
   ['/account.html', 'account-settings', session(), async (page) => {
-    await page.click('#tab-settings');
-    await page.waitForSelector('#panel-settings:not([hidden])', { timeout: 5000 }).catch(() => {});
+    await page.click('#nav-settings');
+    await page.waitForSelector('#ws-settings:not([hidden])', { timeout: 5000 }).catch(() => {});
+  }],
+  /* The detail view is a screen of its own and only exists after a click, so
+     it went unmeasured entirely until it had its own entry. */
+  ['/account.html', 'account-detail', session(), async (page) => {
+    await page.click('.ws-card');
+    await page.waitForSelector('.ws-detail', { timeout: 5000 }).catch(() => {});
   }],
   /* Loaded clean but only ever smoke-checked until now. */
   ['/login.html', 'login'],
+  /* Signup, both of it. The cold screen and the one somebody reaches from a
+   * report are different screens: the second names their product, carries the
+   * three promises and changes the panel copy beside it. Measuring one and
+   * shipping the other is how the trust row would go unchecked at 390. */
+  ['/login.html?mode=signup', 'login-signup'],
+  ['/login.html?mode=signup&next=%2Fvalidate', 'login-signup-report', seedReport()],
   ['/intake.html', 'intake'],
   ['/thanks.html', 'thanks'],
   ['/order-confirmed.html', 'order-confirmed'],
@@ -443,7 +532,10 @@ for (const [url, name, prep, act] of PAGES) {
     // Pages behind a session stub what they need before anything loads.
     if (prep) await prep(page);
     await page.goto(BASE + url, { waitUntil: 'domcontentloaded' });
-    if (url.includes('account.html')) await page.waitForSelector('.cr-card, #acct-welcome:not([hidden]), #acct-empty:not([hidden])', { timeout: 20000 }).catch(() => {});
+    if (url.includes('account.html')) await page.waitForSelector('.ws-card, .ws-state', { timeout: 20000 }).catch(() => {});
+    /* The signed-in report is the post-signup screen, so it is only worth
+     * measuring once the band that carries the free ad has drawn. */
+    if (name === 'report-unlocked') await page.waitForSelector('.vd-band-welcome', { timeout: 20000 }).catch(() => {});
     if (url.includes('validate')) await page.waitForSelector('.vd-call', { timeout: 20000 }).catch(() => {});
     // The delivered state is the one worth measuring: reveal() adds .done once
     // the poll completes, so without this the audit sees the progress frame.

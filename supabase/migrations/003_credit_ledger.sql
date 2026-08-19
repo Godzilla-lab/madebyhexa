@@ -202,10 +202,14 @@ grant execute on function public.my_credit_balance() to authenticated;
 -- ─────────────────────────────────────────────────────────────
 -- New account allowance.
 --
--- 2,500 credits, which is five single creatives at 500 each. Sized on purpose
--- so it cannot reach a 7,000 credit film: a free image costs us about 2.6
--- cents, a free film costs us $4.16. Same generosity on the page, roughly a
--- thirtieth of the cost.
+-- 2,500 credits. Written when that meant five single creatives at 500 each and
+-- nothing else; the market read has since landed at 1,000, so the honest
+-- statement of what this buys is two full reads OR five static ads, and that is
+-- the version the pages quote.
+--
+-- The sizing logic is unchanged and still holds: it cannot reach a film, which
+-- costs us $4.16, while a static ad costs us about 2.6 cents and a full read
+-- about 61 cents. Same generosity on the page, a fraction of the cost.
 -- ─────────────────────────────────────────────────────────────
 
 create or replace function public.handle_new_user()

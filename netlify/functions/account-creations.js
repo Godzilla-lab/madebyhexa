@@ -33,9 +33,28 @@ exports.handler = async (event) => {
   const u = await getUser(event);
   if (!u) return json(401, { error: 'sign in required' });
 
+  /*
+   * The order's product rides along, because `type` cannot tell the library
+   * apart.
+   *
+   * A creation stores type: 'video' | 'image', which puts a product photoshoot,
+   * a static ad and a poster in one bucket and a UGC creator video, a
+   * cinematic spot and a hyper-motion burst in the other. Those are five
+   * different things to make and five different things to go looking for, so a
+   * library that only knows "image" cannot offer a category at all.
+   *
+   * The product id is what actually names the kind, and creations already
+   * carry order_id, so it is one embedded select rather than a new column and
+   * a backfill. catalog/studio-data.json maps the id to a category, in one
+   * place, so the page and the studio cannot disagree about what a photoshoot
+   * is.
+   *
+   * order_id is nullable (the comped free ad writes no order), so `product`
+   * comes back null for those and the page says nothing rather than guessing.
+   */
   const { data, error } = await admin()
     .from('creations')
-    .select('id,order_id,type,title,result_urls,thumb_url,status,created_at')
+    .select('id,order_id,type,title,result_urls,thumb_url,status,created_at,orders(product)')
     .eq('user_id', u.userId)
     .order('created_at', { ascending: false })
     .limit(200);
@@ -44,5 +63,14 @@ exports.handler = async (event) => {
     console.error('account-creations:', error.message);
     return json(500, { error: 'could not load your library' });
   }
-  return json(200, { creations: data || [] });
+
+  /* Flattened, so the browser is not reaching through an embedded object for
+   * one string. The join shape is PostgREST's business, not the page's. */
+  const creations = (data || []).map((c) => {
+    const product = c.orders && c.orders.product ? c.orders.product : null;
+    delete c.orders;
+    return Object.assign(c, { product: product });
+  });
+
+  return json(200, { creations: creations });
 };

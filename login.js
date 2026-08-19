@@ -312,3 +312,32 @@
   if (new URLSearchParams(location.search).get('mode') === 'signup') setState('signup');
   else setState('signin');
 })();
+
+/*
+ * The login film loads only when its panel is actually displayed.
+ *
+ * The <video> carries data-src rather than src, because a video with a src and
+ * an autoplay attribute is fetched whether or not its box is ever painted, and
+ * .auth-visual is display:none under 900px. Measured 2026-08-19 at 390px:
+ * 2,402 KB downloaded for an element the phone never shows, on the login
+ * screen, which is the worst page on the site to spend someone's data on
+ * decoration.
+ *
+ * Lives here rather than in a <script> block in the page because the site
+ * sends `script-src 'self'`, so an inline script is refused outright. That CSP
+ * is doing its job; the fix is to be a real file.
+ */
+(function loginFilm() {
+  var box = document.querySelector('.auth-visual');
+  var film = box && box.querySelector('.auth-visual-video');
+  if (!film || !film.dataset.src) return;
+  function arm() {
+    if (getComputedStyle(box).display === 'none') return;
+    if (!film.getAttribute('src')) film.setAttribute('src', film.dataset.src);
+    var p = film.play();
+    if (p && p.catch) p.catch(function () {});
+    window.removeEventListener('resize', arm);
+  }
+  arm();
+  window.addEventListener('resize', arm);
+})();

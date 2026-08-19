@@ -75,6 +75,21 @@
   var PRODUCTS = {
     photoshoot: { title: 'Product Photoshoot', kicker: 'Ten images, one pass', price: 9, eta: '~2 min', steps: ['link', 'mode', 'aspect', 'notes'] },
     adpack:     { title: 'DTC Ad Pack', kicker: 'Twenty static ads, twenty angles', price: 12, eta: '~2 min', steps: ['link', 'formats', 'notes'] },
+    /*
+     * One static ad, in one layout.
+     *
+     * adsingle has existed the whole time -- priced in catalog/pricing.json at
+     * 500 credits, handled by render-create.js:1154, and comped as the free ad
+     * off a report -- but it was never in this map, so the studio had no way to
+     * open one and openConfig() returned early on it. It is the entry product
+     * and it was unreachable.
+     *
+     * No `formats` step: the layout is the thing the merchant just clicked, so
+     * asking again would be asking twice. That also matters mechanically --
+     * the formats step opens with `state.sel.formats = []`, which would wipe
+     * the choice that got them here.
+     */
+    adsingle:   { title: 'Poster', kicker: 'One static ad, one layout', price: 1, eta: '~1 min', steps: ['link', 'notes'] },
     soul:       { title: 'Soul Character', kicker: 'Train once, reuse forever', price: 22, eta: '~1 hr', steps: ['soulname', 'soulphotos'] },
     cinematic:  { title: 'Cinematic Spot', kicker: 'Director-grade look', price: 25, eta: '~7 min', steps: ['link', 'camera', 'grade', 'light', 'duration', 'aspect', 'notes'] },
     auto:       { title: 'Auto Mode', kicker: 'We pick the winning format', price: 15, eta: '~5 min', steps: ['link', 'duration', 'quality', 'aspect', 'notes'] },
@@ -290,31 +305,6 @@
     return null;
   }
 
-  function presetExamples(p) {
-    var out = [];
-    var sd = state.data || {};
-    var sel = p.sel || {};
-    if (sel.setting) {
-      var s = findById(sd.settings, sel.setting.id);
-      if (s && s.video) out.push({ video: s.video, thumb: s.thumb, label: 'Scene · ' + s.name });
-    }
-    if (sel.hook) {
-      var h = findById(sd.hooks, sel.hook.id);
-      if (h && h.video) out.push({ video: h.video, thumb: h.thumb, label: 'Hook · ' + h.name });
-    }
-    if (p.product && p.product.indexOf('mode:') === 0) {
-      var m = findById(sd.modes, p.product.slice(5));
-      if (m && m.video) out.push({ video: m.video, thumb: m.poster, label: 'Format · ' + m.name });
-    }
-    /* previews that point at a scene thumb carry that scene's clip too */
-    if (p.preview && p.preview.indexOf('assets/hf/settings/') === 0) {
-      var clip = p.preview.replace('_thumb.webp', '.mp4');
-      var already = out.some(function (x) { return x.video === clip; });
-      if (!already) out.unshift({ video: clip, thumb: p.preview, label: 'Scene' });
-    }
-    if (!out.length && p.preview) out.push({ image: p.preview, label: p.name });
-    return out;
-  }
 
   function modeExamples(m) {
     var out = [];
@@ -681,126 +671,169 @@
   }
 
   /* ── Rails ── */
-  function renderStyles(presets) {
-    var grid = $('#style-grid');
-    if (!grid) return;
-    presets.forEach(function (p, i) {
-      var t = el('button', 'style-tile');
-      t.type = 'button';
-      if (p.preview) {
-        var img = el('img');
-        img.src = p.preview; img.alt = p.name; img.loading = 'lazy';
-        t.appendChild(img);
-      }
-      t.appendChild(el('div', 'style-shade'));
-      if (i < 2) {
-        t.appendChild(el('span', 'style-badge', 'New'));
-        t.classList.add('is-new');
-      }
-      if (p.product) t.appendChild(el('span', 'mode-price', formatPrice(p.product)));
-      var meta = el('div', 'style-meta');
-      meta.appendChild(el('span', 'style-name', p.name));
-      meta.appendChild(el('span', 'style-tag', p.tag || ''));
-      t.appendChild(meta);
-      var chip = el('span', 'tile-open', 'Create →');
-      chip.addEventListener('click', function (e) {
-        e.stopPropagation();
-        openPreset(p);
-      });
-      t.appendChild(chip);
-      t.addEventListener('click', function () {
-        var items = presetExamples(p);
-        if (VIEWER && items.length) {
-          VIEWER.open({
-            kicker: 'Hexa Style',
-            title: p.name,
-            tag: p.tag || '',
-            items: items,
-            cta: { label: 'Create this style · ' + formatPrice(p.product), run: function () { openPreset(p); } },
-          });
-        } else {
-          openPreset(p);
-        }
-      });
-      grid.appendChild(t);
-    });
-  }
-
   /*
-   * The three cells under the style shelf.
+   * The work section: what the read produced, browsable.
    *
-   * Replaced renderModes, renderMarquee and renderHooks, which drew a rail
-   * each: ten mode tiles, an eighty-item avatar marquee and nine hook cards.
-   * That was most of the page's height spent asking the visitor to browse
-   * three catalogues, on a page whose whole argument is that the read picks
-   * these for them. The counts are the point; the browsing lives in the
-   * studio, behind one link per cell.
+   * Replaced renderStyles, renderExecCells and initStyleShelf. Those drew a
+   * style shelf and three cells that counted our cast, our formats and our
+   * openers. Two of the three cells were dead on arrival: the chips were
+   * <span>, so .chip:hover recoloured them and .chip:active scaled them and a
+   * click did nothing at all. Counting our parts was also the wrong argument
+   * for this page, which exists to say the research decides.
+   *
+   * Three sources, one grid. Statics come from catalog/showcase.json with the
+   * argument each one carries; formats and openers come from the same
+   * studio-data the studio itself runs on, so nothing here can advertise a
+   * capability we do not have. The filters are real buttons.
    */
-  function renderExecCells(data) {
-    var fmt = $('#format-chips');
-    if (fmt) {
-      // Auto leads, and is marked: it is a real product, not a chooser-only
-      // option, and it is what happens if you touch none of this.
-      var auto = el('span', 'chip chip-auto', 'Auto · we pick');
-      fmt.appendChild(auto);
-      var modes = data.modes || [];
-      modes.slice(0, 5).forEach(function (m) {
-        fmt.appendChild(el('span', 'chip', m.name));
+  function renderWork(data) {
+    var bar = $('#work-filters');
+    var grid = $('#work-grid');
+    if (!bar || !grid) return;
+
+    var groups = [];
+
+    function push(key, label, items) {
+      if (items.length) groups.push({ key: key, label: label, items: items });
+    }
+
+    // Video formats and openers are known synchronously; the statics arrive
+    // from a fetch. Draw with what we have, then redraw if the statics land,
+    // so a failed fetch costs the section its first tab and not the section.
+    function build(statics) {
+      groups = [];
+      push('statics', 'Statics', statics);
+      push('formats', 'Video formats', (data.modes || []).map(function (m) {
+        return {
+          kind: 'video',
+          fmt: m.name,
+          line: m.name,
+          why: 'A shape the angle can be run in. The read picks it; you can override it.',
+          video: m.video,
+          poster: m.poster,
+        };
+      }));
+      push('openers', 'Openers', (data.hooks || []).map(function (h) {
+        return {
+          kind: 'video',
+          fmt: 'Opener',
+          line: h.name,
+          why: h.prompt || 'The first line, which is the only one most people hear.',
+          video: h.video,
+          poster: h.thumb,
+        };
+      }));
+      if (!groups.length) { grid.closest('.work').hidden = true; return; }
+      drawBar();
+      select(groups[0].key);
+    }
+
+    var current = null;
+
+    function drawBar() {
+      bar.innerHTML = '';
+      groups.forEach(function (g) {
+        var b = el('button', 'work-filter');
+        b.type = 'button';
+        b.textContent = g.label;
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', function () { select(g.key); });
+        b.dataset.key = g.key;
+        bar.appendChild(b);
       });
-      if (modes.length > 5) fmt.appendChild(el('span', 'chip', '+' + (modes.length - 5)));
     }
 
-    var hooks = $('#hook-chips');
-    if (hooks) {
-      (data.hooks || []).slice(0, 4).forEach(function (h) {
-        hooks.appendChild(el('span', 'chip', h.name));
+    function select(key) {
+      if (current === key) return;
+      current = key;
+      $all('.work-filter', bar).forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.key === key));
       });
-      if ((data.hooks || []).length > 4) {
-        hooks.appendChild(el('span', 'chip', '+' + ((data.hooks || []).length - 4)));
-      }
+      var g = groups.filter(function (x) { return x.key === key; })[0];
+      draw(g ? g.items : []);
     }
-  }
 
-  /*
-   * The style shelf scrolls sideways. The arrows exist because a horizontal
-   * scroller with no visible scrollbar is invisible to anyone on a mouse; the
-   * shelf itself stays keyboard scrollable and the arrows are just a second
-   * way in.
-   */
-  function initStyleShelf() {
-    var shelf = $('#style-grid');
-    var prev = $('#styles-prev');
-    var next = $('#styles-next');
-    if (!shelf || !prev || !next) return;
+    function draw(items) {
+      grid.innerHTML = '';
+      grid.dataset.kind = current || '';
+      items.forEach(function (it, i) {
+        var t = el('button', 'work-tile');
+        t.type = 'button';
 
-    // Measured off a real tile rather than hardcoded, because the tile width
-    // changes at two breakpoints and a fixed step drifts out of alignment.
-    function step() {
-      var tile = shelf.querySelector('.style-tile');
-      var w = tile ? tile.getBoundingClientRect().width : 200;
-      return Math.round((w + 12) * 2);
+        var media = el('span', 'work-media');
+        if (it.kind === 'video' && it.video) {
+          var v = el('video');
+          v.src = it.video; v.muted = true; v.loop = true;
+          v.playsInline = true; v.setAttribute('playsinline', '');
+          v.preload = 'none';
+          if (it.poster) v.poster = it.poster;
+          media.appendChild(v);
+          // Play on intent only. Nine autoplaying clips is a phone's battery
+          // and a stutter on the one thing the visitor is actually reading.
+          t.addEventListener('mouseenter', function () {
+            var p = v.play(); if (p && p.catch) p.catch(function () {});
+          });
+          t.addEventListener('mouseleave', function () { v.pause(); });
+        } else if (it.src) {
+          var im = el('img');
+          im.src = it.src; im.alt = it.line || '';
+          im.loading = i < 4 ? 'eager' : 'lazy';
+          im.decoding = 'async';
+          if (it.w) im.width = it.w;
+          if (it.h) im.height = it.h;
+          media.appendChild(im);
+        }
+        t.appendChild(media);
+
+        if (it.fmt) t.appendChild(el('span', 'work-fmt', it.fmt));
+
+        var cap = el('span', 'work-cap');
+        cap.appendChild(el('span', 'work-line', it.line || ''));
+        if (it.why) cap.appendChild(el('span', 'work-why', it.why));
+        t.appendChild(cap);
+
+        t.addEventListener('click', function () { openWork(items, i); });
+        grid.appendChild(t);
+      });
     }
-    prev.addEventListener('click', function () {
-      shelf.scrollBy({ left: -step(), behavior: 'smooth' });
-    });
-    next.addEventListener('click', function () {
-      shelf.scrollBy({ left: step(), behavior: 'smooth' });
-    });
 
-    // Grey out an arrow that cannot do anything, so the control tells the
-    // truth about where you are in the shelf.
-    function sync() {
-      var max = shelf.scrollWidth - shelf.clientWidth - 2;
-      prev.disabled = shelf.scrollLeft <= 2;
-      next.disabled = shelf.scrollLeft >= max;
+    function openWork(items, i) {
+      if (!VIEWER) return;
+      var it = items[i];
+      VIEWER.open({
+        kicker: it.kind === 'video' ? 'Example' : 'Made from a read',
+        title: it.line || '',
+        tag: it.fmt || '',
+        start: i,
+        items: items.map(function (x) {
+          return x.kind === 'video'
+            ? { video: x.video, thumb: x.poster, label: x.line }
+            : { image: x.src, thumb: x.src, label: x.fmt };
+        }),
+        cta: { label: 'Read my market, free', run: function () { location.href = '/validate'; } },
+      });
     }
-    shelf.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', sync);
-    sync();
-    // The tiles arrive from a fetch, so the first sync runs against an empty
-    // shelf and would leave both arrows dead.
-    if (window.requestAnimationFrame) requestAnimationFrame(sync);
-    setTimeout(sync, 400);
+
+    build([]);
+
+    fetch('catalog/showcase.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var items = (j && j.items) || [];
+        if (!items.length) return;
+        build(items.map(function (s) {
+          return {
+            kind: 'image',
+            fmt: s.format,
+            line: s.line,
+            why: s.argument,
+            src: s.src,
+            w: s.w,
+            h: s.h,
+          };
+        }));
+      })
+      .catch(function () { /* the video tabs already drew */ });
   }
 
   /* ── Step renderers ── */
@@ -1981,17 +2014,28 @@
    * here without. The tiles underneath are unchanged; only the question they
    * answer is.
    */
+  /*
+   * Five types, and the same five everywhere.
+   *
+   * These used to be five adjectives -- "Feels authentic", "Looks expensive",
+   * "Looks viral" -- which is a fine way to describe an ad and a poor way to
+   * name a thing. Nothing else on the site used those words: the library filed
+   * the result under Motion, the studio sold it as "Looks viral", and there was
+   * no thread between the two. A merchant who bought "Make people stop
+   * scrolling" could not find it again.
+   *
+   * So the NAME is the type, shared with catalog/studio-data.json and with the
+   * account library, and the perception line survives as the SUB, which is
+   * where a description belongs. Both facts are still on screen; only which
+   * one is the label has changed.
+   */
   var CHOOSER_GROUPS = [
-    { name: 'Feels authentic', sub: 'Reads like a real customer filmed it.',
-      products: ['mode:ugc', 'mode:unboxing', 'mode:ugc_try_on'] },
-    { name: 'Looks expensive', sub: 'Reads like a brand with a budget.',
-      products: ['cinematic', 'mode:tv_spot', 'mode:pro_try_on'] },
-    { name: 'Looks viral', sub: 'Built to survive the first second of a scroll.',
-      products: ['mode:hyper_motion', 'mode:wild_card'] },
-    { name: 'Feels trustworthy', sub: 'Reads like a review rather than an ad.',
-      products: ['mode:product_review', 'mode:tutorial'] },
-    { name: 'Looks like a product commercial', sub: 'The product itself, shot properly.',
-      products: ['photoshoot', 'adpack'] },
+    { id: 'product_shot', name: 'Product shots', sub: 'The product itself, shot properly. No creator, no scene.',
+      products: ['photoshoot'] },
+    { id: 'ugc', name: 'UGC', sub: 'Reads as authentic: a real customer filming, or a review rather than an ad.',
+      products: ['mode:ugc', 'mode:unboxing', 'mode:ugc_try_on', 'mode:product_review', 'mode:tutorial'] },
+    { id: 'motion', name: 'Motion', sub: 'Camera-led film: reads like a brand with a budget, or built to survive the first second of a scroll.',
+      products: ['cinematic', 'mode:tv_spot', 'mode:pro_try_on', 'mode:hyper_motion', 'mode:wild_card'] },
   ];
 
   /*
@@ -2002,18 +2046,63 @@
    * to DO is a question anyone selling something can answer, and each answer
    * maps to exactly one product we already build.
    */
+  /*
+   * Icons are drawn, not typed.
+   *
+   * These tiles used to carry emoji. An emoji is not an icon: it is a picture
+   * chosen by whichever vendor built the OS, so 🤷 is a different person on
+   * Windows, Android and macOS, it arrives full-colour into a two-colour
+   * palette, and at tile size it sits at a different weight from the label
+   * under it. `account.js` already draws its rail from paths for exactly this
+   * reason, and `validate.js` now does the same. One family, three surfaces.
+   *
+   * `type` maps the goal onto the taxonomy in catalog/studio-data.json, so the
+   * words a merchant reads here are the same words the library files the
+   * result under. It used to be possible to buy something called "Make people
+   * stop scrolling" and find it under "Motion" with no thread between them.
+   */
+  /* One family, drawn from paths. Matches account.js and validate.js. */
+  var GOAL_ICONS = {
+    auto:   'M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+    motion: 'M3 5h13v14H3zM16 10l5-3v10l-5-3',
+    ugc:    'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0',
+    cinema: 'M2 6h20v12H2zM2 10h20M6 6v4M12 6v4M18 6v4M6 14h6',
+    box:    'M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',
+    steps:  'M4 18h4v3H4zM10 12h4v9h-4zM16 6h4v15h-4z',
+    ads:    'M3 3h18v18H3zM3 9h18M9 9v12',
+  };
+
+  function goalIcon(id) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.6');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('class', 'goal-ico');
+    (GOAL_ICONS[id] || GOAL_ICONS.auto).split(' M').forEach(function (seg, i) {
+      var path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', (i ? 'M' : '') + seg.trim());
+      svg.appendChild(path);
+    });
+    return svg;
+  }
+
   var GOALS = [
-    { ico: '🤷', name: 'Let Hexa choose', sub: 'We pick the format, the look and the script from what the research found.', product: 'auto', lead: true },
-    { ico: '🔥', name: 'Make people stop scrolling', sub: 'Fast, impossible camera moves that break a scroll.', product: 'mode:hyper_motion' },
-    { ico: '👤', name: 'Make it feel like a real customer', sub: 'A creator holding your product, talking to camera.', product: 'mode:ugc' },
-    { ico: '🎬', name: 'Make it look premium', sub: 'Director-grade camera, lighting and colour.', product: 'cinematic' },
-    { ico: '📦', name: 'Show the product', sub: 'Your product in real hands, opened and shown off.', product: 'mode:unboxing' },
-    { ico: '🧪', name: 'Show how it works', sub: 'A clear walkthrough of using it, start to finish.', product: 'mode:tutorial' },
+    { ico: 'auto', name: 'Let Hexa choose', sub: 'We pick the format, the look and the script from what the research found.', product: 'auto', lead: true },
+    { ico: 'motion', type: 'motion', name: 'Make people stop scrolling', sub: 'Fast, impossible camera moves that break a scroll.', product: 'mode:hyper_motion' },
+    { ico: 'ugc', type: 'ugc', name: 'Make it feel like a real customer', sub: 'A creator holding your product, talking to camera.', product: 'mode:ugc' },
+    { ico: 'cinema', type: 'motion', name: 'Make it look premium', sub: 'Director-grade camera, lighting and colour.', product: 'cinematic' },
+    { ico: 'box', type: 'ugc', name: 'Show the product', sub: 'Your product in real hands, opened and shown off.', product: 'mode:unboxing' },
+    { ico: 'steps', type: 'ugc', name: 'Show how it works', sub: 'A clear walkthrough of using it, start to finish.', product: 'mode:tutorial' },
     /* Statics. Not in the cold grid, because someone arriving with no research
      * is choosing a look and every other tile here is a video. It appears, and
      * leads, when a report has actually measured that statics is the format
      * this market responds to. */
-    { ico: '🖼️', name: 'Run it as static ads', sub: 'Twenty images, twenty arguments, each carrying your proven line.', product: 'adpack', staticsOnly: true },
+    { ico: 'ads', type: 'ads', name: 'Run it as static ads', sub: 'Twenty images, twenty arguments, each carrying your proven line.', product: 'adpack', staticsOnly: true },
   ];
 
   /*
@@ -2156,7 +2245,7 @@
     tiles.forEach(function (g) {
       var t = el('button', 'goal-tile' + (g.lead ? ' goal-tile-lead' : ''));
       t.type = 'button';
-      t.appendChild(el('span', 'goal-ico', g.ico));
+      t.appendChild(goalIcon(g.ico));
       var meta = el('span', 'goal-meta');
       if (g.lead) {
         meta.appendChild(el('span', 'goal-badge',
@@ -2165,7 +2254,17 @@
       meta.appendChild(el('span', 'goal-name', g.name));
       meta.appendChild(el('span', 'goal-sub', g.sub));
       t.appendChild(meta);
-      t.appendChild(el('span', 'goal-price', formatPrice(g.product)));
+      /*
+       * No price on the tile.
+       *
+       * This said "From $15" in the corner while everything downstream is
+       * denominated in credits, so the grid quoted one currency and the button
+       * that actually spends charged another. It also put a number beside a
+       * question the reader has not answered yet: the choice here is what kind
+       * of ad this should be, and the cost of that choice is carried by the Go
+       * button at the moment of commitment, which is the rule the rest of this
+       * product already follows.
+       */
       t.addEventListener('click', function () {
         // "Let Hexa choose" is not a shrug: it means choose from the evidence,
         // and the evidence has already named the format.
@@ -2191,6 +2290,19 @@
       members.forEach(function (p) { used[p.id] = true; });
       renderChooserGroup(grid, group.name, members, pk, group.sub);
     });
+
+    /*
+     * Posters, which is a layout rather than a product.
+     *
+     * There is no poster SKU, so it has no presets and would never have
+     * appeared. But it is a real thing we make: an Ad rendered in a poster
+     * layout, and the seven layouts below already ship with local artwork.
+     * The category in catalog/studio-data.json carries `formats` instead of
+     * `products` for exactly this reason, and the library still files the
+     * result under Ads because that is what the order records.
+     */
+    formatGroup(grid, 'ads', 8);
+    formatGroup(grid, 'posters', 0);
     // presets outside the group map still show, ungrouped
     var rest = state.presets.filter(function (p) { return !used[p.id]; });
     renderChooserGroup(grid, rest.length && Object.keys(used).length ? 'More styles' : null, rest, pk);
@@ -2210,6 +2322,65 @@
     overlay.hidden = false;
     document.body.style.overflow = 'hidden';
     body.scrollTop = 0;
+  }
+
+  /*
+   * The two static groups, drawn from the ad-format catalogue.
+   *
+   * Statics were invisible here. The chooser builds its groups from
+   * catalog/presets.json, and not one preset carries `adpack` or `adsingle`,
+   * so the group that was supposed to hold them only ever rendered its two
+   * photoshoot presets. A merchant could not pick a static ad from the studio
+   * at all -- the only way one got made was the comped free ad off a report.
+   *
+   * The 39 ad formats already ship with local artwork, so they are the tiles.
+   * Posters takes the seven poster layouts; Ads takes the rest, capped, since
+   * thirty-two tiles is a catalogue and not a choice.
+   */
+  function formatGroup(grid, catId, limit) {
+    var cats = (state.data && state.data.categories) || [];
+    var cat = cats.filter(function (c) { return c.id === catId; })[0];
+    if (!cat) return;
+
+    var posters = (cats.filter(function (c) { return c.id === 'posters'; })[0] || {}).formats || [];
+    var all = ((state.data && state.data.ad_formats) || []).filter(function (f) { return f.preview; });
+
+    var formats = catId === 'posters'
+      ? all.filter(function (f) { return posters.indexOf(f.name) >= 0; })
+      : all.filter(function (f) { return posters.indexOf(f.name) < 0; });
+    if (limit) formats = formats.slice(0, limit);
+    if (!formats.length) return;
+
+    var h = el('p', 'chooser-group', cat.name);
+    if (cat.sub) h.appendChild(el('span', 'chooser-group-sub', cat.sub));
+    grid.appendChild(h);
+
+    formats.forEach(function (f, i) {
+      var t = el('button', 'style-tile');
+      t.type = 'button';
+      t.style.animationDelay = Math.min(60 + i * 40, 480) + 'ms';
+      var img = el('img');
+      img.src = f.preview;
+      img.alt = f.name;
+      img.loading = 'lazy';
+      /* Real dimensions on load, so a poster arriving late cannot shove the
+       * grid down under the pointer. */
+      img.addEventListener('load', function () {
+        if (img.naturalWidth && img.naturalHeight) {
+          img.width = img.naturalWidth;
+          img.height = img.naturalHeight;
+        }
+      });
+      t.appendChild(img);
+      var meta = el('span', 'style-meta');
+      meta.appendChild(el('span', 'style-name', f.name));
+      meta.appendChild(el('span', 'style-tag', catId === 'posters' ? 'Poster layout' : 'Static ad'));
+      t.appendChild(meta);
+      t.addEventListener('click', function () {
+        openConfig('adsingle', { formats: [{ id: f.id, name: f.name }] });
+      });
+      grid.appendChild(t);
+    });
   }
 
   function renderChooserGroup(grid, name, presets, pk, sub) {
@@ -2720,25 +2891,7 @@
         if (pr && pr.then) pr.then(open, open); else open();
       } else { open(); }
     };
-    renderStyles(state.presets);
-    renderExecCells(data);
-    initStyleShelf();
-
-    // "Meet the cast", "All formats", "See the openers": all three land in the
-    // same place, because all three are chosen in the same place.
-    $all("[data-open-choose]").forEach(function (btn) {
-      btn.addEventListener("click", function () { openChooser(); });
-    });
-
-    /* The style shelf is the only one of these left as tiles. Modes, avatars
-     * and hooks used to own a rail each; they are three cells in one section
-     * now, so their renderers went with the rails. */
-    var sc = $('#styles-count');
-    if (sc) sc.textContent = state.presets.length + ' briefs, already written and shot';
-    var mc = $('#modes-count');
-    if (mc) mc.textContent = String((data.modes || []).length + 1);
-    var hc = $('#hooks-count');
-    if (hc) hc.textContent = String((data.hooks || []).length);
+    renderWork(data);
 
     /*
      * The two ways in.
@@ -2914,263 +3067,6 @@
         if (note) { note.textContent = noteText; note.classList.remove('is-err'); }
         window.location.href = '/.netlify/functions/shopify-install?shop='
           + encodeURIComponent(raw + '.myshopify.com');
-      });
-    })();
-
-    /*
-     * Guess the angle.
-     *
-     * The only section on the page that demonstrates instead of asserting. A
-     * real product, three real claims, and the wrong answers are the ones
-     * competitors actually advertise. Most people pick a crowded lane, and
-     * feeling that happen is worth more than any headline claiming it would.
-     *
-     * The reveal happens in place now. It used to tear the stage down and
-     * rebuild it as a different list, which threw away the one moment worth
-     * animating: the claim you just picked is the same row that then grows
-     * its evidence underneath it. Rebuilding also meant the answer arrived
-     * fully formed, so nothing ever felt measured.
-     *
-     * Frozen data, deliberately: it has to be instant, it has to cost nothing
-     * per visitor, and every number in it has to be one we actually measured.
-     * There is no "62% of people pick wrong" line and there will not be one
-     * until picks are really counted, because inventing it would poison the
-     * only section whose whole argument is that we do not guess.
-     */
-    (function initGuess() {
-      var stage = $('#guess-stage');
-      if (!stage) return;
-      var rounds = [];
-      var at = 0;
-      var locked = false;
-      var current = null;
-
-      fetch('/catalog/guess-angles.json')
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          rounds = (d && d.rounds) || [];
-          if (rounds.length) draw();
-          else stage.closest('.guess').hidden = true;
-        })
-        .catch(function () {
-          // No data, no section. A broken quiz is worse than no quiz.
-          var sec = stage.closest('.guess');
-          if (sec) sec.hidden = true;
-        });
-
-      /* Both metrics share one scale, so the bars can be compared to each
-       * other rather than each to itself. That comparison IS the finding: the
-       * lane with nine buyers behind it and no ads, next to the lane with two
-       * buyers and eleven ads. Two independent scales would draw those the
-       * same length and delete the point. */
-      function scaleOf(r) {
-        return r.options.reduce(function (m, o) {
-          return Math.max(m, o.people, o.ads);
-        }, 1);
-      }
-
-      function meter(cls, n, noun, nouns, width) {
-        var row = el('span', 'guess-meter' + (cls ? ' ' + cls : ''));
-        var label = el('span', 'guess-meter-label');
-        label.appendChild(el('b', null, String(n)));
-        label.appendChild(document.createTextNode(' ' + (n === 1 ? noun : nouns)));
-        row.appendChild(label);
-        var bar = el('span', 'guess-bar');
-        var fill = el('i');
-        fill.dataset.w = width;
-        bar.appendChild(fill);
-        row.appendChild(bar);
-        return row;
-      }
-
-      function draw() {
-        var r = rounds[at % rounds.length];
-        current = r;
-        locked = false;
-        stage.textContent = '';
-
-        var slip = el('div', 'guess-slip');
-
-        var head = el('div', 'guess-product');
-        head.appendChild(el('span', 'guess-product-label', 'The product'));
-        head.appendChild(el('span', 'guess-product-name', r.product));
-        head.appendChild(el('span', 'guess-product-price', r.price));
-        /* What the read behind these three claims actually covered. It is the
-         * only number on the slip before you pick, and it is there to say the
-         * answer is measured rather than editorial. */
-        head.appendChild(el('span', 'guess-product-read',
-          r.read.comments + ' comments · ' + r.read.communities +
-          ' communities · ' + r.read.ads + ' competitor ads read'));
-        slip.appendChild(head);
-
-        var scale = scaleOf(r);
-        var group = el('div', 'guess-options');
-        group.setAttribute('role', 'radiogroup');
-        group.setAttribute('aria-label', 'Which would you run?');
-
-        r.options.forEach(function (o, i) {
-          var row = el('div', 'guess-row');
-
-          var b = el('button', 'guess-option');
-          b.type = 'button';
-          b.setAttribute('role', 'radio');
-          b.setAttribute('aria-checked', 'false');
-
-          var tag = el('span', 'guess-tag');
-          b.appendChild(tag);
-
-          var top = el('span', 'guess-option-top');
-          top.appendChild(el('span', 'guess-key', String(i + 1)));
-          top.appendChild(el('span', 'guess-option-claim', o.claim));
-          b.appendChild(top);
-
-          /* The receipt is a 0fr -> 1fr grid row rather than a height
-           * animation, because the evidence is a different height for every
-           * option and nothing here should have to know it in advance. */
-          var receipt = el('span', 'guess-receipt');
-          var clip = el('span');
-          var inner = el('span', 'guess-receipt-inner');
-          inner.appendChild(meter('', o.people, 'customer raised it', 'customers raised it',
-            Math.round((o.people / scale) * 100)));
-          inner.appendChild(meter('is-ads', o.ads, 'competitor ad says it', 'competitor ads say it',
-            Math.round((o.ads / scale) * 100)));
-          inner.appendChild(el('span', 'guess-note', o.note));
-          clip.appendChild(inner);
-          receipt.appendChild(clip);
-          b.appendChild(receipt);
-
-          b.addEventListener('click', function () { reveal(i); });
-          row.appendChild(b);
-
-          /* Quotes live outside the button. A <button> may only contain
-           * phrasing content, and an .ev-card is a blockquote in a div, so
-           * nesting them made the row invalid and unreadable to a screen
-           * reader that flattens button labels. */
-          if ((o.quotes || []).length) {
-            var quotes = el('div', 'guess-quotes');
-            /* The clip has to be one wrapper, not the cards themselves. With
-             * the cards as the grid items, a 0fr row still painted them: each
-             * card clipped its own content and nothing clipped the row, so
-             * the winner's receipts were legible before anyone had picked,
-             * which gives the answer away. */
-            var qclip = el('div');
-            var qinner = el('div', 'guess-quotes-inner');
-            o.quotes.forEach(function (q) {
-              var card = el('div', 'ev-card');
-              card.appendChild(el('blockquote', null, q.text));
-              var meta = el('div', 'ev-meta');
-              meta.appendChild(el('span', 'ev-src', 'r/' + q.sub));
-              meta.appendChild(el('span', 'ev-score', q.score + ' points'));
-              card.appendChild(meta);
-              qinner.appendChild(card);
-            });
-            qclip.appendChild(qinner);
-            quotes.appendChild(qclip);
-            row.appendChild(quotes);
-          }
-
-          group.appendChild(row);
-        });
-        slip.appendChild(group);
-
-        var verdict = el('div', 'guess-verdict');
-        var vclip = el('div');
-        var vinner = el('div', 'guess-verdict-inner');
-        vinner.appendChild(el('p', 'guess-close-line'));
-        var actions = el('div', 'guess-close-actions');
-        var go = el('a', 'btn btn-primary', 'Read my market, free');
-        go.href = '/validate';
-        var again = el('button', 'guess-again', 'Try another product');
-        again.type = 'button';
-        again.addEventListener('click', function () { at += 1; draw(); });
-        actions.appendChild(go);
-        actions.appendChild(again);
-        vinner.appendChild(actions);
-        vclip.appendChild(vinner);
-        verdict.appendChild(vclip);
-        slip.appendChild(verdict);
-
-        stage.appendChild(slip);
-
-        var hint = el('p', 'guess-hint');
-        hint.appendChild(document.createTextNode('Pick one. '));
-        ['1', '2', '3'].forEach(function (k) {
-          hint.appendChild(el('kbd', null, k));
-          hint.appendChild(document.createTextNode(' '));
-        });
-        hint.appendChild(document.createTextNode('work too. Nothing is submitted anywhere.'));
-        stage.appendChild(hint);
-      }
-
-      function reveal(picked) {
-        if (locked || !current) return;
-        locked = true;
-        var r = current;
-        var winner = r.options.reduce(function (best, o, i) {
-          return o.people > r.options[best].people ? i : best;
-        }, 0);
-        var right = picked === winner;
-
-        var slip = stage.querySelector('.guess-slip');
-        var rows = stage.querySelectorAll('.guess-row');
-        slip.classList.add('is-done');
-
-        rows.forEach(function (row, i) {
-          row.classList.add('guess-result');
-          row.classList.toggle('is-winner', i === winner);
-          row.classList.toggle('is-picked', i === picked);
-          row.classList.toggle('is-dim', i !== winner && i !== picked);
-
-          var b = row.querySelector('.guess-option');
-          b.setAttribute('aria-checked', i === picked ? 'true' : 'false');
-          b.disabled = true;
-
-          var tag = row.querySelector('.guess-tag');
-          tag.textContent = i === picked ? 'Your pick' : (i === winner ? 'The angle' : '');
-
-          // Next frame, so the bars animate from zero instead of being born
-          // at their final width.
-          requestAnimationFrame(function () {
-            row.querySelectorAll('.guess-bar i').forEach(function (fill) {
-              fill.style.width = fill.dataset.w + '%';
-            });
-          });
-        });
-
-        /* The winner keeps its own tag even when it is also the pick, because
-         * "Your pick" alone would leave the evidence-backed row unmarked. */
-        if (right) {
-          var w = stage.querySelector('.guess-row.is-winner .guess-tag');
-          if (w) w.textContent = 'Your pick, and the angle';
-        }
-
-        var label = stage.querySelector('.guess-product-label');
-        if (label) label.textContent = right ? 'You got it' : 'What the evidence says';
-
-        var line = stage.querySelector('.guess-close-line');
-        if (line) {
-          line.textContent = right
-            ? 'You picked the one the evidence backs. Now do it for a product where you do not already know the answer.'
-            : 'That is the lane most brands are already in. We read ' + r.read.comments +
-              ' customer comments and ' + r.read.ads + ' competitor ads before answering.';
-        }
-      }
-
-      /* 1, 2 and 3 pick, the way they would in any list you are meant to
-       * choose from. Not while someone is typing a product link, and not
-       * while the section is off screen, or the page answers a question the
-       * visitor cannot see. */
-      document.addEventListener('keydown', function (e) {
-        if (locked || !current) return;
-        if (e.key !== '1' && e.key !== '2' && e.key !== '3') return;
-        if (e.metaKey || e.ctrlKey || e.altKey) return;
-        var t = e.target;
-        if (t && t.closest && t.closest('input, textarea, select, [contenteditable="true"]')) return;
-        var sec = stage.closest('.guess');
-        var box = sec && sec.getBoundingClientRect();
-        if (!box || box.bottom < 0 || box.top > window.innerHeight) return;
-        var i = Number(e.key) - 1;
-        if (i < current.options.length) { reveal(i); e.preventDefault(); }
       });
     })();
 
@@ -3435,16 +3331,6 @@
     }
     linkInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') $('#composer-go').click();
-    });
-
-    // more tiles: wire clicks and fill prices from PRODUCTS (one source of truth)
-    $all('.still').forEach(function (tile) {
-      var id = tile.getAttribute('data-product');
-      var priceEl = tile.querySelector('.still-price');
-      if (priceEl && PRODUCTS[id]) priceEl.textContent = formatPrice(id);
-      tile.addEventListener('click', function () {
-        openConfig(id);
-      });
     });
 
     // homepage pricing band: <span data-price="mode:ugc"> / <span data-price-extra>

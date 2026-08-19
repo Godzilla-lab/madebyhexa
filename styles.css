@@ -62,8 +62,25 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
   --shadow-3: 0 40px 90px -30px rgba(0, 0, 0, 0.85);
   --glow-accent: 0 26px 60px -24px rgba(255, 77, 109, 0.35);
   --glow-accent-strong: 0 30px 80px -26px rgba(255, 77, 109, 0.5);
-  --font-display: 'Bricolage Grotesque', 'Inter', -apple-system, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+  /* ── Type ──
+   *
+   * Bricolage Grotesque over Inter was the default AI-product stack: shipped
+   * on nearly every AI tool since 2023, which is exactly why it read as one.
+   * It was not bad type, it was type that belonged to nobody.
+   *
+   * We sell research. An editorial serif over a workhorse grotesque says that
+   * before a word is read.
+   *
+   * Instrument Serif ships weight 400 ONLY: the API rejects wght@700. So
+   * display hierarchy comes from size and measure, never from bolding, and
+   * anything that genuinely needs weight uses --font-body instead. That is a
+   * discipline, not a limitation: it stops headings competing by shouting.
+   *
+   * Mono is for figures that must not reflow. Not for micro-labels.
+   */
+  --font-display: 'Instrument Serif', 'Times New Roman', Georgia, serif;
+  --font-body: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --surface-media: #0d080c;
   --edge-fade: linear-gradient(180deg, transparent 44%, rgba(7, 5, 10, 0.6) 68%, rgba(7, 5, 10, 0.96) 100%);
 }
@@ -95,8 +112,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-feature-settings: 'cv11', 'ss01';
+  /* One file owns the stack. `cv11`/`ss01` went with Inter: they were its
+   * stylistic sets and mean nothing to any other face. */
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.55;
   color: var(--text);
@@ -269,8 +287,8 @@ a.nav-cta {
   color: var(--accent-soft);
   font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  text-transform: none;
+  letter-spacing: 0.012em;
 }
 .eyebrow-center { margin: 0 auto; }
 .bolt {
@@ -579,7 +597,7 @@ a.nav-cta {
   margin-bottom: 12px;
 }
 .process-num {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -761,8 +779,8 @@ a.nav-cta {
   border: 1px solid rgba(255,255,255,0.1);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: #fff;
 }
 .shot-date {
@@ -1081,8 +1099,8 @@ a.nav-cta {
 .why-col-tag {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   padding: 5px 10px;
   border-radius: 6px;
   background: rgba(255,255,255,0.06);
@@ -1170,8 +1188,8 @@ a.nav-cta {
 .why-col-foot span {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 .why-col-old .why-col-foot strong {
@@ -1206,8 +1224,8 @@ a.nav-cta {
   color: #fff;
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   box-shadow: 0 10px 24px -6px rgba(226,58,74,0.55);
 }
 .why-col-winner-dot {
@@ -1451,17 +1469,70 @@ a.nav-cta {
 }
 .legal-meta {
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
   margin: 0 0 12px;
 }
+/* Missed the type migration: this was still Public Sans 800 while every other
+   page's display type had moved to Instrument Serif, so the policy pages read
+   as a different site. Serif ships at 400 only, so size carries the weight.
+   h2 and h3 stay sans on purpose: they are scanning aids in a legal document,
+   not display type. */
 .legal h1 {
-  font-size: clamp(30px, 5vw, 42px);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 46px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
   margin: 0 0 16px;
+}
+
+/* Thirty headings across three policies with no ids and no contents list: the
+   only way to reach "Right of withdrawal" was to scroll 3,600px hunting for
+   it. Every h2 is anchored now and each page opens with its own map. */
+.legal-toc {
+  margin: 22px 0 8px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.legal-toc-title {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+.legal-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  columns: 2;
+  column-gap: 28px;
+}
+.legal-toc li {
+  break-inside: avoid;
+  margin: 0 0 7px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.legal-toc a {
+  color: var(--text-mute);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.legal-toc a:hover {
+  color: var(--text);
+  border-bottom-color: var(--border-strong);
+}
+/* An anchored jump that lands the heading flush against the viewport edge
+   reads as the wrong section. */
+.legal h2 { scroll-margin-top: 24px; }
+
+@media (max-width: 640px) {
+  .legal-toc ol { columns: 1; }
 }
 .legal-intro {
   color: var(--text-mute);
@@ -1666,8 +1737,8 @@ body.lb-open { overflow: hidden; }
 .proof-bar-label {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 /* Phones: three stats share one row instead of wrapping 2 + 1 */
@@ -1711,8 +1782,8 @@ body.lb-open { overflow: hidden; }
   margin: 40px 0 0;
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent-soft);
 }
 .tier-group-title span {
@@ -1782,8 +1853,8 @@ body.lb-open { overflow: hidden; }
   color: var(--on-accent);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   white-space: nowrap;
   box-shadow: 0 10px 24px -6px rgba(226,58,74,0.6);
 }
@@ -1798,8 +1869,8 @@ body.lb-open { overflow: hidden; }
 .tier-name {
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent-soft);
 }
 .tier-price {
@@ -2072,8 +2143,8 @@ body.lb-open { overflow: hidden; }
   text-align: center;
   margin: 26px 0 12px;
   font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-mute);
 }
 .review-quote {
@@ -2389,9 +2460,16 @@ body.lb-open { overflow: hidden; }
 @media (max-width: 720px) {
   .nav { padding: 14px 18px; }
   .nav-links { gap: 10px; }
-  /* Phones keep the two doors: Sign in + Create, like every app header.
-   * Section anchors stay desktop-only. */
-  .nav-links a:not(.nav-cta):not(#nav-account) { display: none; }
+  /* Phones keep two doors, like every app header, and section anchors stay
+   * desktop-only.
+   *
+   * The second door used to be the "Read my market" pill. That pill is gone
+   * from these headers: on /validate it pointed off-page to the home composer
+   * while that page's own paste-a-link form sat directly beneath it, and on the
+   * home page it scrolled to a composer already on screen. Research is the door
+   * it should always have been, because it is a destination rather than a
+   * scroll, and it is the same door on both pages. */
+  .nav-links a:not(.nav-cta):not(#nav-account):not([href="/validate"]) { display: none; }
   .nav-links #nav-account {
     display: inline-flex;
     padding: 8px 14px;
@@ -2401,12 +2479,14 @@ body.lb-open { overflow: hidden; }
     font-weight: 600;
     font-size: 13.5px;
   }
-  .nav-links .nav-cta {
+  .nav-links .nav-cta,
+  .nav-links a[href="/validate"] {
     background: var(--accent);
     color: var(--on-accent);
     font-weight: 700;
     font-size: 13.5px;
     padding: 9px 16px;
+    border-radius: 999px;
   }
   .hero { padding: 44px 20px 36px; }
   .hero-title { font-size: clamp(28px, 8.2vw, 38px); line-height: 1.07; margin: 16px 0 12px; }

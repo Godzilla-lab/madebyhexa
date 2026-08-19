@@ -55,11 +55,11 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -86,15 +86,19 @@
 .stage-h1 {
   margin: 20px 0 0;
   font-family: var(--font-display);
-  font-size: clamp(40px, 5.2vw, 64px);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.02;
+  font-size: clamp(44px, 6vw, 76px);
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  line-height: 1.0;
 }
 
-/* The second line is dimmed rather than accented. Accent on the payoff line
-   read as a highlighter; dimming it makes the pair sequential, which is what
-   the sentence is: do this, get that. */
+/* Kept, unused for now. The headline was a two-clause pair ("First, find out
+   what to say. / Then we make the ad.") and this dimmed the second clause:
+   accent on a payoff line read as a highlighter, dimming made the pair
+   sequential. The headline is one sentence today, so nothing carries this. It
+   stays because the two-beat headline is a shape this hero keeps returning to,
+   and re-deriving why the second line is dim rather than pink is the expensive
+   part, not the two declarations. */
 .stage-h1-dim {
   display: block;
   color: var(--text-faint);
@@ -120,7 +124,7 @@
 
 .stage-hero .entry-ask {
   margin: 26px 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -174,11 +178,11 @@
   align-items: center;
   gap: 7px;
   cursor: pointer;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
   background: transparent;
   border: 1px solid transparent;
@@ -294,10 +298,10 @@
 }
 
 .stage-hero .composer-try-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 
@@ -311,9 +315,9 @@
   background: none;
   border-radius: 0;
   text-align: center;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.01em;
   color: var(--text-faint);
 }
 
@@ -395,15 +399,37 @@
     linear-gradient(0deg, rgba(0, 0, 0, 0.72), transparent 46%);
 }
 
+/* A still in the fan. No film, no timecode, no progress bar, so the HUD slots
+   simply are not there rather than sitting empty.
+
+   `contain`, not `cover`. The fan's cards are 9:16 and these creatives are
+   1:1, so covering crops the headline straight off the top -- and on a static
+   ad the composition IS the product. Same reasoning as the library grid: never
+   crop a result to a shape we guessed. It letterboxes, and letterboxing an ad
+   is honest in a way that beheading it is not. */
+.adcard-still {
+  background: #0b0910;
+}
+.adcard-still .adcard-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  opacity: 1;
+}
+/* The scrim exists to keep white subtitles legible over moving footage. There
+   is no footage here and the creative carries its own contrast. */
+.adcard-still .adcard-scrim { opacity: 0.35; }
+
 .adcard-angle {
   position: absolute;
   top: 12px;
   left: 12px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: #fff;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -463,11 +489,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 8.5px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: rgba(255, 255, 255, 0.82);
 }
 
@@ -493,10 +519,10 @@
 
 .stage-hint {
   margin: 22px 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 
@@ -528,11 +554,11 @@
 }
 
 .research-head {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
   margin-right: 4px;
 }
@@ -541,7 +567,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   color: var(--text-mute);
   border: 1px solid var(--border);
@@ -578,11 +604,11 @@ html:not(.js) .rchip { opacity: 1; transform: none; }
   justify-content: center;
   gap: 28px;
   flex-wrap: wrap;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 

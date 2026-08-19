@@ -11,8 +11,8 @@
 .studio-kicker {
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
   margin: 0 0 16px;
 }
@@ -22,7 +22,7 @@
   line-height: 0.98;
   letter-spacing: -0.03em;
   font-weight: 900;
-  text-transform: uppercase;
+  text-transform: none;
   margin: 0;
 }
 .display-2 {
@@ -30,7 +30,7 @@
   line-height: 1;
   letter-spacing: -0.02em;
   font-weight: 900;
-  text-transform: uppercase;
+  text-transform: none;
   margin: 0;
 }
 .hl {
@@ -93,8 +93,8 @@
   padding-left: 4px;
   font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 
@@ -364,7 +364,7 @@
   display: block;
   font-size: 16px;
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.01em;
   color: var(--text);
   line-height: 1.1;
@@ -381,8 +381,8 @@
   left: 10px;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
   background: rgba(7,5,10,0.7);
   border: 1px solid rgba(255, 77, 109, 0.4);
@@ -444,7 +444,7 @@
 .steps-band .steps h3 {
   font-size: 16px;
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   margin: 0 0 6px;
 }
 .steps-band .steps p {
@@ -464,7 +464,7 @@
   font: inherit;
   font-size: 16px;
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.04em;
   color: var(--on-accent);
   background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 100%);
@@ -530,7 +530,7 @@
   display: inline-block;
   font-size: 14.5px;
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.04em;
   color: var(--on-accent);
   text-decoration: none;
@@ -570,8 +570,8 @@
   margin-bottom: 8px;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
   border: 1px solid rgba(255, 77, 109, 0.4);
   border-radius: 999px;
@@ -618,8 +618,8 @@
 .config-kicker {
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
   margin: 0 0 6px;
 }
@@ -627,7 +627,7 @@
   font-family: var(--font-display);
   font-optical-sizing: auto;
   font-size: 25px;
-  font-weight: 800;
+  font-weight: 400;
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -655,8 +655,8 @@
 .config-step h3 {
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-mute);
   margin: 0 0 12px;
 }
@@ -791,8 +791,8 @@
 .config-total { display: flex; flex-direction: column; }
 .config-total-label {
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 .config-total-price {
@@ -821,7 +821,7 @@
   font: inherit;
   font-size: 15px;
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.03em;
   color: #fff;
   background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 100%);
@@ -1068,26 +1068,38 @@ body.home::after {
 
 /* ── Type system ── */
 .c-kicker {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
   margin: 0 0 var(--s-4);
 }
+/*
+ * Instrument Serif has one weight, 400. Asking for 800 does not fail loudly:
+ * the browser synthesises a bold by smearing the outline, which on a
+ * high-contrast serif turns the thin strokes to mush. So weight is 400 and
+ * presence comes from size instead.
+ *
+ * Sizes go up ~12% against the old Bricolage numbers. A serif at 400 sits
+ * visually smaller than a grotesque at 800 at identical px, and matching the
+ * old numbers would have quietly shrunk every headline on the site.
+ *
+ * Tracking loosens from -0.028em to -0.015em for the same reason: tight
+ * tracking suits a grotesque and closes up a serif's counters.
+ */
 .c-display {
   font-family: var(--font-display);
-  font-optical-sizing: auto;
-  font-weight: 800;
-  letter-spacing: -0.028em;
-  line-height: 1.02;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.04;
   margin: 0;
   color: var(--text);
 }
-.c-display-xl { font-size: clamp(34px, 4.5vw, 70px); line-height: 1.0; }
-.c-display-l  { font-size: clamp(32px, 4.2vw, 58px); }
-.c-display-m  { font-size: clamp(23px, 2.8vw, 37px); }
+.c-display-xl { font-size: clamp(40px, 5.2vw, 80px); line-height: 1.0; }
+.c-display-l  { font-size: clamp(36px, 4.8vw, 66px); }
+.c-display-m  { font-size: clamp(26px, 3.2vw, 42px); }
 .c-display .hl-line {
   display: block;
   background: linear-gradient(92deg, var(--accent) 0%, var(--accent-deep) 90%);
@@ -1102,17 +1114,22 @@ body.home::after {
   margin: var(--s-5) 0 0;
   max-width: 56ch;
 }
+/* A section deck can run to more than one paragraph. The 24px that separates
+   the first one from the heading is the wrong gap between two paragraphs of
+   the same thought: it reads as three separate decks rather than one argument
+   in three beats. */
+.c-sub + .c-sub { margin-top: var(--s-3); }
 
 /* ── Technical badge: camera-metadata chip ── */
 .c-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   font-variant-numeric: tabular-nums;
   color: var(--text-mute);
   background: rgba(7, 5, 10, 0.72);
@@ -1137,10 +1154,10 @@ body.home::after {
 }
 .c-head-row .c-sub { margin-top: var(--s-3); }
 .c-head-meta {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
   padding-bottom: 8px;
   white-space: nowrap;
@@ -1348,37 +1365,37 @@ body.home .hook-card .hook-shade {
 /* names go title-card: Archivo, all-caps */
 body.home .style-tile .style-name,
 body.home .mode-tile .mode-name {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 800;
   font-size: clamp(15px, 1.5vw, 20px);
   letter-spacing: 0.005em;
   line-height: 1.02;
-  text-transform: uppercase;
+  text-transform: none;
 }
 body.home .hook-card .hook-name {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.005em;
 }
 body.home .style-tile .style-tag,
 body.home .mode-tile .mode-kicker {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: rgba(255, 255, 255, 0.6);
 }
 
 /* price + badge become technical chips */
 body.home .style-tile .mode-price,
 body.home .mode-tile .mode-price {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   font-variant-numeric: tabular-nums;
   color: rgba(255, 255, 255, 0.85);
   background: rgba(7, 5, 10, 0.72);
@@ -1389,10 +1406,10 @@ body.home .mode-tile .mode-price {
   padding: 4px 8px;
 }
 body.home .style-tile .style-badge {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.01em;
   background: rgba(7, 5, 10, 0.72);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -1412,11 +1429,11 @@ body.home .style-tile.is-new .style-badge {
   right: 12px;
   bottom: 12px;
   z-index: 3;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: #0a0608;
   background: #fff;
   border-radius: 999px;
@@ -1446,10 +1463,10 @@ body.home .mq-item {
   box-shadow: var(--shadow-1);
 }
 body.home .mq-item span {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
 }
 
 /* rails get edge fade on both ends */
@@ -1479,11 +1496,11 @@ body.home .hook-rail {
   margin: 0;
 }
 .c-spec-row dt {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
   padding-top: 3px;
 }
@@ -1519,15 +1536,15 @@ body.home .proof-bar {
   background: none;
 }
 body.home .proof-bar-num {
-  font-family: var(--font-display);
-  font-weight: 800;
+  font-family: var(--font-mono);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 body.home .proof-bar-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
 }
 body.home .review-card {
   border: 0;
@@ -1547,13 +1564,14 @@ body.home .steps-band .step-num {
 }
 body.home .steps-band h3 {
   font-family: var(--font-display);
-  text-transform: uppercase;
+  font-weight: 400;
+  text-transform: none;
   letter-spacing: 0.01em;
 }
 
 /* results */
 body.home .results .metric-num {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 body.home .case { border: 0; box-shadow: var(--shadow-3); }
@@ -1637,11 +1655,11 @@ body.home .faq-item summary::after {
   border-radius: 999px;
   background: var(--accent);
   color: var(--on-accent);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
 }
 .closer-offer li strong { font-size: 16px; font-weight: 700; line-height: 1.25; }
 .closer-offer li span:not(.closer-offer-tag) {
@@ -1711,10 +1729,10 @@ body.home .float-cta-link svg { color: var(--accent); }
   gap: 3px;
 }
 .ticket-hero-text strong {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 800;
   font-size: 19px;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.005em;
   color: var(--text);
   line-height: 1.05;
@@ -1795,9 +1813,9 @@ body.home .float-cta-link svg { color: var(--accent); }
   left: 5px;
   bottom: 4px;
   z-index: 3;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 9px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
   color: #fff;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
@@ -1807,11 +1825,11 @@ body.home .float-cta-link svg { color: var(--accent); }
   top: 4px;
   right: 4px;
   z-index: 3;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 8.5px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: #fff;
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.6);
 }
@@ -1832,11 +1850,11 @@ body.home .float-cta-link svg { color: var(--accent); }
   border-bottom: 1px solid var(--border);
 }
 .ticket-row dt {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
   padding-top: 2px;
 }
@@ -1962,11 +1980,11 @@ body.home .float-cta-link svg { color: var(--accent); }
 
 .peek-eyebrow {
   margin: 22px 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
 }
 .peek-label {
@@ -1981,7 +1999,7 @@ body.home .float-cta-link svg { color: var(--accent); }
   margin: 8px 0 0;
   font-family: var(--font-display);
   font-size: clamp(22px, 3vw, 27px);
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1.16;
   color: var(--text);
@@ -2046,10 +2064,10 @@ body.home .float-cta-link svg { color: var(--accent); }
   padding: 0;
   border: 0;
   background: none;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -2098,11 +2116,11 @@ body.home .float-cta-link svg { color: var(--accent); }
   min-width: 0;
 }
 .peek-toast-text strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
 }
 .peek-toast-text span {
@@ -2150,10 +2168,10 @@ body.home .float-cta-link svg { color: var(--accent); }
 }
 .product-chip-text em {
   font-style: normal;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 .product-chip-fix {
@@ -2163,11 +2181,11 @@ body.home .float-cta-link svg { color: var(--accent); }
   border-radius: 999px;
   border: 1px solid var(--border);
   background: none;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-mute);
   cursor: pointer;
   transition: color 160ms var(--ease), border-color 160ms var(--ease);
@@ -2191,11 +2209,11 @@ body.home .float-cta-link svg { color: var(--accent); }
 .chooser-group {
   grid-column: 1 / -1;
   margin: 14px 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 .chooser-grid .style-tile.chooser-auto-hero {
@@ -2223,11 +2241,11 @@ body.home .float-cta-link svg { color: var(--accent); }
 }
 .chooser-sample-badge {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: #fff;
   background: var(--accent);
   border-radius: 999px;
@@ -2415,9 +2433,9 @@ img.img-loaded,
 .composer-pop-row.sel { color: var(--accent); }
 .composer-pop-row em {
   font-style: normal;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
   color: var(--text-faint);
 }
 
@@ -2453,10 +2471,10 @@ img.img-loaded,
   gap: 4px;
 }
 .avatar-preview-text strong {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 19px;
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.005em;
 }
 .avatar-preview-text span {
@@ -2523,11 +2541,11 @@ body.home .studio:has(.composer-hero) { z-index: 2; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-mute);
 }
 .c-hero-ticks li::before {
@@ -2654,18 +2672,18 @@ body.viewer-open { overflow: hidden; }
 }
 .viewer-kicker {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent);
 }
 .viewer-title {
   margin: 0;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-weight: 800;
+  font-weight: 400;
   font-size: clamp(24px, 2.6vw, 34px);
   letter-spacing: -0.025em;
   line-height: 1.04;
@@ -2707,11 +2725,11 @@ body.viewer-open { overflow: hidden; }
   right: 6px;
   bottom: 5px;
   z-index: 1;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 8.5px;
   font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: rgba(255, 255, 255, 0.92);
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
   text-align: left;
@@ -2777,7 +2795,7 @@ body.home .hook-card.previewing img { opacity: 0; }
   margin: 0 0 6px;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-weight: 800;
+  font-weight: 400;
   font-size: clamp(24px, 2.6vw, 32px);
   letter-spacing: -0.025em;
   color: var(--text);
@@ -2801,7 +2819,7 @@ body.home .hook-card.previewing img { opacity: 0; }
 }
 .chooser .style-tile .style-tag,
 #config-overlay .style-tile .style-tag {
-  font-family: var(--font-body, 'Inter', sans-serif);
+  font-family: var(--font-body);
   font-size: 12.5px;
   font-weight: 500;
   letter-spacing: 0;
@@ -2922,10 +2940,10 @@ body.home .bg-glow {
 .config-summary {
   display: block;
   margin-top: 6px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-mute);
   max-width: 260px;
   overflow: hidden;
@@ -3079,11 +3097,11 @@ body.home .bg-glow {
 .composer-store-note { margin: 10px 0 0; font-size: 12.5px; color: var(--text-faint); }
 .composer-free-badge {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--on-accent);
   background: var(--accent);
   border-radius: 999px;
@@ -3153,10 +3171,10 @@ body.home .bg-glow {
 .how-cta-note {
   margin: 0;
   max-width: 30ch;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   line-height: 1.6;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.01em;
   color: var(--text-faint);
 }
 
@@ -3249,10 +3267,10 @@ body.home .bg-glow {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11.5px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.01em;
   color: var(--text-faint);
   transition: border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
 }
@@ -3267,7 +3285,7 @@ body.home .bg-glow {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(19px, 1.7vw, 22px);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
@@ -3286,6 +3304,28 @@ body.home .bg-glow {
 
 .how-step p strong { color: var(--text); font-weight: 500; }
 
+/* The subtraction the whole product rests on, set as an equation rather than
+   as another sentence. It is the one claim here that neither half of the
+   tooling landscape can make: customer-research tools know what buyers say and
+   cannot see the ads, ad-intelligence tools know the ads and cannot see the
+   buyers. Writing it as prose buried it in the paragraph above. */
+.how-step p.how-formula {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: none;
+}
+.how-step p.how-formula b {
+  color: var(--accent);
+  font-weight: 700;
+  padding: 0 2px;
+}
+
 /* What the pass hands to the next one: a pipeline output, not a benefit
    bullet. That distinction is the whole difference between this section and
    the four-step band it replaced. */
@@ -3298,7 +3338,7 @@ body.home .bg-glow {
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.04);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11.5px;
   color: var(--text-mute);
 }
@@ -3334,11 +3374,11 @@ body.home .bg-glow {
 .how-gate.is-lit::before { border-color: var(--accent); }
 
 .how-gate-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 
@@ -3421,6 +3461,7 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
   margin: 0 0 4px;
   text-align: center;
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: 17px;
   letter-spacing: -0.015em;
   color: var(--text);
@@ -3616,7 +3657,7 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
 .shop-bar input::placeholder { color: var(--text-faint); }
 .shop-suffix {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 13.5px;
   color: var(--text-faint);
   padding-left: 4px;
@@ -3691,7 +3732,9 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
 }
 .goal-tile {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  /* Icon, then text. The third track held the price, which the tile no longer
+     carries: the cost belongs on the button that spends it. */
+  grid-template-columns: auto 1fr;
   align-items: start;
   gap: 14px;
   padding: 16px 18px;
@@ -3721,7 +3764,16 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
 }
 .goal-tile-lead:hover { border-color: rgba(255, 77, 109, 0.8); }
 
-.goal-ico { font-size: 20px; line-height: 1.2; }
+/* Drawn, so it sizes in px and takes the tile's colour instead of dragging a
+   vendor's emoji palette into a two-colour design. */
+.goal-ico {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+.goal-tile-lead .goal-ico { color: var(--accent); }
 .goal-meta { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .goal-badge {
   align-self: flex-start;
@@ -3730,20 +3782,14 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
   border-radius: 999px;
   background: var(--accent);
   color: #fff;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
 }
 .goal-name { font-size: 15px; font-weight: 700; line-height: 1.25; }
 .goal-sub { font-size: 12.5px; line-height: 1.45; color: var(--text-mute); }
-.goal-price {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-faint);
-  white-space: nowrap;
-}
 
 /* The style library, folded. */
 .chooser-lib { margin-top: 4px; }
@@ -3786,6 +3832,7 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
 .entry-ask {
   margin: 24px 0 10px;
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(19px, 2vw, 23px);
   letter-spacing: -0.02em;
   color: var(--text);
@@ -3832,376 +3879,6 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
   /* A drop zone on a phone is a tap target for the camera roll, not a place to
    * drag anything, so it gets height rather than instructions. */
   .hero-drop { min-height: 128px; }
-}
-/* ═════ Guess the angle ═════
- *
- * The only section on the page that demonstrates instead of asserting. It is
- * built to feel like a decision rather than a widget: the options are large,
- * the reveal is calm, and the losing lanes stay legible because "everyone else
- * is already saying this" is the actual argument.
- *
- * One slip, revealed in place. It used to swap the list of choices for a
- * different list of results, which threw away the only moment worth animating:
- * the row you just picked is the row that grows its evidence underneath it.
- */
-
-.guess { position: relative; z-index: 1; padding: 40px 0 96px; }
-.guess[hidden] { display: none; }
-
-/* Centred, not left-aligned in a wide wrap. Left-aligning it left a 400px
- * dead column on desktop, which is the exact defect that made the old spec
- * section unreadable. A single decision deserves a single column. */
-.guess-stage { max-width: 780px; margin: 0 auto; }
-
-.guess-slip {
-  position: relative;
-  border: 1px solid var(--border-strong);
-  border-radius: 18px;
-  overflow: hidden;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
-  box-shadow: var(--shadow-2);
-}
-
-/* A hairline of light along the top edge, so the slip reads as a lit object
- * rather than a flat rectangle on a flat page. */
-.guess-slip::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 24px;
-  right: 24px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-}
-
-.guess-product {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 14px;
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--border);
-}
-
-.guess-product-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.guess-product-name {
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.guess-product-price { font-family: var(--font-mono); font-size: 13px; color: var(--text-faint); }
-
-.guess-product-read {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  color: var(--text-faint);
-}
-
-.guess-options { display: block; padding: 10px 12px 12px; }
-
-/* The row is the card, not the button inside it. The winner's quotes are a
-   sibling of its button (a <button> may only hold phrasing content, and an
-   .ev-card is a blockquote in a div), so highlighting the button left the
-   evidence sitting outside the highlight that was meant to contain it. */
-.guess-row {
-  position: relative;
-  border: 1px solid transparent;
-  border-radius: 13px;
-  transition: border-color 0.3s ease, background 0.3s ease, opacity 0.3s ease;
-}
-
-.guess-row + .guess-row { margin-top: 4px; }
-
-/* ───── a choice ───── */
-
-.guess-option {
-  display: block;
-  width: 100%;
-  position: relative;
-  text-align: left;
-  cursor: pointer;
-  padding: 15px 16px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--text);
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.guess-slip:not(.is-done) .guess-option:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: var(--border);
-}
-
-/* Disabled is how the reveal locks the row, but it is still the thing you
- * just chose and it must not grey out like a dead control. */
-.guess-option[disabled] { cursor: default; opacity: 1; color: var(--text); }
-.guess-option[disabled]:hover { background: transparent; border-color: transparent; }
-
-.guess-option-top { display: flex; align-items: center; gap: 13px; }
-
-.guess-key {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 7px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-faint);
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.guess-option:hover .guess-key { border-color: var(--accent); color: var(--text-mute); }
-
-.guess-option-claim {
-  font-size: 15.5px;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-}
-
-.guess-tag {
-  position: absolute;
-  top: 13px;
-  right: 13px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--accent);
-  border: 1px solid rgba(255, 77, 109, 0.4);
-  background: rgba(255, 77, 109, 0.13);
-  border-radius: 999px;
-  padding: 4px 10px;
-  opacity: 0;
-  transform: scale(0.85);
-  transition: opacity 0.3s ease 0.55s, transform 0.3s ease 0.55s;
-}
-
-.guess-tag:empty { display: none; }
-.guess-slip.is-done .guess-tag { opacity: 1; transform: none; }
-
-.guess-slip.is-done .guess-row.is-picked {
-  border-color: var(--border-strong);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.guess-slip.is-done .guess-row.is-winner {
-  border-color: rgba(255, 77, 109, 0.4);
-  background: linear-gradient(180deg, rgba(255, 77, 109, 0.07), transparent 70%);
-}
-
-/* The lanes that are neither right nor chosen stay readable. They are the
-   argument, not filler: "everyone else is already saying this". */
-.guess-slip.is-done .guess-row.is-dim { opacity: 0.62; }
-
-/* ───── the receipt ───── */
-
-/* 0fr to 1fr rather than a height, because the evidence is a different height
-   for every option and nothing here should have to know it in advance. */
-.guess-receipt {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.5s var(--ease);
-}
-
-/* Clipped is not hidden. overflow only stops the paint: the collapsed
-   receipt keeps its real boxes, so its text stayed in the accessibility tree,
-   answered ctrl+F, and measured as sitting on top of the claim below it.
-   visibility takes it out of all three, and the row still animates open. */
-.guess-receipt > span { overflow: hidden; visibility: hidden; }
-.guess-slip.is-done .guess-receipt { grid-template-rows: 1fr; }
-.guess-slip.is-done .guess-receipt > span { visibility: visible; }
-
-.guess-receipt-inner { display: block; padding: 12px 0 2px 39px; }
-
-.guess-meter {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 6px;
-}
-
-.guess-meter-label {
-  flex: none;
-  width: 176px;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--text-faint);
-}
-
-.guess-meter-label b {
-  color: var(--text-mute);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.guess-bar {
-  flex: 1;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.07);
-  overflow: hidden;
-}
-
-.guess-bar i {
-  display: block;
-  height: 100%;
-  width: 0;
-  border-radius: 2px;
-  background: var(--border-strong);
-  transition: width 1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s;
-}
-
-/* Buyers in accent, competitors in grey, on one shared scale. A long grey bar
-   beside a short accent one is a category buying an answer nobody asked for,
-   which is the finding this whole section exists to hand over. */
-.guess-row.is-winner .guess-meter:not(.is-ads) .guess-bar i {
-  background: linear-gradient(90deg, var(--accent), var(--accent-soft));
-}
-
-.guess-row.is-winner .guess-meter:not(.is-ads) .guess-meter-label b { color: var(--accent); }
-
-.guess-note {
-  display: block;
-  margin-top: 12px;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--text-mute);
-}
-
-.guess-quotes {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.5s var(--ease) 0.1s;
-  padding: 0 16px 0 55px;
-}
-
-.guess-slip.is-done .guess-row.is-winner .guess-quotes { padding-bottom: 4px; }
-
-.guess-quotes > div { overflow: hidden; visibility: hidden; }
-.guess-slip.is-done .guess-row.is-winner .guess-quotes { grid-template-rows: 1fr; }
-.guess-slip.is-done .guess-row.is-winner .guess-quotes > div { visibility: visible; }
-.guess-quotes .ev-card:last-child { margin-bottom: 4px; }
-
-/* ───── the verdict ───── */
-
-.guess-verdict {
-  display: grid;
-  grid-template-rows: 0fr;
-  border-top: 1px solid transparent;
-  transition: grid-template-rows 0.5s var(--ease) 0.25s;
-}
-
-.guess-verdict > div { overflow: hidden; visibility: hidden; }
-.guess-slip.is-done .guess-verdict > div { visibility: visible; }
-
-.guess-slip.is-done .guess-verdict {
-  grid-template-rows: 1fr;
-  border-top-color: var(--border);
-}
-
-.guess-verdict-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 18px 22px;
-}
-
-.guess-close-line {
-  margin: 0;
-  max-width: 46ch;
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: var(--text-mute);
-}
-
-.guess-close-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-
-.guess-again {
-  cursor: pointer;
-  height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  background: transparent;
-  color: var(--text-mute);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.guess-again:hover { color: var(--text); border-color: var(--text-faint); }
-
-.guess-hint {
-  margin: 14px 0 0;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: var(--text-faint);
-}
-
-.guess-hint kbd {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  border: 1px solid var(--border-strong);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  padding: 1px 6px;
-  color: var(--text-mute);
-}
-
-@media (max-width: 640px) {
-  .guess { padding: 24px 0 64px; }
-  .guess-product { padding: 16px 16px; }
-  /* It wraps under the price on a phone and reads as a stray line; the same
-     counts arrive in the verdict, attached to the sentence they support. */
-  .guess-product-read { display: none; }
-  .guess-options { padding: 8px 8px 10px; }
-  .guess-option { padding: 14px 13px; min-height: 60px; }
-  .guess-tag { position: static; display: inline-block; margin-bottom: 8px; }
-  .guess-receipt-inner { padding-left: 0; }
-  .guess-meter { flex-direction: column; align-items: stretch; gap: 5px; }
-  .guess-meter-label { width: auto; }
-  /* Once the meter stacks, `flex: 1` applies down the column instead of
-     across it: flex-basis 0 beats the 4px height and the bar renders at zero.
-     The bars were invisible on every phone until this line. */
-  .guess-bar { flex: none; width: 100%; height: 4px; }
-  .guess-quotes { padding: 0 4px; }
-  .guess-verdict-inner { padding: 16px; }
-  .guess-close-actions { width: 100%; }
-  .guess-close-actions .btn-primary { flex: 1; text-align: center; }
-  .guess-again { flex: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .guess-option, .guess-key, .guess-tag { transition: none; }
-  .guess-receipt, .guess-quotes, .guess-verdict { transition: none; }
-  .guess-bar i { transition: none; }
 }
 
 /* Touch floors on the smaller composer controls. Each of these was between 25
@@ -4265,15 +3942,16 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
   border-radius: 999px;
   background: var(--accent);
   color: var(--on-accent);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
 }
 .price-free-title {
   margin: 12px 0 8px;
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(21px, 2.6vw, 28px);
   letter-spacing: -0.025em;
   line-height: 1.15;
@@ -4322,312 +4000,161 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
   .price-free-cta:hover { transform: none; }
 }
 
-/* ═════ The execution layer ═════
+/* ═════ The work ═════
  *
- * One section where there were five: a style grid, a mode rail, an avatar
- * marquee, a hook rail and a "beyond video" grid. They asked the same question
- * in five shapes, which is what made this stretch of the page ambiguous. Only
- * styles keep tiles, because they are the only part with something to look at.
+ * Replaced the execution layer, which was a parts catalogue: a style shelf,
+ * three cells counting cast, formats and openers, and a four-button price
+ * list. Two of those cells were dead. Their chips were <span> carrying
+ * .chip:hover and .chip:active, so they recoloured and scaled under a press
+ * and did nothing, and all three browse buttons resolved to one screen.
+ *
+ * This shows the output instead, and the filters are buttons that work. The
+ * tile is one press target: the media, the format it ran in, the line it
+ * carries and the finding that produced the line.
  */
 
-.exec { position: relative; z-index: 1; padding: 96px 0 100px; }
+.work { position: relative; z-index: 1; padding: 96px 0 100px; }
 
-.exec-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 32px;
-  flex-wrap: wrap;
-}
-
-.exec-head-main { min-width: 0; }
-.exec-head .c-display { max-width: 20ch; }
-.exec-dim { color: var(--text-faint); }
-
-.exec-auto {
-  margin: 0;
-  max-width: 280px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.7;
-  letter-spacing: 0.08em;
-  color: var(--text-mute);
-}
-
-.exec-auto b { color: var(--accent); font-weight: 600; }
-
-/* ───── the style shelf ───── */
-
-.shelf-head {
-  margin-top: 44px;
+.work-bar {
+  margin: 28px 0 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-}
-
-.shelf-title {
-  margin: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
+  gap: 20px 28px;
   flex-wrap: wrap;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-faint);
 }
 
-.shelf-title b { color: var(--text); font-size: 13px; }
+.work-filters { display: flex; flex-wrap: wrap; gap: 8px; }
 
-.shelf-nav { display: flex; gap: 6px; flex: none; }
-
-.snav {
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
+/* A real button, and it looks pressed when it is. The thing it replaced was
+   styled to look interactive and was not, which is worse than plain text. */
+.work-filter {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: transparent;
   color: var(--text-mute);
-  font-size: 15px;
-  transition: color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.004em;
+  padding: 9px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease),
+              background-color 0.18s var(--ease);
 }
-
-.snav:hover { color: var(--text); border-color: var(--text-faint); }
-/* An arrow that cannot move the shelf says so rather than doing nothing. */
-.snav[disabled] { opacity: 0.32; cursor: default; }
-
-.shelf {
-  margin-top: 16px;
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 8px;
-  scrollbar-width: none;
+.work-filter:hover { color: var(--text); border-color: var(--border-strong); }
+/* --bg-0, not --bg. There is no --bg token on this site, and var() with no
+   fallback resolves to nothing, so the label inherited --text and rendered
+   white on a white pill: 1:1, the selected filter invisible. */
+.work-filter[aria-pressed="true"] {
+  color: var(--bg-0);
+  background: var(--text);
+  border-color: var(--text);
 }
+.work-filter:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.shelf::-webkit-scrollbar { display: none; }
+.work-note { margin: 0; font-size: 13px; color: var(--text-faint); }
+.work-note b { color: var(--text-mute); font-weight: 600; }
 
-/* studio.js draws .style-tile for the grid this used to be; the shelf only
-   changes how they are laid out, so the tile internals are untouched. */
-.shelf .style-tile {
-  flex: 0 0 200px;
-  scroll-snap-align: start;
-  aspect-ratio: 9 / 13.5;
-  height: auto;
-}
-
-.shelf .tile-skeleton { flex: 0 0 200px; aspect-ratio: 9 / 13.5; }
-
-/* ───── the three cells ───── */
-
-.exec-row {
-  margin-top: 14px;
+/* Dense, like a contact sheet. The point is that there are many reads behind
+   this, not that any one image is a hero. */
+.work-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 14px;
 }
 
-.cell {
+.work-tile {
+  appearance: none;
+  position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 200px;
-  padding: 20px 22px;
-  border: 1px solid var(--border-strong);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
-  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
+  text-align: left;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-media);
+  color: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.22s var(--ease), transform 0.22s var(--ease);
+}
+.work-tile:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.work-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Letterboxed, not cropped. These are finished ads: cutting the headline off
+   to fill a square would hide the only part that carries the argument. */
+.work-media {
+  display: block;
+  position: relative;
+  background: rgba(0, 0, 0, 0.35);
+  aspect-ratio: 4 / 5;
+}
+.work-media img,
+.work-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
-.cell:hover { border-color: var(--text-faint); transform: translateY(-3px); }
-
-.cell-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.cell-n {
-  font-family: var(--font-mono);
-  font-size: 34px;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-
-.cell-label {
+.work-fmt {
+  position: absolute;
+  top: 10px;
+  left: 10px;
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.cell-sub { margin: 8px 0 0; font-size: 13px; color: var(--text-mute); }
-.cell-sub em { font-style: italic; color: var(--text); }
-
-.faces { margin-top: 12px; display: flex; align-items: center; }
-
-.face {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  margin-left: -9px;
-  border-radius: 50%;
-  border: 2px solid var(--bg-1);
-  object-fit: cover;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--text-mute);
-}
-
-.face:first-child { margin-left: 0; }
-.face-more { background: rgba(255, 255, 255, 0.05); border: 1px dashed var(--border-strong); }
-
-.chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
-
-.exec .chip {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  color: var(--text-mute);
+  letter-spacing: 0.02em;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.62);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 5px 10px;
-  background: none;
+  padding: 4px 9px;
+  backdrop-filter: blur(6px);
 }
 
-.exec .chip-auto {
-  color: var(--accent);
-  border-color: rgba(255, 77, 109, 0.4);
-  background: rgba(255, 77, 109, 0.13);
+.work-cap { display: block; padding: 13px 14px 15px; }
+.work-line {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.25;
+  color: var(--text);
 }
-
-.browse {
-  margin-top: auto;
-  padding: 12px 0 2px;
-  align-self: flex-start;
-  cursor: pointer;
-  background: none;
-  border: 0;
-  border-bottom: 1px solid var(--border-strong);
-  border-radius: 0;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-mute);
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.browse::after { content: " \2192"; }
-.browse:hover { color: var(--text); border-color: var(--text); }
-
-/* ───── stills ───── */
-
-.stills {
-  margin-top: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px 24px;
-  flex-wrap: wrap;
-  padding: 16px 22px;
-  border: 1px solid var(--border-strong);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
-}
-
-.stills-lead {
-  flex: none;
-  margin-right: 4px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+.work-why {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--text-faint);
 }
 
-.still {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  cursor: pointer;
-  background: none;
-  border: 0;
-  padding: 6px 0;
-  font-size: 13.5px;
-  color: var(--text-mute);
-  transition: color 0.15s ease;
-}
-
-.still:hover { color: var(--text); }
-.still-name { font-weight: 500; color: var(--text); }
-
-.still-price {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-@media (max-width: 980px) {
-  .exec-row { grid-template-columns: 1fr; }
-  .exec-head { gap: 20px; }
-  .exec-auto { max-width: none; }
-}
+/* The video tabs carry a name and a one-line description, not an argument, so
+   they do not need the taller caption the statics use. */
+.work-grid[data-kind="formats"] .work-media,
+.work-grid[data-kind="openers"] .work-media { aspect-ratio: 9 / 16; }
 
 @media (max-width: 640px) {
-  .exec { padding: 64px 0 72px; }
-  .shelf .style-tile, .shelf .tile-skeleton { flex-basis: 168px; }
-  .cell { min-height: 0; padding: 18px; }
-  .stills { padding: 14px 16px; gap: 8px 18px; }
+  .work { padding: 64px 0 72px; }
+  .work-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .work-cap { padding: 11px 11px 13px; }
+  .work-why { display: none; }
 }
 
-/* The 44px floor belongs to the pointer, not to the viewport. Keyed to width
-   it missed tablets, which are 768px wide and still operated with a thumb. */
 @media (pointer: coarse) {
-  .snav { width: 48px; height: 48px; }
-  .browse { padding-top: 16px; padding-bottom: 12px; }
-  .still { padding: 12px 0; min-height: 44px; }
+  .work-filter { padding: 12px 16px; min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cell, .snav, .browse, .still { transition: none; }
-  .cell:hover { transform: none; }
-  .shelf { scroll-behavior: auto; }
+  .work-tile, .work-filter { transition: none; }
+  .work-tile:hover { transform: none; }
 }
-
-/* ── Shelf-scale corrections ──
-   These tiles used to be a full-width grid where a 20px title card fitted.
-   In a 200px shelf tile the same size wraps "Editorial try-on" onto three
-   lines and pushes the tag off the bottom edge. */
-.exec .shelf .style-tile .style-name { font-size: 14px; line-height: 1.1; }
-.exec .shelf .style-tile .style-tag { font-size: 9px; }
-.exec .shelf .style-tile .style-meta { left: 12px; right: 12px; bottom: 11px; }
-
-/* The heading shares the row with the note box, so it cannot run to the page
-   clamp: at 50px it took three lines and buried everything under it. */
-.exec-head .c-display-l { font-size: clamp(28px, 3.2vw, 42px); max-width: 24ch; }
-.exec-head { align-items: flex-end; }
 
 /* ═════ Pricing: the sticker treatment ═════
  *
@@ -4671,21 +4198,25 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
   color: var(--on-accent);
   box-shadow: 3px 3px 0 var(--drop);
   transform: rotate(-3deg);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
 }
 
+/* Was Caveat, a whole webfont loaded for this one rule. An editorial italic
+ * makes the same aside without a third family and without the doodle. */
 .price-free-hand {
   position: absolute;
   top: -34px;
   right: -6px;
-  font-family: 'Caveat', cursive;
-  font-size: 23px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 25px;
   color: var(--accent);
-  transform: rotate(4deg);
+  transform: rotate(-2deg);
   pointer-events: none;
 }
 
@@ -4760,11 +4291,11 @@ html:not(.js) .how-step { opacity: 1; transform: none; }
   color: var(--on-accent);
   box-shadow: 3px 3px 0 var(--drop);
   transform: rotate(6deg);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 9.5px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
 }
 
 .tier-badge-dot { display: none; }

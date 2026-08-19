@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" href="assets/brand/hexa-logo.avif" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=JetBrains+Mono:wght@400;500&amp;family=Public+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* the state machine drives visibility via [hidden]; it must always win */
@@ -38,7 +38,7 @@
       text-decoration: none;
       color: var(--text);
       font-family: var(--font-display);
-      font-weight: 700;
+      font-weight: 400;
       font-size: 20px;
       letter-spacing: -0.02em;
     }
@@ -58,18 +58,18 @@
     }
     .auth-kicker {
       margin: 0 0 6px;
-      font-family: var(--font-mono);
+      font-family: var(--font-body);
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
+      letter-spacing: 0.012em;
+      text-transform: none;
       color: var(--accent-soft);
     }
     .auth-title {
       margin: 0 0 6px;
       font-family: var(--font-display);
       font-size: clamp(26px, 3.4vw, 32px);
-      font-weight: 700;
+      font-weight: 400;
       letter-spacing: -0.03em;
       line-height: 1.05;
     }
@@ -261,18 +261,18 @@
     .auth-visual-copy { position: absolute; left: 40px; bottom: 44px; right: 40px; max-width: 460px; }
     .auth-visual-kicker {
       margin: 0 0 10px;
-      font-family: var(--font-mono);
+      font-family: var(--font-body);
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
+      letter-spacing: 0.012em;
+      text-transform: none;
       color: rgba(255, 255, 255, 0.7);
     }
     .auth-visual-line {
       margin: 0;
       font-family: var(--font-display);
       font-size: clamp(22px, 2.4vw, 30px);
-      font-weight: 600;
+      font-weight: 400;
       letter-spacing: -0.02em;
       line-height: 1.15;
       text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
@@ -377,7 +377,14 @@
     </section>
 
     <aside class="auth-visual" aria-hidden="true">
-      <video class="auth-visual-video" src="assets/film/login-visual-1080.mp4" muted loop playsinline autoplay preload="metadata"></video>
+      <!-- data-src, not src, and no autoplay attribute.
+           This aside is display:none under 900px, but a <video> with a src and
+           autoplay is fetched regardless of whether its box is ever painted.
+           Measured 2026-08-19 at 390px: 2,402 KB downloaded for an element the
+           phone never shows, on the login screen, which is the worst place on
+           the site to spend someone's data. The script below attaches the src
+           only once the element is actually being displayed. -->
+      <video class="auth-visual-video" data-src="assets/film/login-visual-1080.mp4" muted loop playsinline preload="none"></video>
       <div class="auth-visual-shade"></div>
       <div class="auth-visual-copy">
         <p class="auth-visual-kicker" id="auth-visual-kicker">Hexa Studio</p>

@@ -50,9 +50,22 @@ import {
 
 const MIN_RECEIPTS = 3;
 
-/* What report-create charged for a deep report, and therefore exactly what any
- * path that fails to deliver one has to give back. Must match
- * DEEP_REPORT_CREDITS in report-create.js. */
+/*
+ * What a cold market read costs the customer, in credits. Defined here because
+ * this is now the only file that charges it: report-create used to take the
+ * money up front and could not, because whether a market is warm is not known
+ * until the planning call below has run.
+ *
+ * Measured cost to us on 2026-08-14 with the real xAI rate card: $0.615 for a
+ * cold report, of which $0.466 is the Apify competitor-ads pull and $0.149 is
+ * tokens. At 500 credits to the dollar this is $2, so it clears cost at about
+ * 69% margin and the 2,500 credit welcome grant covers the first two.
+ *
+ * Only a COLD read is charged. A warm one answers off documents the corpus
+ * already holds, for a few cents of synthesis, and billing the cold-harvest
+ * price for it was charging for work we do not do. A cached report is never
+ * charged either: that work was already paid for by whoever triggered it.
+ */
 const REPORT_CREDITS = 1000;
 
 function db() {
@@ -69,11 +82,10 @@ async function setStep(client, id, step) {
 /*
  * Give the credits back.
  *
- * report-create charges a deep report up front, before this worker spends
- * anything at Apify or xAI, because finding an empty balance mid-run is the one
- * order that loses both the report and the money. The consequence is that every
- * path out of here which does not deliver a report has to hand the credits
- * back, and this is that path.
+ * charge() takes the money immediately before the harvest, so every path out
+ * of here which does not deliver the report it charged for has to hand the
+ * credits back, and this is that path. It is a no-op for a warm read, which
+ * was never charged: the `paid` flag on the row is what decides, not the tier.
  *
  * Idempotent on the ledger's unique index over (kind, ref), so calling it twice
  * for the same report refunds once. That matters because a retry, a timeout
@@ -100,6 +112,48 @@ async function refund(client, id, reason) {
   } catch (e) {
     console.error('[report] ' + id + ' REFUND FAILED, settle by hand: ' + e.message);
   }
+}
+
+/*
+ * Take the money, once, immediately before the expensive leg.
+ *
+ * Two orderings were available and both are wrong in one direction. Charging
+ * in report-create, which is what this used to do, bills before anyone knows
+ * whether the market is warm, so a read answered entirely from the corpus was
+ * charged the price of a harvest. Charging after the harvest means discovering
+ * an empty balance only once Apify and xAI have already been paid, which loses
+ * the report and the money together.
+ *
+ * This is the seam between them: the planning call has answered, so we know
+ * the category and whether it is cold, and nothing expensive has run yet. A
+ * refused charge costs us one worker-tier planning call and stops there.
+ *
+ * Idempotent on the ledger's unique index over (kind, ref), the same guard
+ * refund() relies on, so a retried or double-invoked background function
+ * charges once. Returns true when the report may proceed.
+ */
+async function charge(client, id, userId, reason) {
+  if (!userId) return true;                       // anonymous reads are free
+  const { error } = await client.rpc('credit_spend', {
+    p_user: userId,
+    p_amount: REPORT_CREDITS,
+    p_ref: 'report:' + id,
+    p_note: 'Market read: ' + reason,
+  });
+  if (error) {
+    if (/insufficient credits/i.test(error.message || '')) {
+      console.log('[report] ' + id + ' not charged: insufficient credits');
+      return false;
+    }
+    /* Any other ledger error is ours, not theirs. Letting the report run
+     * unpaid is the kinder failure: we lose one harvest, they lose nothing,
+     * and the log says so loudly enough to be settled by hand. */
+    console.error('[report] ' + id + ' CHARGE FAILED, proceeding unpaid: ' + error.message);
+    return true;
+  }
+  await client.from('reports').update({ paid: true }).eq('id', id);
+  console.log('[report] ' + id + ' charged ' + REPORT_CREDITS + ' credits (' + reason + ')');
+  return true;
 }
 
 async function fail(client, id, reason) {
@@ -374,6 +428,16 @@ export default async (req) => {
   if (!reportId || !url) return new Response('missing fields', { status: 400 });
 
   const client = db();
+  /*
+   * The invoke carries signedIn as a boolean, which was enough while the money
+   * was taken in report-create. Charging here needs the account itself, and the
+   * row is the authority on who owns the report: an anonymous read claimed at
+   * sign-in changes user_id without ever re-invoking this worker.
+   */
+  const { data: owner } = await client.from('reports')
+    .select('user_id').eq('id', reportId).maybeSingle();
+  const ownerId = (owner && owner.user_id) || null;
+
   const corpus = openSupabaseCorpus(client);
   const cost = createCostMeter(url);
   const haveLLM = llmConfigured();
@@ -438,7 +502,15 @@ export default async (req) => {
         'You plan market research. Given a product, work out where its buyers actually talk and what they would search for.\n' +
         'Reddit search rules you MUST respect: queries are AND-ed, so multi-word queries return nothing. ' +
         'Emit SINGLE-CONCEPT terms of one or two words. Prefer the words buyers use over marketing words. ' +
-        'subreddit_terms are name fragments for a prefix search, not topics.' +
+        'subreddit_terms are name fragments for a prefix search, not topics.\n' +
+        /* The category is a corpus key that outlives this report, so a brand
+         * name in it makes the harvest unreusable: "allbirds men shoes" was
+         * coined on 2026-08-19 and can never serve another shoe brand, which
+         * is the whole point of holding a corpus. */
+        'The category names a MARKET, not this product and not its brand. Never put the brand or ' +
+        'vendor name in it. "sustainable sneakers" is a category; "Allbirds men shoes" is not. ' +
+        'Include an audience word (men, women, kids) ONLY when that audience genuinely buys a ' +
+        'different product, not merely a different size.' +
         (catList
           ? '\n\nCATEGORIES WE HAVE ALREADY STUDIED:\n' + catList +
             '\nIf this product belongs to one of those markets, return that name EXACTLY as written ' +
@@ -466,10 +538,37 @@ export default async (req) => {
      */
     const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
       .filter((w) => w.length > 2 && !['the', 'for', 'and', 'men', 'women', 'best'].includes(w));
+
+    /*
+     * Who the market is for, read BEFORE norm() throws that word away.
+     *
+     * norm() drops "men" and "women" as noise, which is right for scoring
+     * overlap and catastrophic as the only reading of the name: on 2026-08-19
+     * "allbirds women shoes" and "allbirds men shoes" both reduced to
+     * [allbirds, shoes], scored a perfect match, and the women's Tree Breezers
+     * were answered from 432 documents harvested about men's shoes. A report
+     * built on the wrong people's complaints is worse than no report, because
+     * nothing about it looks wrong.
+     *
+     * Only blocks a match when BOTH names commit to an audience and they
+     * disagree. A general corpus still serves a specific product, which is the
+     * direction that is actually safe.
+     */
+    const audience = (s) => {
+      const w = String(s).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/);
+      if (w.some((x) => x === 'women' || x === 'womens' || x === 'ladies')) return 'women';
+      if (w.some((x) => x === 'men' || x === 'mens' || x === 'mens')) return 'men';
+      if (w.some((x) => x === 'kids' || x === 'children' || x === 'toddler' || x === 'baby')) return 'kids';
+      return '';
+    };
+
     const wanted = new Set(norm(plan.category));
+    const wantedAudience = audience(plan.category);
     if (wanted.size && !(knownCats || []).some((c) => c.name === plan.category)) {
       let best = null;
       for (const c of knownCats || []) {
+        const heldAudience = audience(c.name);
+        if (wantedAudience && heldAudience && wantedAudience !== heldAudience) continue;
         const have = norm(c.name);
         const shared = have.filter((w) => wanted.has(w)).length;
         const score = shared / Math.max(1, Math.min(have.length, wanted.size));
@@ -503,7 +602,7 @@ export default async (req) => {
           gated: true,
           category: plan.category,
           product: { title: product.title, url: product.url },
-          message: 'Nobody has studied this market with us yet. Sign in free and we will go and read it properly.',
+          message: 'Sign in free and we will go and read it properly, then save the report to your library.',
         },
       }).eq('id', reportId);
       console.log('[report] ' + reportId + ' gated: cold category "' + plan.category + '", anonymous');
@@ -526,6 +625,24 @@ export default async (req) => {
        * to ask about this market is served from memory in forty seconds for
        * nothing. We pay for a category once.
        */
+      /* The seam. Category known, harvest not started, so this is the last
+       * moment a refused charge costs us nothing but the planning call. */
+      if (!(await charge(client, reportId, ownerId, plan.category))) {
+        await client.from('reports').update({
+          status: 'failed', step: null,
+          payload: {
+            gated: false, category: plan.category,
+            product: { title: product.title, url: product.url },
+            message: 'Reading a market nobody has studied yet is '
+              + REPORT_CREDITS.toLocaleString() + ' credits, and your balance will not cover it. '
+              + 'Nothing was charged. Markets we already hold stay free.',
+            creditsNeeded: REPORT_CREDITS,
+          },
+        }).eq('id', reportId);
+        console.log('[report] ' + reportId + ' stopped: cold category "' + plan.category + '", no credits');
+        return { statusCode: 200 };
+      }
+
       records = await harvestCategory(reportId, product, plan, corpus, cost);
       if (!records.length) {
         /*
@@ -541,9 +658,9 @@ export default async (req) => {
           payload: {
             gated: false, pending_harvest: true, category: plan.category,
             product: { title: product.title, url: product.url },
-            message: 'We went looking and could not find enough real discussion about this category to say '
-              + 'anything honest. That is usually a sign the market talks about this in words we have not '
-              + 'matched yet. Nothing was charged.',
+            message: 'There was not enough real discussion about this category for us to say anything '
+              + 'honest. That is usually a sign the market talks about this in words we have not matched '
+              + 'yet. Nothing was charged.',
           },
         }).eq('id', reportId);
         await refund(client, reportId, 'harvest found nothing');

@@ -54,23 +54,6 @@ const CACHE_DAYS = 14;
  * check in the handler for why this number and not a smaller one. */
 const DEEP_DAILY_CAP = 25;
 
-/*
- * What a deep report costs the customer, in credits.
- *
- * Measured cost to us on 2026-08-14 with the real xAI rate card: $0.615 a
- * report, of which $0.466 is the Apify competitor-ads pull and $0.149 is
- * tokens. At 500 credits to the dollar this is $2, so it clears cost at about
- * 69% margin and the 2,500 credit welcome grant covers the first two.
- *
- * Only signed-in reports are charged, because only signed-in reports run the
- * expensive legs: the cold-category harvest and the ads pull. The free report
- * stays genuinely free and is the top of the funnel.
- *
- * A cached report is never charged. The work was already paid for by whoever
- * triggered the build, and billing a second person for a row we are reading
- * out of the database would be charging for nothing.
- */
-const DEEP_REPORT_CREDITS = 1000;
 
 async function cachedReport(db, url, wantDeep) {
   const cutoff = new Date(Date.now() - CACHE_DAYS * 86400 * 1000).toISOString();
@@ -184,39 +167,28 @@ exports.handler = async (event) => {
   }
 
   /*
-   * Charge the deep report, after the row exists and before the worker starts.
+   * The charge does NOT happen here, and that is the point.
    *
-   * The order matters in both directions. The row has to come first because
-   * its id is the idempotency key the refund uses, and there is no other stable
-   * handle for this piece of work. The charge has to land before the worker is
-   * invoked, because once the worker starts it spends real money at Apify and
-   * xAI, and discovering an empty balance after that has been spent is the one
-   * sequence that costs us the report AND the money.
+   * It used to: every signed-in report was billed 1,000 credits the moment the
+   * row existed. The flaw is one this function cannot fix from where it sits.
+   * Depth is not knowable here. Whether a market is warm enough to answer from
+   * the corpus depends on knowing its category, knowing the category takes an
+   * LLM planning call, and that call lives in the worker. So this function was
+   * charging the cold-harvest price for every read, including the warm ones
+   * that cost us a few cents of tokens off documents we already hold.
    *
-   * A failed charge deletes the row rather than leaving it 'building' forever,
-   * so the customer can simply try again once they have topped up.
+   * Charging for work we do not do is bad enough on its own. What it actually
+   * produced was worse: measured 2026-08-19, with the signup grant never
+   * backfilled (see migration 015) every account sat at zero, so every
+   * signed-in read was refused for insufficient funds while the anonymous path
+   * kept working. Signing in made the product strictly worse than not signing
+   * in, and the homepage promise that the read is free was false.
+   *
+   * The charge now sits in report-build-background, immediately after the warm
+   * check answers and immediately before harvestCategory spends anything at
+   * Apify or xAI. Warm reads are free. A cold harvest is charged once, before
+   * the expensive leg, and refunded by the paths that already refund.
    */
-  if (user) {
-    const { error: spendErr } = await sb.admin().rpc('credit_spend', {
-      p_user: user.userId,
-      p_amount: DEEP_REPORT_CREDITS,
-      p_ref: 'report:' + row.id,
-      p_note: 'Market read',
-    });
-    if (spendErr) {
-      await db.from('reports').delete().eq('id', row.id);
-      if (/insufficient credits/i.test(spendErr.message || '')) {
-        return json(402, {
-          error: 'A full market read is ' + DEEP_REPORT_CREDITS.toLocaleString() + ' credits and your balance '
-            + 'will not cover it. Nothing was charged.',
-          creditsNeeded: DEEP_REPORT_CREDITS,
-        });
-      }
-      console.error('report credit spend failed:', spendErr.message);
-      return json(503, { error: 'could not charge credits' });
-    }
-    await db.from('reports').update({ paid: true }).eq('id', row.id);
-  }
 
   /*
    * Awaited, not fire-and-forget. A Lambda freezes the moment the handler

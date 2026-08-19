@@ -899,7 +899,7 @@
   // arrives, the rail fills behind it, and the readout on the pinned left
   // column says which pass you are looking at. Nothing here is decoration
   // that repeats what the words already say: the rail is the only thing on
-  // the page that shows the six passes are ordered.
+  // the page that shows the passes are ordered.
   const pipeline = document.getElementById('how-pipeline');
   if (pipeline) {
     const passes = [...pipeline.querySelectorAll('.how-step')];

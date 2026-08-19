@@ -41,6 +41,81 @@
   }
   function pct(n) { return n == null ? '?' : Math.round(n * 100) + '%'; }
 
+  /* Capitalisation belongs to the string, not to a stylesheet. These labels
+   * used to arrive lowercase and were shouted into shape by
+   * `text-transform: uppercase`, so removing that treatment left "high
+   * confidence" sitting in a pill looking like a bug. */
+  function cap(s) {
+    s = String(s == null ? '' : s);
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  }
+
+  /*
+   * Said once, then referred to.
+   *
+   * 486 comments used to read like five, because the same sentence appeared
+   * three times on one page: "Cleaning it takes longer than using it" was the
+   * headline finding, then the first row of "What customers are saying", then
+   * the first row of "What competitors are missing". A reader scrolling past
+   * the same words three times does not conclude that we read 486 comments.
+   *
+   * So the answer tier and the abstract claim a finding, and the working
+   * papers below show what has NOT been said yet. Nothing is deleted: a
+   * section that would empty itself keeps its full list, because showing less
+   * evidence to avoid a repeat is a worse trade than the repeat.
+   */
+  var SHOWN = {};
+
+  function claimKey(s) {
+    return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+  function claimSeen(s) {
+    var k = claimKey(s);
+    return !!(k && SHOWN[k]);
+  }
+  function claimShown(s) {
+    var k = claimKey(s);
+    if (k) SHOWN[k] = 1;
+    return s;
+  }
+
+  /*
+   * One icon family, drawn from paths. Same reasoning as the account rail:
+   * an emoji is not an icon. 🔥 and ⚠️ render as a different picture on every
+   * platform, they carry the vendor's colour into a palette that did not ask
+   * for it, and at 16px on Windows they are a different weight from the text
+   * beside them. On a page whose whole argument is "we measured this", a row
+   * of holiday stickers is the wrong voice.
+   */
+  var ICONS = {
+    pain:    'M12 3c0 4-4 4-4 8a4 4 0 0 0 8 0c0-2-1-3-1-3M9 21h6',
+    worry:   'M12 9v4M12 17h.01M10.3 4.3 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z',
+    covered: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+    open:    'M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z',
+    persona: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21a7 7 0 0 1 14 0M17 11a4 4 0 0 0 0-8M18 21a7 7 0 0 0-2-5',
+    problem: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM8 16s1.5-2 4-2 4 2 4 2M9 9h.01M15 9h.01',
+    angle:   'M6 4h12v6a6 6 0 0 1-12 0V4ZM6 6H4a2 2 0 0 0 2 4M18 6h2a2 2 0 0 1-2 4M9 21h6M12 16v5',
+  };
+
+  function svgIcon(id, cls) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.7');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    if (cls) svg.setAttribute('class', cls);
+    (ICONS[id] || ICONS.open).split(' M').forEach(function (seg, i) {
+      var p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', (i ? 'M' : '') + seg.trim());
+      svg.appendChild(p);
+    });
+    return svg;
+  }
+
   /* Auth loads asynchronously, so both of these are only trustworthy after
    * HexaAuth.ready(). Asked before that, a signed-in visitor reads as anonymous
    * and silently gets the free report instead of the deep one they are owed. */
@@ -158,7 +233,15 @@
   STEP_INDEX.harvesting = 1;
   STEP_INDEX.reading = 2;
 
+  /* The landing pitch and a running read are two different pages sharing one
+     URL. Whichever is not happening should not be on screen. */
+  function showLanding(on) {
+    var w = document.getElementById('what');
+    if (w) w.hidden = !on;
+  }
+
   function startSteps() {
+    showLanding(false);
     progress.hidden = false;
     stepsEl.textContent = '';
     reached = 0;
@@ -316,7 +399,7 @@
     v.appendChild(document.createTextNode('Run '));
     v.appendChild(el('em', null, fv.verdict));
     head.appendChild(v);
-    head.appendChild(el('span', 'fmt-conf', fv.confidence + ' confidence'));
+    head.appendChild(el('span', 'fmt-conf', cap(fv.confidence) + ' confidence'));
     card.appendChild(head);
     card.appendChild(el('p', 'fmt-why', voice(fv.reason) + '.'));
 
@@ -688,10 +771,10 @@
     var covered = themes(report.whitespace, false)[0];
     var open = themes(report.whitespace, true)[0];
 
-    if (pain) rows.push(['🔥', 'Customers care about', voice(pain.claim)]);
-    if (worry) rows.push(['⚠️', 'Customers worry about', voice(worry.claim)]);
+    if (pain) rows.push(['pain', 'Customers care about', voice(pain.claim)]);
+    if (worry) rows.push(['worry', 'Customers worry about', voice(worry.claim)]);
     if (covered) {
-      rows.push(['👀', 'Competitors are mostly selling', voice(covered.claim)]);
+      rows.push(['covered', 'Competitors are mostly selling', voice(covered.claim)]);
     }
 
     /*
@@ -706,18 +789,28 @@
       var fresh = themes(report.whitespace, true).filter(function (t) {
         return shown.indexOf(voice(t.claim).toLowerCase()) < 0;
       })[0];
-      rows.push(['💡', 'Your opportunity', fresh
+      rows.push(['open', 'Your opportunity', fresh
         ? voice(fresh.claim) + ' Not one competitor ad we read is saying it.'
         : 'Lead with that first complaint. Not one competitor ad we read answers it, so it is the opening nobody has taken.']);
     }
+    /*
+     * The angle card, directly above, has already named the biggest problem.
+     * Printing it again here is what made 486 comments read like five. The
+     * abstract yields rather than the answer, but only while it still has
+     * enough left to be an abstract.
+     */
+    var fresh = rows.filter(function (r) { return !claimSeen(r[2]); });
+    if (fresh.length >= 2) rows = fresh;
+
     if (rows.length < 2) return null;
 
     var sec = el('section', 'vd-section vd-found');
     sec.appendChild(el('h2', null, 'What we found'));
     var list = el('div', 'found-list');
     rows.forEach(function (r) {
+      claimShown(r[2]);
       var row = el('div', 'found-row');
-      row.appendChild(el('span', 'found-ico', r[0]));
+      row.appendChild(svgIcon(r[0], 'found-ico'));
       var body = el('div', 'found-body');
       body.appendChild(el('p', 'found-label', r[1]));
       body.appendChild(el('p', 'found-claim', r[2]));
@@ -851,11 +944,12 @@
      */
     var pain = byReceipts(report.pains)[0];
     var answers = [];
-    if (top.persona) answers.push(['👥', 'Your likely customer', voice(top.persona)]);
-    if (pain) answers.push(['😣', 'Their biggest problem', voice(pain.claim)]);
+    if (top.persona) answers.push(['persona', 'Your likely customer', voice(top.persona)]);
+    if (pain) answers.push(['problem', 'Their biggest problem', voice(pain.claim)]);
     answers.forEach(function (a) {
+      claimShown(a[2]);
       var row = el('div', 'call-answer');
-      row.appendChild(el('span', 'call-answer-ico', a[0]));
+      row.appendChild(svgIcon(a[0], 'call-answer-ico'));
       var body = el('div');
       body.appendChild(el('p', 'call-answer-label', a[1]));
       body.appendChild(el('p', 'call-answer-text', a[2]));
@@ -863,8 +957,11 @@
       sec.appendChild(row);
     });
 
-    sec.appendChild(el('p', 'call-answer-label call-claim-label', '🏆 Your strongest angle'));
-    sec.appendChild(el('h2', 'vd-call-claim', voice(top.claim)));
+    var claimLabel = el('p', 'call-answer-label call-claim-label');
+    claimLabel.appendChild(svgIcon('angle', 'call-answer-ico'));
+    claimLabel.appendChild(el('span', null, 'Your strongest angle'));
+    sec.appendChild(claimLabel);
+    sec.appendChild(el('h2', 'vd-call-claim', claimShown(voice(top.claim))));
 
     /* Why, in one line, from measured things rather than adjectives. */
     var reasons = [];
@@ -985,6 +1082,52 @@
     var signedIn = isSignedIn();
     out.textContent = '';
     out.hidden = false;
+    SHOWN = {};
+
+    /*
+     * Three tiers, and a rail.
+     *
+     * The page used to be eleven sections of identical weight, stacked, with
+     * no way to jump: a heading over a dark rounded box, eleven times, 7,000px
+     * tall. The format verdict, the one thing on the page a merchant can act
+     * on this afternoon, was the fourth of them, sitting between "The short
+     * version" and "What customers are saying" as a small bar chart in a box.
+     *
+     * So: the answer opens the page, the reasoning follows it, and the raw
+     * material goes last where working papers belong. The rail is built from
+     * the sections that actually rendered, never from a fixed list, so it can
+     * not offer a jump to a section a thin report never produced.
+     */
+    var rail = el('nav', 'vd-rail');
+    rail.setAttribute('aria-label', 'Report sections');
+    var railList = el('ol', 'vd-rail-list');
+    rail.appendChild(railList);
+
+    var body = el('div', 'vd-body');
+    var tier = null;
+
+    function openTier(cls, label) {
+      tier = el('div', 'vd-tier ' + cls);
+      if (label) tier.appendChild(el('p', 'vd-tier-label', label));
+      body.appendChild(tier);
+    }
+
+    /* Adding a section and adding its rail entry is one action, because doing
+     * them separately is how a rail ends up pointing at nothing. */
+    function add(node, id, railName) {
+      if (!node) return null;
+      (tier || body).appendChild(node);
+      if (!id) return node;
+      node.id = id;
+      if (railName) {
+        var li = el('li');
+        var a = el('a', 'vd-rail-link', railName);
+        a.href = '#' + id;
+        li.appendChild(a);
+        railList.appendChild(li);
+      }
+      return node;
+    }
 
     var head = el('section', 'vd-section vd-head');
     head.appendChild(el('h2', null, report.product_title || 'Your market'));
@@ -992,10 +1135,10 @@
 
     var bar = el('div', 'proof-bar');
     [
-      [report.stats && report.stats.comments, 'comments read'],
-      [report.stats && report.stats.reviews, 'of your reviews'],
-      [report.stats && report.stats.subreddits, 'communities'],
-      [report.adsAnalysed || 0, 'competitor ads']
+      [report.stats && report.stats.comments, 'Comments read'],
+      [report.stats && report.stats.reviews, 'Of your reviews'],
+      [report.stats && report.stats.subreddits, 'Communities'],
+      [report.adsAnalysed || 0, 'Competitor ads']
     ].forEach(function (s) {
       if (!s[0]) return;
       var item = el('div', 'proof-bar-item');
@@ -1006,65 +1149,167 @@
       bar.appendChild(item);
     });
     head.appendChild(bar);
-    out.appendChild(head);
+    body.appendChild(head);
 
-    /* The answers first. Everything below this is the working. */
-    var found = summarySection(report);
-    if (found) out.appendChild(found);
+    /* ── Tier 1: the answer ──
+     * The format verdict, the angle it produces, and whether the category is
+     * worth advertising in at all. Nothing above this line, nothing competing
+     * with it. */
+    openTier('vd-tier-answer');
+    add(formatSection(report.format_verdict), 'vd-verdict', 'Verdict');
+    add(recommendation(report), 'vd-angle', 'Angle');
+    add(strengthSection(report), 'vd-strength', 'Worth it?');
 
-    var call = recommendation(report);
-    if (call) out.appendChild(call);
+    /* ── Tier 2: why we say so ──
+     * The abstract, the one-line read, and what the competition is actually
+     * running. `#vd-evidence` is where "see research" and "view sources" land,
+     * so it keeps its id. */
+    openTier('vd-tier-working', 'The evidence');
+    var evidenceAnchor = el('div');
+    evidenceAnchor.id = 'vd-evidence';
+    body.appendChild(evidenceAnchor);
 
-    var strength = strengthSection(report);
-    if (strength) out.appendChild(strength);
+    add(summarySection(report), 'vd-found', 'What we found');
 
     if (report.verdict) {
       var vsec = el('section', 'vd-section');
       vsec.appendChild(el('h2', null, 'The short version'));
       vsec.appendChild(el('p', 'vd-lede', voice(report.verdict)));
-      out.appendChild(vsec);
+      add(vsec, 'vd-short', 'The short version');
     }
+    add(adsSection(report.ads), 'vd-ads', 'What rivals run');
 
-    /* Where "see research" and "view sources" land, and where the working
-     * proper begins. */
-    var evidenceAnchor = el('div');
-    evidenceAnchor.id = 'vd-evidence';
-    out.appendChild(evidenceAnchor);
-
-    var fmt = formatSection(report.format_verdict);
-    if (fmt) out.appendChild(fmt);
-
-    // Free above the line: what people say. Gated below: the parts that tell
-    // you what to do about it.
-    var pains = section('What customers are saying', report.pains);
-    if (pains) out.appendChild(pains);
-
-    /* Everything we computed is shown, to everybody. A free read that hides its
-     * own conclusions is not a free read. */
-    var gap = whitespaceSection(report.whitespace);
-    if (gap) out.appendChild(gap);
-    var wishes = section('What customers wish existed', report.wishes);
-    if (wishes) out.appendChild(wishes);
-    var objections = section("Why people don't buy",
-      report.objections,
-      'The reasons people give for not buying. Your ad has to answer these.');
-    if (objections) out.appendChild(objections);
-    var adsSec = adsSection(report.ads);
-    if (adsSec) out.appendChild(adsSec);
+    /* ── Tier 3: the raw material ──
+     * Working papers. Everything we computed is still shown to everybody, and
+     * a free read that hides its own conclusions is not a free read, but it
+     * reads as source material rather than as findings of equal weight. */
+    openTier('vd-tier-papers', 'The raw material');
+    add(fold(section('What customers are saying', report.pains)), 'vd-pains', 'Customers');
+    add(fold(whitespaceSection(report.whitespace)), 'vd-gap', 'Gaps');
+    add(fold(section('What customers wish existed', report.wishes)), 'vd-wishes', 'Wishes');
+    add(fold(section("Why people don't buy", report.objections,
+      'The reasons people give for not buying. Your ad has to answer these.')),
+      'vd-objections', 'Objections');
 
     if ((report.angles || []).length > 1) {
       var asec = el('section', 'vd-section');
-      asec.id = 'vd-angles';
       asec.appendChild(el('h2', null, 'Other angles you could try'));
       asec.appendChild(el('p', 'vd-lede',
         'Every one of these came from what real customers said, ordered by how many people said it.'));
       report.angles.slice(1).forEach(function (a) { asec.appendChild(angleCard(a, report)); });
-      out.appendChild(asec);
+      add(fold(asec), 'vd-angles', 'Other angles');
     }
 
-    if (!signedIn) out.appendChild(unlockCard(report));
-    else if (resumed) welcomeBand(report);
+    tier = null;
+
+    /*
+     * A tier that received nothing must not announce itself.
+     *
+     * openTier() writes its label the moment the tier opens, before anything
+     * is added to it, so a gated free read drew "The evidence" and "The raw
+     * material" as headings over empty space: two promises with nothing under
+     * them, directly above the card asking for a sign-in. Found on the live
+     * site rather than locally, because it only appears when the payload comes
+     * back gated.
+     */
+    [].slice.call(body.querySelectorAll('.vd-tier')).forEach(function (t) {
+      if (!t.querySelector('.vd-section')) t.remove();
+    });
+
+    if (!signedIn) body.appendChild(unlockCard(report));
+
+    /* A rail with one entry is a rail pointing at the thing you are looking
+     * at. Thin reports simply do not get one. */
+    if (railList.children.length > 2) out.appendChild(rail);
+    out.appendChild(body);
+
+    if (signedIn && resumed) welcomeBand(report);
+    spyRail(rail);
     out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /*
+   * The rail marks where you are, not merely where you can go.
+   *
+   * IntersectionObserver rather than a scroll handler: the callback fires only
+   * when a section crosses the line, so a 7,000px page does not run layout
+   * maths on every frame of a flick scroll. The top-third rootMargin means the
+   * highlight changes when a section reaches reading position rather than when
+   * its last pixel leaves the viewport.
+   */
+  /*
+   * Tier 3 folds.
+   *
+   * These sections are the working papers: every quote behind every finding.
+   * Open, they are most of the 7,000px, and a reader who wanted the answer has
+   * to scroll past all of it. Closed, the page is an argument with its sources
+   * one click away, which is how a research document has always worked.
+   *
+   * The count goes on the summary line, so folding never hides HOW MUCH we
+   * read. "6 findings, 41 quotes" closed says more about the depth of the work
+   * than six open cards the reader scrolls past.
+   */
+  function fold(sec) {
+    if (!sec) return sec;
+    var h2 = sec.querySelector(':scope > h2');
+    if (!h2) return sec;
+
+    var findings = sec.querySelectorAll('.vd-finding, .gap-row').length;
+    var quotes = sec.querySelectorAll('.vd-cite, blockquote, q').length;
+
+    var d = el('details', 'vd-fold');
+    var sum = el('summary', 'vd-fold-head');
+    sum.appendChild(el('span', 'vd-fold-title', h2.textContent));
+
+    var bits = [];
+    if (findings) bits.push(findings + (findings === 1 ? ' finding' : ' findings'));
+    if (quotes) bits.push(quotes + (quotes === 1 ? ' quote' : ' quotes'));
+    if (bits.length) sum.appendChild(el('span', 'vd-fold-n', bits.join(', ')));
+
+    d.appendChild(sum);
+    h2.remove();
+    while (sec.firstChild) d.appendChild(sec.firstChild);
+    sec.appendChild(d);
+    return sec;
+  }
+
+  function spyRail(rail) {
+    var links = [].slice.call(rail.querySelectorAll('.vd-rail-link'));
+    if (!links.length || typeof IntersectionObserver !== 'function') return;
+
+    var byId = {};
+    links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+
+    rail.addEventListener('click', function (e) {
+      var a = e.target.closest ? e.target.closest('.vd-rail-link') : null;
+      if (!a) return;
+      var target = document.getElementById(a.getAttribute('href').slice(1));
+      var d = target && target.querySelector('.vd-fold');
+      if (d) d.open = true;
+    });
+
+    var visible = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) visible[e.target.id] = 1;
+        else delete visible[e.target.id];
+      });
+      /* Several sections can be on screen at once; the topmost one in document
+       * order is the one being read. */
+      var current = null;
+      links.forEach(function (a) {
+        var id = a.getAttribute('href').slice(1);
+        if (!current && visible[id]) current = id;
+      });
+      links.forEach(function (a) {
+        a.classList.toggle('is-here', a.getAttribute('href').slice(1) === current);
+      });
+    }, { rootMargin: '-80px 0px -66% 0px' });
+
+    Object.keys(byId).forEach(function (id) {
+      var node = document.getElementById(id);
+      if (node) io.observe(node);
+    });
   }
 
   /* ── the stored payload, in the shape this renderer reads ──── */
@@ -1265,6 +1510,14 @@
         if (res.title) rememberTitle(res.title);
 
         if (res.status === 'failed') {
+          /* A market refused for want of credits is not a failure to read the
+           * page, and telling somebody their product page is thin when the real
+           * answer is "top up" sends them to fix the wrong thing. */
+          if (res.creditsNeeded) {
+            notice('Nobody has studied this market with us yet.', res.message || '',
+              { label: 'Add credits', href: '/account.html#settings', track: 'credits' });
+            return;
+          }
           notice('We could not read enough about this product to say anything honest.',
             (res.message || '') + ' Nothing was charged. A product page with a real description works best.');
           return;
@@ -1278,6 +1531,11 @@
         }
         if (p.gated) {
           gateSeen('cold');
+          /* The heading is the first half of the sentence, so the body has to
+           * be the second half and nothing else. The server used to send a
+           * message that opened by repeating the heading verbatim, and because
+           * a message is always sent the `||` fallback below never ran, so the
+           * card read the same sentence twice every single time. */
           notice('Nobody has studied this market with us yet.',
             p.message || 'Create a free account and we will go and read it properly, then save the report to your library. ' +
               'A free account also makes your first static ad, from whichever angle the read lands on.',
@@ -1285,13 +1543,22 @@
           return;
         }
         if (p.pending_harvest) {
-          notice('This market is new to us.',
-            p.message || 'We are gathering the discussion now and your report will fill in shortly.');
+          /* Not "your report will fill in shortly": the worker has already been
+           * and come back empty by the time this renders, so a heading that
+           * promises more is coming leaves somebody waiting on nothing. */
+          notice('We went looking, and there was not enough to read.',
+            p.message || 'That is usually a sign this market talks about the product in words we have '
+              + 'not matched yet. Nothing was charged.');
           return;
         }
         render(adapt(res));
       })
-      .catch(function () {
+      .catch(function (e) {
+        /* Logged, because this catch covers the render as well as the fetch:
+         * a throw anywhere in adapt() or render() lands here and gets reported
+         * to the reader as a lost connection, which is the wrong story and the
+         * hardest kind of bug to find from the page. */
+        console.error('[validate] report failed to draw:', e);
         finish(tick);
         notice('We lost the connection while your report was building.',
           'It is saved on our side. Reload this page and it will pick up where it left off.');
@@ -1362,7 +1629,7 @@
    * So a resumed report always arrives with a sentence naming it and a way
    * out, and a signed-in visitor gets the version that names the account.
    */
-  var band = null;
+  var activeBand = null;
 
   function showBand(cls, strongText, restText, action) {
     hideBand();
@@ -1380,12 +1647,12 @@
       b.appendChild(btn);
     }
     progress.parentNode.insertBefore(b, progress);
-    band = b;
+    activeBand = b;
     return b;
   }
 
   function hideBand() {
-    if (band) { band.remove(); band = null; }
+    if (activeBand) { activeBand.remove(); activeBand = null; }
   }
 
   /* Back to an empty page. Bumping the generation matters: without it the
@@ -1401,6 +1668,7 @@
     progress.hidden = true;
     out.hidden = true;
     out.textContent = '';
+    showLanding(true);
     button.disabled = false;
     input.value = '';
     input.focus();
@@ -1494,8 +1762,26 @@
     catch (e) { return ''; }
   })();
 
+  /*
+   * A link handed over by the composer, read at the same moment as OPEN_ID and
+   * for the same reason: both are instructions, and a resume is a guess.
+   *
+   * This was read inside fromLink() instead, which ran last and gave up the
+   * moment a resume had already started. The effect was the exact thing the
+   * composer exists to prevent: paste a product on the home page, watch the
+   * peek identify it, arrive here, and get somebody else's half-finished read
+   * from up to six hours ago with an empty form above it. The link was thrown
+   * away in silence, so the only way forward was to paste it a second time.
+   */
+  var FROM_URL = (function () {
+    var u = '';
+    try { u = (new URLSearchParams(window.location.search).get('url') || '').trim(); }
+    catch (e) { return ''; }
+    return /^https?:\/\//i.test(u) ? u : '';
+  })();
+
   var resumed = (function resume() {
-    if (OPEN_ID) return false;
+    if (OPEN_ID || FROM_URL) return false;
     var saved = stored();
     if (!saved) return false;
     var gen = ++runId;
@@ -1546,15 +1832,15 @@
    * has to start on arrival: asking someone to paste the same link twice is
    * how a single flow turns back into two separate tools.
    *
-   * A report already resuming wins, because that one is paid for and finished.
+   * This wins over a resume, for the same reason ?report= does: a link the
+   * visitor just handed us is an instruction about what they want NOW, and a
+   * stored report is a guess about what they wanted earlier. Nothing is lost
+   * by preferring it, because the stored report is claimed to the account and
+   * still sitting in Reports.
    */
   (function fromLink() {
-    if (resumed || opened) return;
-    var url = '';
-    try { url = new URLSearchParams(window.location.search).get('url') || ''; }
-    catch (e) { return; }
-    url = url.trim();
-    if (!/^https?:\/\//i.test(url)) return;
+    if (resumed || opened || !FROM_URL) return;
+    var url = FROM_URL;
     input.value = url;
     // The link is in the address bar and does not belong there once it is in
     // the form: a reload should not silently re-run a paid read.

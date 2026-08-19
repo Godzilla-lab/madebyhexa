@@ -104,7 +104,7 @@ const STEPS = [
       'Quick one about the credits sitting on your account.\n\n' +
       'When your report finishes it ends in angles: a specific claim, aimed at a specific buyer, in their words, backed by the comments that support it. Each one comes with a video hook and a static headline already written.\n\n' +
       'Next to each angle is a button that makes it. The hook goes straight into the brief, so what we proved is what gets made, and you are not retyping anything.\n\n' +
-      'A single ad creative is 500 credits, so the 2,500 you already have makes five of them for nothing. A full video is 7,000.\n\n' +
+      'A single ad creative is 500 credits, so the 2,500 you already have makes five of them for nothing, or two more full market reads at 1,000 each.\n\n' +
       'And if a render fails, the credits go straight back to your balance automatically. You are never charged for work we do not deliver.\n\n' +
       SITE + '/validate',
   },

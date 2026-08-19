@@ -129,9 +129,22 @@ exports.handler = async (event) => {
   }
 
   if (row.status === 'failed') {
+    /*
+     * The worker's own words win when it left any.
+     *
+     * This used to answer one hardcoded sentence for every failure, which was
+     * fine while every failure genuinely was "we could not read enough". It
+     * stopped being true when the charge moved into the worker: a cold market
+     * refused for want of credits is a completely different thing to tell
+     * somebody, and it has an action attached, so swallowing the payload
+     * message turned an answerable problem into a dead end.
+     */
+    const p = row.payload || {};
     return json(200, {
       status: 'failed',
-      message: 'We could not read enough about this product to say anything honest. Nothing was charged.',
+      message: p.message
+        || 'We could not read enough about this product to say anything honest. Nothing was charged.',
+      creditsNeeded: p.creditsNeeded || undefined,
     });
   }
 

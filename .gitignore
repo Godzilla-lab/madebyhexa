@@ -44,3 +44,10 @@ research/corpus.db-wal
 research/corpus.db-shm
 research/out/
 .uitest/
+
+# Generated statics held back from the showcase: on disk, never deployed.
+.showcase-rejects/
+
+# Showcase masters, kept outside the published tree: publish = "." means
+# anything under assets/ uploads whether git tracks it or not.
+.showcase-masters/

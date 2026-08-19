@@ -109,9 +109,15 @@ async function run() {
   await check(2, 'Positioning: H1, sub and microcopy', async (page) => {
     await go(page, '/');
     const h1 = await textOf(page, 'h1');
-    assert(/paste a link/i.test(h1) && /get the ad/i.test(h1), 'H1 is not the positioning line: ' + h1);
+    /* The H1 used to be "Paste a link. Get the ad.", which the next section
+     * then contradicted ("The ad is the last step. Not the first."). What is
+     * pinned now is the ORDER, because the order is the product: the read
+     * comes first and the ad is downstream of it. */
+    assert(/what to say/i.test(h1), 'H1 does not lead with the read: ' + h1);
+    assert(/then we make the ad/i.test(h1), 'H1 does not put the ad last: ' + h1);
     const t = await textOf(page, '.c-hero-copy');
-    assert(/we research your product/i.test(t), 'sub missing the research promise');
+    assert(/read your market/i.test(t), 'sub missing the research promise');
+    assert(/free/i.test(t), 'sub does not say the read is free');
     assert(/video or statics/i.test(t), 'sub does not say we make statics too');
     assert(/No prompting\. No video editing\. No marketing expertise required\./i.test(t), 'microcopy missing');
   });
@@ -506,41 +512,6 @@ async function run() {
     await page.goto(BASE + '/__stub/full', { waitUntil: 'domcontentloaded' });
   });
 
-  /* Not one of the 22, but it is the only section on the page that is a game
-   * rather than a paragraph, and a game that has never been played is not
-   * shipped. The thesis check matters most: if the wrong answers are not the
-   * ones competitors actually run, the section argues nothing. */
-  await check(24, 'Guess the angle plays, and the wrong answers are real ads', async (page) => {
-    await go(page, '/');
-    await page.waitForSelector('.guess-option', { timeout: 15000 });
-    const opts = await page.$$('.guess-option');
-    assert(opts.length === 3, 'expected 3 angles, found ' + opts.length);
-
-    await opts[0].click();
-    await page.waitForSelector('.guess-result', { timeout: 10000 });
-    const t = await textOf(page, '#guess-stage');
-    assert(/customers? raised it/i.test(t), 'no customer counts in the reveal');
-    assert(/competitor ads? says? it/i.test(t), 'no competitor counts in the reveal');
-    assert(await page.$('.guess-result.is-winner'), 'nothing is marked as the evidence-backed answer');
-    assert(await page.$('.guess-result.is-picked'), 'their own pick is not marked');
-
-    /* The whole argument: at least one angle nobody raised is one competitors
-     * are buying. Without that, this is a trivia question. */
-    const rows = await page.$$eval('.guess-result', (n) => n.map((x) => x.innerText));
-    const loserWithAds = rows.some((r) => !/Your pick/.test(r) &&
-      /(\d+) customers? raised it/.test(r) && /([1-9]\d*) competitor ads? says? it/.test(r) &&
-      Number(r.match(/(\d+) customers? raised it/)[1]) <= 2);
-    assert(loserWithAds, 'no weak angle that competitors are actually running');
-
-    /* Honesty constraint from the plan: no invented pick statistics until real
-     * picks have been counted. */
-    assert(!/% of (people|visitors|marketers)/i.test(t), 'invented social proof in the reveal');
-
-    await page.click('.guess-again');
-    await page.waitForSelector('.guess-option', { timeout: 10000 });
-    const next = await textOf(page, '.guess-product-name');
-    assert(next, 'Try another product did not load a second product');
-  });
 
   /* Layout, asserted. A horizontal scrollbar is a bug, not a judgement call. */
   await check(23, 'No horizontal overflow at any width', async (page) => {

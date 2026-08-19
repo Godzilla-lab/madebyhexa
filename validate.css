@@ -26,6 +26,7 @@
 }
 .vd-hero h1 {
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(32px, 5.2vw, 54px);
   line-height: 1.05;
   letter-spacing: -0.03em;
@@ -87,18 +88,136 @@
 
 /* ───── Report shell ───── */
 
+/*
+ * The report, as a document rather than a stack of boxes.
+ *
+ * At 1440px this used to be an 860px column with ~290px of dead margin either
+ * side: a phone layout stretched wide. The rail moves into that margin and
+ * earns it, and the measure stays where prose is actually readable.
+ *
+ * Below 1100px the rail is not worth the width it costs, so it goes and the
+ * page returns to a single column.
+ */
 .vd-report {
   max-width: 860px;
   margin: 0 auto;
   padding: 0 var(--s-5);
 }
+@media (min-width: 1100px) {
+  .vd-report:has(.vd-rail) {
+    max-width: 1180px;
+    display: grid;
+    grid-template-columns: 176px minmax(0, 1fr);
+    gap: var(--s-8);
+    align-items: start;
+  }
+}
+.vd-body { min-width: 0; }
+
+.vd-rail { display: none; }
+@media (min-width: 1100px) {
+  .vd-rail {
+    display: block;
+    position: sticky;
+    top: 84px;
+    padding: var(--s-2) 0;
+    border-left: 1px solid var(--border);
+  }
+}
+.vd-rail-list { list-style: none; margin: 0; padding: 0; }
+.vd-rail-link {
+  display: block;
+  padding: 7px 0 7px var(--s-4);
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text-faint);
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.vd-rail-link:hover { color: var(--text); }
+.vd-rail-link.is-here {
+  color: var(--text);
+  border-left-color: var(--accent);
+}
+
+/*
+ * Three weights, so a quote card and a verdict stop looking identical.
+ *
+ * Everything used to be one dark rounded box under one heading, eleven times.
+ * With no difference in weight the reader has no way to tell the finding from
+ * the working, so they read all of it or none of it, and 7,000px means none.
+ */
+.vd-tier { margin: 0; }
+.vd-tier-label {
+  margin: var(--s-8) 0 var(--s-5);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.012em;
+  color: var(--text-faint);
+}
 .vd-section { margin: 0 0 var(--s-8); }
 .vd-section > h2 {
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(22px, 3vw, 30px);
   letter-spacing: -0.02em;
   margin: 0 0 var(--s-2);
 }
+
+/* Tier 1 carries the answer, so it gets the scale. */
+.vd-tier-answer .vd-section > h2 { font-size: clamp(26px, 3.6vw, 38px); }
+.vd-tier-answer .vd-section { margin-bottom: var(--s-7); }
+
+/* The fold. Closed, the summary still reports the depth of the work, so
+   collapsing never reads as having less to show. */
+.vd-fold { border-top: 1px solid var(--border); }
+.vd-fold-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  cursor: pointer;
+  list-style: none;
+  padding: var(--s-4) 0;
+  min-height: 44px;
+}
+.vd-fold-head::-webkit-details-marker { display: none; }
+.vd-fold-title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: clamp(19px, 2vw, 23px);
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+.vd-fold-n {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* The affordance: a chevron that turns, rather than a word that says "open". */
+.vd-fold-head::after {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--text-faint);
+  border-bottom: 1.5px solid var(--text-faint);
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+  align-self: center;
+}
+.vd-fold[open] .vd-fold-head::after { transform: rotate(-135deg); }
+.vd-fold[open] .vd-fold-head { border-bottom: 1px solid var(--border); }
+.vd-fold > *:not(.vd-fold-head) { margin-top: var(--s-5); }
+
+/* Tier 3 is source material. Same information, read as working papers. */
+.vd-tier-papers .vd-section { margin-bottom: var(--s-7); }
+.vd-tier-papers .vd-section > h2 { font-size: clamp(19px, 2vw, 23px); }
+.vd-tier-papers .vd-section > .vd-lede { font-size: 14px; }
 .vd-section > .vd-lede {
   margin: 0 0 var(--s-5);
   color: var(--text-mute);
@@ -168,16 +287,17 @@
 }
 .vd-call-kicker {
   margin: 0 0 10px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent-soft);
 }
 .vd-call-claim {
   margin: 0 0 12px;
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(22px, 3.4vw, 32px);
   line-height: 1.15;
   letter-spacing: -0.025em;
@@ -194,11 +314,11 @@
   border: 1px solid var(--border);
 }
 .vd-call-line b {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 .vd-call-line q { font-size: 16px; line-height: 1.45; font-style: italic; }
@@ -260,8 +380,8 @@
   border: 1px solid var(--border-strong);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-mute);
 }
 .gap-row.is-open .gap-tag {
@@ -353,6 +473,7 @@
 }
 .fmt-verdict {
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(26px, 4vw, 38px);
   letter-spacing: -0.03em;
   line-height: 1;
@@ -364,8 +485,8 @@
   border: 1px solid var(--border-strong);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-mute);
 }
 .fmt-why { margin: 0 0 var(--s-5); color: var(--text-mute); font-size: 15px; line-height: 1.55; }
@@ -403,6 +524,7 @@
 .angle-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
 .angle-card h3 {
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(18px, 2.4vw, 22px);
   line-height: 1.25;
   letter-spacing: -0.02em;
@@ -421,8 +543,8 @@
   display: block;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
   margin-bottom: 4px;
 }
@@ -515,8 +637,8 @@
   font-family: var(--font-mono, inherit);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 .unlock-angle q { font-size: 16px; line-height: 1.45; font-style: italic; }
@@ -589,8 +711,18 @@
 .vd-thin strong { color: var(--text); }
 
 /* A cold market is an invitation, not a dead end, so the answer carries an
- * action rather than leaving the reader on a paragraph. */
-.vd-notice-cta { display: inline-flex; margin-top: var(--s-4); }
+ * action rather than leaving the reader on a paragraph.
+ *
+ * The button was `display: inline-flex`, which put it in the text flow: an
+ * inline-level box takes no part in line positioning, so `margin-top` moved
+ * nothing and the button rendered ON TOP of the last line of the paragraph.
+ * A block-level box on its own line is what was meant, and `width: fit-content`
+ * keeps it the width of its label rather than the width of the card. */
+.vd-notice-cta {
+  display: flex;
+  width: fit-content;
+  margin-top: var(--s-4);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .angle-card, .vd-form button, .angle-actions a, .angle-actions button,
@@ -622,14 +754,23 @@
   border: 1px solid var(--border);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
 }
-.found-ico { font-size: 18px; line-height: 1.3; }
+/* Icons are drawn, not typed, so they size in px and take their colour from
+   the row rather than from whichever emoji font the OS happens to ship. */
+.found-ico {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  margin-top: 1px;
+  color: var(--accent);
+  opacity: 0.9;
+}
 .found-label {
   margin: 0 0 3px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 .found-claim { margin: 0; font-size: 15.5px; line-height: 1.5; color: var(--text); }
@@ -655,14 +796,22 @@
   align-items: start;
   margin-bottom: var(--s-3);
 }
-.call-answer-ico { font-size: 16px; line-height: 1.35; }
+.call-answer-ico {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+.call-claim-label { display: flex; align-items: center; gap: 7px; }
+.call-claim-label .call-answer-ico { margin-top: 0; }
 .call-answer-label {
   margin: 0 0 2px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent-soft);
 }
 .call-answer-text { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--text-mute); }
@@ -728,16 +877,17 @@
 }
 .str-name {
   margin: 0 0 6px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--text-faint);
 }
 .str-word {
   margin: 0 0 8px;
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(22px, 3vw, 28px);
   letter-spacing: -0.02em;
   line-height: 1;
@@ -764,6 +914,7 @@
 .vd-working {
   margin: 0 0 var(--s-4);
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(20px, 3vw, 26px);
   letter-spacing: -0.02em;
 }
@@ -802,10 +953,119 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 77, 109, 0.45);
   background: rgba(255, 77, 109, 0.1);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.012em;
+  text-transform: none;
   color: var(--accent-soft);
+}
+
+/* ───── What comes back ─────
+   The landing state used to be a headline, an input and roughly 600px of
+   black: the page selling the free market read described none of it. This
+   matches the report's own width (1180px, same as .vd-report with its rail)
+   rather than the hero's 780px, so the preview of the deliverable is laid out
+   like the deliverable. */
+
+.vd-what {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--s-8) var(--s-5) var(--s-9);
+}
+.vd-what > h2,
+.vd-method > h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3.4vw, 38px);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 0 var(--s-2);
+}
+.vd-what-lede {
+  margin: 0 0 var(--s-6);
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-mute);
+}
+
+.vd-what-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s-4);
+}
+.vd-what-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-media);
+  padding: var(--s-5);
+}
+.vd-what-n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--accent-soft);
+}
+.vd-what-card h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin: var(--s-2) 0 var(--s-2);
+}
+.vd-what-card > p {
+  margin: 0 0 var(--s-4);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-mute);
+}
+/* The exact h2 strings validate.js emits, so this reads as a table of
+   contents for the real thing rather than a list of adjectives. */
+.vd-what-card ul {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-3) 0 0;
+  border-top: 1px solid var(--border);
+}
+.vd-what-card li {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--text-faint);
+}
+.vd-what-card li::before {
+  content: "\2192";
+  margin-right: 8px;
+  color: var(--accent-soft);
+}
+
+.vd-method { margin-top: var(--s-9); }
+.vd-method-row {
+  margin-top: var(--s-5);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--s-6);
+}
+.vd-method-item h3 {
+  margin: 0 0 var(--s-2);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+}
+.vd-method-item p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-mute);
+}
+
+@media (max-width: 620px) {
+  .vd-what { padding: var(--s-6) var(--s-4) var(--s-7); }
+  .vd-what-card { padding: var(--s-4); }
 }

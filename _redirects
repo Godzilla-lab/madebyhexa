@@ -68,10 +68,12 @@
 # so the exemptions must sit above the block.
 /catalog/studio-data.json  /catalog/studio-data.json  200!
 /catalog/presets.json      /catalog/presets.json      200!
-# Public because the home page quiz reads it. Frozen findings from reads we
-# already published, no cost, margin or prompt data.
-/catalog/guess-angles.json /catalog/guess-angles.json 200!
 # The account page's top-up chooser reads this. Generated from pricing.json but
 # display only: pack sizes and dollar prices, no cost or margin fields.
 /catalog/credit-packs.json /catalog/credit-packs.json 200!
+# The home page's work section reads this. Captions and image paths for statics
+# we published ourselves: no cost, margin or prompt data. Missing it cost the
+# showcase its Statics tab on the first deploy, silently, because the block
+# below answers 301 and the grid simply drew the video tabs instead.
+/catalog/showcase.json     /catalog/showcase.json     200!
 /catalog/*            /  301!

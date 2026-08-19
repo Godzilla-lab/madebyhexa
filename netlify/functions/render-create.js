@@ -1294,6 +1294,27 @@ async function buildPlan(order) {
           + realReviews[i % realReviews.length].slice(0, 240)
           + '". Do not invent a reviewer name, star rating, review count or helpful count. '
         : '';
+      /*
+       * The substitution above only rescues formats whose LAYOUT is a
+       * testimonial. Any format can decide to garnish one.
+       *
+       * Measured 2026-08-18 across nine renders: formats marked
+       * review_shaped:false produced five gold stars with "2,847+ brewers"
+       * (Benefits Checklist), a five-star row with invented milligram figures
+       * (Stat Surround), and a "TRUSTED BY HOME BAKERS" strip (Bold
+       * Statement). Every one of those prompts already ended with "avoid ...
+       * any invented claim or badge", so the general prohibition is not what
+       * the model obeys. Enumerating the artifact is.
+       *
+       * Applied whenever we have nothing real to quote, to every format
+       * rather than to a list of the three we happened to catch.
+       */
+      const noProofLine = allowReview ? '' :
+        'Render no social proof of any kind: no star ratings or score rows, no '
+        + 'reviewer names, faces or avatars, no "verified" or "trusted by" badges, '
+        + 'no review counts, customer counts or "helpful" counts, no testimonial '
+        + 'or quoted praise, no press, award or publication logos, and no invented '
+        + 'statistics, percentages, or measured quantities such as milligrams. ';
       // A brief with named slots, not an adjective pile: product, concept,
       // scene, lighting, the exact on-image text, and what to avoid.
       prompts.push(
@@ -1304,6 +1325,7 @@ async function buildPlan(order) {
         personaLine +
         (directions ? 'Brand direction: ' + directions + ' ' : '') +
         reviewLine +
+        noProofLine +
         'Studio quality commercial photography, clean composition with room for text, ' +
         'soft directional lighting, the real product as the hero and unaltered. ' +
         (headline ? 'Render this exact on-image text, spelled exactly: "' + headline + '". ' +

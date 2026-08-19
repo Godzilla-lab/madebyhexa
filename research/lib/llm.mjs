@@ -52,11 +52,35 @@ export function provider() {
  * moves to the next provider instead of the report losing a section, which is
  * what "use both together" actually needs to mean in practice.
  */
+/*
+ * Order was implicit and therefore accidental: whichever key happened to exist
+ * highest in this list won, and a key set once and forgotten silently outranked
+ * the provider we meant to be on. Measured 2026-08-19: three production reads
+ * all ran the Anthropic path at $0.08 each while XAI_API_KEY sat configured and
+ * unreached, because ANTHROPIC_API_KEY existed somewhere in the deploy env.
+ *
+ * LLM_PROVIDER makes the intent explicit and authoritative. Set it to a
+ * comma-separated order ("xai" or "xai,anthropic") and that is the chain, with
+ * any provider missing its key dropped. Unset, behaviour is exactly what it was.
+ */
+const PROVIDER_KEYS = {
+  anthropic: 'ANTHROPIC_API_KEY',
+  xai: 'XAI_API_KEY',
+  agentrouter: 'AGENTROUTER_API_KEY',
+};
+
 export function providers() {
+  const wanted = String(process.env.LLM_PROVIDER || '').trim();
+  const order = wanted
+    ? wanted.split(',').map((x) => x.trim()).filter(Boolean)
+    : ['anthropic', 'xai', 'agentrouter'];
+
   const list = [];
-  if (process.env.ANTHROPIC_API_KEY) list.push('anthropic');
-  if (process.env.XAI_API_KEY) list.push('xai');
-  if (process.env.AGENTROUTER_API_KEY) list.push('agentrouter');
+  for (const name of order) {
+    const key = PROVIDER_KEYS[name];
+    if (!key) throw new Error('LLM_PROVIDER names an unknown provider: "' + name + '"');
+    if (process.env[key]) list.push(name);
+  }
   return list;
 }
 
@@ -84,8 +108,20 @@ const PROVIDER = PROVIDERS[0] || null;
 export const WORKER = 'worker';
 export const SYNTH = 'synth';
 
+/*
+ * `ROUTES[name] || ROUTES.anthropic` used to sit here, and an unrecognised
+ * provider silently became Anthropic: Claude model ids sent to whichever
+ * gateway was actually configured, and Claude prices written into the cost
+ * ledger for tokens another vendor served. Both failures are invisible,
+ * because a wrong model id looks like a provider outage and a wrong price
+ * looks like a number.
+ *
+ * A provider we do not have a route for is a bug in this file, so it says so
+ * rather than guessing.
+ */
 function modelFor(name, tier) {
-  const r = ROUTES[name] || ROUTES.anthropic;
+  const r = ROUTES[name];
+  if (!r) throw new Error('llm: no model route for provider "' + name + '"');
   if (tier === WORKER) return r.worker;
   if (tier === SYNTH) return r.synth;
   return tier; // an explicit model name: honour it
@@ -134,7 +170,7 @@ function flattenSystem(system) {
   return system.map((b) => (typeof b === 'string' ? b : b.text || '')).join('\n\n');
 }
 
-async function askAnthropic({ model, system, prompt, schema, maxTokens, effort, cost, label }) {
+async function askAnthropic({ providerName, model, system, prompt, schema, maxTokens, effort, cost, label }) {
   if (!anthropicClient) anthropicClient = new Anthropic();
 
   const caps = CAPS[model] || {};
@@ -157,7 +193,7 @@ async function askAnthropic({ model, system, prompt, schema, maxTokens, effort, 
     msg = await anthropicClient.messages.create(req);
   }
 
-  if (cost) cost.usage(model, msg.usage || {});
+  if (cost) cost.usage(model, msg.usage || {}, providerName || 'anthropic');
 
   if (msg.stop_reason === 'refusal') {
     console.error(`  ! ${label}: model declined (${msg.stop_details?.category || 'unspecified'})`);
@@ -257,7 +293,7 @@ async function askOpenAICompatible({ providerName, model, system: systemIn, prom
     cost.usage(model, {
       input_tokens: u.prompt_tokens || 0,
       output_tokens: u.completion_tokens || 0,
-    });
+    }, providerName);
   }
 
   const choice = (json.choices || [])[0] || {};
@@ -292,6 +328,9 @@ export async function ask({
   for (let i = 0; i < PROVIDERS.length; i++) {
     const name = PROVIDERS[i];
     const resolved = modelFor(name, model);
+    /* provider on the args AND on the ledger line: a cost row naming only a
+     * model cannot answer "who actually billed us for this", which is exactly
+     * the question that took a live report and a price calculation to settle. */
     const args = {
       providerName: name, model: resolved,
       system, prompt, schema, maxTokens, effort, cost, label,

@@ -187,7 +187,7 @@ const server = http.createServer(async (req, res) => {
 
   if (p.startsWith('/__stub')) {
     const want = p.split('/')[2];
-    if (want && ['full', 'anon', 'building', 'partial', 'feeddown', 'ungrounded'].includes(want)) MODE = want;
+    if (want && ['full', 'anon', 'building', 'partial', 'feeddown', 'ungrounded', 'adfail'].includes(want)) MODE = want;
     return send(res, 200,
       `<!doctype html><meta charset=utf-8><title>stub: ${MODE}</title>` +
       `<body style="font:16px system-ui;background:#0a0608;color:#fff;padding:40px">` +
@@ -197,7 +197,8 @@ const server = http.createServer(async (req, res) => {
       `<a style="color:#ff7a8e" href="/__stub/building">building</a> (never finishes, watch the progress UI)<br>` +
       `<a style="color:#ff7a8e" href="/__stub/partial">partial</a> (a pack that delivers 19 of 20, with the refund note)<br>` +
       `<a style="color:#ff7a8e" href="/__stub/feeddown">feeddown</a> (render-status 502s: the poll must give up, not spin)<br>` +
-      `<a style="color:#ff7a8e" href="/__stub/ungrounded">ungrounded</a> (the product page could not be read; the render must say so)</p>` +
+      `<a style="color:#ff7a8e" href="/__stub/ungrounded">ungrounded</a> (the product page could not be read; the render must say so)<br>` +
+      `<a style="color:#ff7a8e" href="/__stub/adfail">adfail</a> (every render fails: the free ad must retry once, then say so honestly)</p>` +
       `<p><a style="color:#ff7a8e" href="/">back to the site</a></p>`,
       'text/html; charset=utf-8');
   }
@@ -276,6 +277,17 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (p.includes('/render-status')) {
+    /* Every render dies. The case worth being able to look at is the free ad
+     * failing in somebody's first session, because that is a churn event
+     * rather than a toast: render.js must spend its one silent retry and then
+     * say something true, without promising an email the mailer would eat. */
+    if (MODE === 'adfail') {
+      return json(res, {
+        status: 'failed', retryable: true,
+        headline: 'The engine refused this one',
+        message: 'The render did not complete. Nothing was charged.',
+      });
+    }
     if (MODE === 'building') {
       return json(res, { status: 'in_progress', step: 'generate', pct: 62, segmentsTotal: 2, segmentsDone: 1 });
     }
@@ -316,14 +328,97 @@ const server = http.createServer(async (req, res) => {
    * with no query string, so a flag on the page URL could never reach it. The
    * first-run states are driven by intercepting this response in the harness. */
   if (p.includes('/account-creations')) {
-    return json(res, { creations: [
-      { id: 'c1', type: 'video', status: 'completed', title: '', job_ids: ['job-1'],
-        result_urls: ['/assets/film/hero-loop.mp4'], created_at: '2026-08-14T10:00:00Z' },
-      { id: 'c2', type: 'image', status: 'completed', title: 'Kitchen set', job_ids: ['job-2'],
-        result_urls: ['/assets/film/seg-01.jpg'], created_at: '2026-08-13T10:00:00Z' },
-      { id: 'c3', type: 'video', status: 'processing', title: '', job_ids: ['job-3'],
-        result_urls: [], created_at: '2026-08-15T09:00:00Z' },
-    ] });
+    /*
+     * A library that looks like a library.
+     *
+     * Three rows was enough to prove the card renderer branched correctly and
+     * useless for looking at the feed: a masonry grid with one item per day
+     * reads as a broken layout rather than a sparse one, so every judgement
+     * about column width, gaps and day grouping was being made against a
+     * screen no real account will ever see.
+     *
+     * Deliberately unordered. account-creations sorts by created_at desc, and
+     * the page must not depend on that being the only thing keeping the day
+     * headings in order.
+     */
+    const shots = [
+      '/assets/reel-thumbs/43a72eb58f.webp', '/assets/reel-thumbs/20c70d0755.webp',
+      '/assets/reel-thumbs/21776f5939.webp', '/assets/reel-thumbs/2b4354ce31.webp',
+    ];
+    const titles = [
+      'Cleanup angle', 'Dead motor answered', 'Rinse in ten seconds', 'Six parts, one drink',
+      'Still going after 400 blends', 'Carry it everywhere', 'The sink shot', 'Proof over promise',
+    ];
+    const days = ['2026-08-16', '2026-08-15', '2026-08-14'];
+    const creations = [];
+    let n = 0;
+    days.forEach((day, di) => {
+      const perDay = [5, 4, 3][di];
+      for (let i = 0; i < perDay; i++) {
+        // Spread across the real categories in catalog/studio-data.json, so
+        // the rail, the counts and the card tags are exercised rather than
+        // assumed. One row deliberately has no product: an order can be gone,
+        // and the page must file it under All work and tag it with nothing.
+        const products = ['adsingle', 'photoshoot', 'ugc', 'hyper_motion', 'adpack', 'ugc_try_on', null];
+        const product = products[n % products.length];
+        const isVideo = product === 'ugc' || product === 'hyper_motion' || product === 'ugc_try_on';
+        creations.push({
+          id: 'c' + (n + 1),
+          product: product,
+          type: isVideo ? 'video' : 'image',
+          status: 'completed',
+          title: titles[n % titles.length],
+          job_ids: ['job-' + (n + 1)],
+          result_urls: [isVideo ? '/assets/film/hero-loop.mp4' : shots[n % shots.length]],
+          thumb_url: isVideo ? null : shots[n % shots.length],
+          created_at: day + 'T' + String(9 + i).padStart(2, '0') + ':00:00Z',
+        });
+        n++;
+      }
+    });
+    // One still rendering and one that died, because both are real states the
+    // feed has to draw and neither has a result to draw them from.
+    creations.push({ id: 'c-live', product: 'adsingle', type: 'image', status: 'processing',
+      title: 'Rinse angle, take two', job_ids: ['job-live'], result_urls: [], created_at: '2026-08-16T11:30:00Z' });
+    creations.push({ id: 'c-dead', product: 'hyper_motion', type: 'video', status: 'failed',
+      title: 'Motor teardown', job_ids: ['job-dead'], result_urls: [], created_at: '2026-08-15T08:00:00Z' });
+    // Shuffled on purpose: see the note above.
+    creations.sort((a, b) => (a.id > b.id ? 1 : -1));
+    return json(res, { creations: creations });
+  }
+
+  /* The claim. Answers the shape report-claim.js does, so auth.js's listener
+   * runs end to end rather than being asserted from its source. */
+  if (p.includes('/report-claim')) {
+    req.resume();
+    return json(res, { claimed: true, already: false, id: 'stub-1', title: 'Portable Blender' });
+  }
+
+  /*
+   * The reports list, read by account.js straight through PostgREST rather than
+   * through a function of ours.
+   *
+   * That is why this route exists at all: there is no report-list endpoint to
+   * stub, so the page talks to supabase-js, and the harness swaps in a client
+   * that calls here instead. The rows are what the real policy would return for
+   * one owner, including a `paid: false` row, which is the highest-intent line
+   * on the page: a free read that got claimed at sign-in and never went deep.
+   */
+  if (p.includes('/rest/v1/reports') || p.includes('/__reports')) {
+    return json(res, [
+      { id: 'stub-1', product_title: 'Portable Blender',
+        product_url: 'https://example-store.com/products/portable-blender',
+        verdict: READ.verdict, demand_signal: 'strong', evidence_count: 486,
+        paid: true, status: 'ready', created_at: '2026-08-15T10:00:00Z' },
+      { id: 'stub-2', product_title: 'Merino Base Layer',
+        product_url: 'https://example-store.com/products/merino-base-layer',
+        verdict: 'Buyers in this category compare on itch and on smell, not on warmth.',
+        demand_signal: 'steady', evidence_count: 211,
+        paid: false, status: 'ready', created_at: '2026-08-12T10:00:00Z' },
+      { id: 'stub-3', product_title: 'Desk Lamp', product_url: '', verdict: null,
+        demand_signal: null, evidence_count: 0, paid: false, status: 'building',
+        created_at: '2026-08-16T08:00:00Z' },
+    ]);
   }
 
   if (p.includes('/.netlify/functions/')) { req.resume(); return json(res, { ok: true, stub: true }); }
@@ -338,6 +433,7 @@ server.listen(PORT, () => {
   Home            http://localhost:${PORT}/
   Report          http://localhost:${PORT}/validate?url=https://example-store.com/products/portable-blender
   Goal chooser    http://localhost:${PORT}/index.html?open=choose
+  Signup gate     http://localhost:${PORT}/login.html?mode=signup&next=%2Fvalidate
   Switch modes    http://localhost:${PORT}/__stub
 `);
 });

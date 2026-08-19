@@ -23,7 +23,7 @@
   <link rel="apple-touch-icon" href="assets/brand/hexa-logo.avif" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@300..900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=JetBrains+Mono:wght@400;500&amp;family=Public+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
 
 
 <link rel="stylesheet" href="styles.css" />
@@ -31,6 +31,7 @@
   <link rel="stylesheet" href="render.css" />
   <link rel="stylesheet" href="validate.css" />
   <script src="pixels.js"></script>
+  <script src="funnel.js"></script>
 </head>
 <body class="validate" data-track="view-content">
   <div class="bg-grid" aria-hidden="true"></div>
@@ -42,11 +43,10 @@
       <span class="brand-name">Hexa<span class="brand-dot">·</span>AI</span>
     </a>
     <nav class="nav-links">
-      <a href="/#styles">Styles</a>
+      <a href="/#work">Work</a>
       <a href="/validate" aria-current="page">Research</a>
       <a href="/#pricing">Pricing</a>
       <a href="/login.html" id="nav-account">Sign in</a>
-      <a href="/#composer" class="nav-cta">Create</a>
     </nav>
   </header>
 
@@ -67,6 +67,72 @@
         <button type="submit" id="vd-go">Read my market</button>
       </form>
       <p class="vd-note">Free. No account needed to see the first findings.</p>
+    </section>
+
+
+    <!-- ── What the read returns ───────────────────────────────
+         This page used to be a headline, an input and 600px of black. It sells
+         the most valuable thing we do and described none of it, so a visitor
+         who was not already sold had nothing to read and nothing to judge.
+
+         The three cards are the report's three real tiers, and the section
+         names inside them are the exact h2 strings validate.js emits. Written
+         from the code rather than from ambition, so the promise here cannot
+         drift away from what actually comes back. -->
+    <section class="vd-what" id="what">
+      <h2>What comes back</h2>
+      <p class="vd-what-lede">One page, in three layers. The answer first, then what it rests on, then everything raw enough to check yourself.</p>
+
+      <ol class="vd-what-grid">
+        <li class="vd-what-card">
+          <span class="vd-what-n">01</span>
+          <h3>The answer</h3>
+          <p>Whether this is worth advertising at all, the single angle to lead on, and whether your category rewards video or still images.</p>
+          <ul>
+            <li>Is this worth advertising?</li>
+            <li>What we found</li>
+            <li>Should you run video or images?</li>
+          </ul>
+        </li>
+        <li class="vd-what-card">
+          <span class="vd-what-n">02</span>
+          <h3>The evidence</h3>
+          <p>What your buyers keep raising unprompted, ranked by how many separate people raised it, set against what your competitors are actually running.</p>
+          <ul>
+            <li>What competitors are doing</li>
+            <li>What competitors are missing</li>
+            <li>Other angles you could try</li>
+          </ul>
+        </li>
+        <li class="vd-what-card">
+          <span class="vd-what-n">03</span>
+          <h3>The raw material</h3>
+          <p>The quotes themselves. Every one links to the thread it was written in, so any claim on the page can be checked at its source.</p>
+          <ul>
+            <li>What customers are saying</li>
+            <li>Why people don't buy</li>
+            <li>What customers wish existed</li>
+          </ul>
+        </li>
+      </ol>
+
+      <div class="vd-method">
+        <h2>How we decide</h2>
+        <div class="vd-method-row">
+          <div class="vd-method-item">
+            <h3>Time is the only vote we count</h3>
+            <p>Competitor ads are weighted by how long they have been running, so an ad live for 200 days counts 200 times one that lasted a day. A brand can buy a launch. It cannot buy six months of a losing ad.</p>
+          </div>
+          <div class="vd-method-item">
+            <h3>Nothing is asserted without its source</h3>
+            <p>Every quote carries a link to where it was said. If a finding cannot be traced back to something a real person wrote, it does not appear on the page at all.</p>
+          </div>
+          <div class="vd-method-item">
+            <h3>We tell you when the answer is no</h3>
+            <p>If the read says your category is won by still images, it says so, even though video is the more expensive thing we sell. A read you cannot trust against us is worth nothing to you.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ── Progress, reusing the existing render-steps component ─ -->

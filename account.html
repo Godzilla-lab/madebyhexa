@@ -3,709 +3,878 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Your library · Hexa Studio</title>
+  <title>Hexa Studio</title>
   <meta name="theme-color" content="#0a0608" />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" type="image/avif" href="assets/brand/hexa-logo.avif" />
   <link rel="apple-touch-icon" href="assets/brand/hexa-logo.avif" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=JetBrains+Mono:wght@400;500&amp;family=Public+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
 
-
-<link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css" />
   <style>
+    /* ═════ The workspace ═════
+     *
+     * Rebuilt against how a creative tool is actually shaped, rather than as a
+     * settings page with the work bolted underneath. The shape is: a
+     * persistent left rail for where things LIVE, a work area whose first
+     * screen is the product itself, and a prompt dock that is always in reach.
+     *
+     * Four rules from that model change everything about the old page, and
+     * each one was a defect here before:
+     *
+     *   the work is the interface     cards are the media, at its own aspect
+     *                                 ratio, with no chrome bolted around it
+     *   the cost lives in the button  never as a separate line beside it
+     *   detail opens IN PLACE         clicking a piece of work inspects it
+     *                                 without leaving the feed you found it in
+     *   settings is one column        grouped sections, not a wall of cards
+     */
+
     [hidden] { display: none !important; }
-    .acct-nav {
+
+    body.ws-body {
+      min-height: 100dvh;
+      overflow: hidden;                 /* the work area does the scrolling */
+    }
+
+    /* ───── shell ───── */
+
+    .ws {
+      display: grid;
+      grid-template-columns: 264px minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      height: 100dvh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ws-top {
+      grid-column: 1 / -1;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 18px 28px;
-      max-width: var(--max-w);
-      margin: 0 auto;
-      position: relative;
-      z-index: 2;
+      padding: 0 20px;
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 6, 8, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
-    .acct-nav .brand {
-      display: inline-flex; align-items: center; gap: 10px;
+    .ws-top .brand {
+      display: inline-flex; align-items: center; gap: 9px;
       text-decoration: none; color: var(--text);
-      font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: -0.02em;
+      font-family: var(--font-display); font-weight: 400; font-size: 17px;
+      letter-spacing: -0.02em;
     }
-    .acct-nav .brand img { width: 28px; height: 28px; border-radius: 7px; }
+    .ws-top .brand img { width: 26px; height: 26px; border-radius: 7px; }
     .brand-dot { color: var(--accent); }
-    .acct-nav-right { display: inline-flex; align-items: center; gap: 14px; }
-    .acct-user { font-size: 13.5px; color: var(--text-mute); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    /* .acct-new is gone with the "New creation" button it styled. That button
-       was the only way to start work from this page and it left for the home
-       page to do it; the composer on Home replaced both. */
-    .acct-signout { background: none; border: none; color: var(--text-faint); font-family: inherit; font-size: 13px; cursor: pointer; transition: color 160ms var(--ease); }
-    .acct-signout:hover { color: var(--text); }
-
-    .acct-main { max-width: var(--max-w); margin: 0 auto; padding: 20px 28px 80px; position: relative; z-index: 1; }
-    .acct-title {
-      margin: 0;
-      font-family: var(--font-display);
-      font-size: clamp(28px, 4vw, 40px);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      text-wrap: balance;
+    .ws-top-right { display: inline-flex; align-items: center; gap: 12px; }
+    .ws-user {
+      font-size: 13px; color: var(--text-mute);
+      max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
 
-    /* The balance, as chrome. */
-    .acct-pill {
+    /* The balance. Chrome, not a headline: nobody signs in to read it, and it
+       is one press from where you top it up. */
+    .ws-pill {
       display: inline-flex; align-items: center; gap: 5px;
-      padding: 8px 14px; border-radius: 999px;
+      padding: 7px 13px; border-radius: 999px;
       border: 1px solid var(--border-strong);
       background: rgba(255, 255, 255, 0.05);
       color: var(--text-mute);
-      font-family: inherit; font-size: 13px; font-weight: 600;
+      font: inherit; font-size: 13px; font-weight: 600;
       font-variant-numeric: tabular-nums;
       cursor: pointer;
       transition: border-color 160ms var(--ease), color 160ms var(--ease);
     }
-    .acct-pill:hover { border-color: var(--text-faint); color: var(--text); }
-    .acct-pill #acct-balance-num { color: var(--text); }
+    .ws-pill:hover { border-color: var(--text-faint); color: var(--text); }
+    .ws-pill b { color: var(--text); font-weight: 700; }
 
-    /* ── The composer, which is what Home is for ── */
-    .acct-composer { margin: 18px 0 34px; }
-    .acct-composer-sub { margin: 10px 0 18px; color: var(--text-mute); font-size: 15px; max-width: 62ch; }
-    .acct-composer-form { display: flex; gap: 10px; flex-wrap: wrap; max-width: 680px; }
-    .acct-composer-form input {
-      flex: 1 1 320px; min-width: 0;
-      padding: 14px 16px;
-      border-radius: var(--radius-control);
-      border: 1px solid var(--border-strong);
-      background: rgba(0, 0, 0, 0.35);
-      color: var(--text);
-      font-family: inherit; font-size: 15px;
-      transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
-    }
-    .acct-composer-form input::placeholder { color: rgba(255, 255, 255, 0.28); }
-    .acct-composer-form input:focus-visible {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.18);
-    }
-    .acct-composer-form button { flex: none; }
-    .acct-composer-note {
-      margin: 12px 0 0; font-size: 13px; color: var(--text-faint);
-      font-variant-numeric: tabular-nums;
-    }
-    .acct-composer-note.is-short { color: var(--accent-soft); }
-    .acct-link-btn {
+    .ws-signout {
       background: none; border: 0; padding: 0;
-      color: var(--accent-soft); font: inherit; font-size: inherit; font-weight: 600;
-      text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
-    }
-    .acct-link-btn:hover { color: var(--text); }
-
-    /* ── Rows on Home ── */
-    .acct-row { margin: 34px 0 0; }
-    .acct-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-    .acct-row-head {
-      margin: 0 0 14px; font-family: var(--font-mono); font-size: 11px; font-weight: 600;
-      letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-faint);
-    }
-    .acct-row-more {
-      background: none; border: 0; padding: 0;
-      color: var(--text-mute); font: inherit; font-size: 13px; cursor: pointer;
+      color: var(--text-faint); font: inherit; font-size: 13px; cursor: pointer;
       transition: color 160ms var(--ease);
     }
-    .acct-row-more:hover { color: var(--text); }
+    .ws-signout:hover { color: var(--text); }
 
-    .acct-shop-line {
-      margin: 40px 0 0; padding-top: 20px;
-      border-top: 1px solid var(--border);
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      font-size: 13.5px; color: var(--text-faint);
+    /* ───── the rail ───── */
+
+    .ws-rail {
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-    .acct-shop-line .acct-link-btn { font-size: 13.5px; }
 
-    /* ── Reports ──
-     * A read is a document, so it is drawn as a row of text rather than as a
-     * tile: there is no image to show, and a card with a grey rectangle where
-     * the picture should be reads as a broken tile rather than a report. */
-    .acct-reports { display: grid; gap: 12px; }
-    .acct-report {
-      display: block; padding: 18px 20px;
-      border-radius: var(--tile-radius);
+    .ws-search { position: relative; margin-bottom: 14px; }
+    .ws-search input {
+      width: 100%; box-sizing: border-box;
+      padding: 9px 12px 9px 32px;
+      border-radius: 10px;
       border: 1px solid var(--border-strong);
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--text);
+      font: inherit; font-size: 13.5px;
+    }
+    .ws-search input::placeholder { color: var(--text-faint); }
+    .ws-search svg {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      width: 14px; height: 14px; color: var(--text-faint); pointer-events: none;
+    }
+
+    /*
+     * Sentence case, in the body face.
+     *
+     * Mono all-caps micro-labels on every heading are a house style, and they
+     * are somebody else's: the tool this layout was studied from sets RESEARCH
+     * / MADE / AUGUST 16 that way throughout. Taking the structure is the
+     * point; taking the voice would make us a copy. Ours is Instrument Serif
+     * for headings, Public Sans for everything read, and mono reserved for the
+     * one job it is better at, which is digits that must line up.
+     */
+    .ws-group {
+      margin: 18px 0 6px; padding: 0 10px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
+      color: var(--text-faint);
+    }
+
+    .ws-nav {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 9px 10px; border-radius: 10px;
+      border: 0; background: none; color: var(--text-mute);
+      font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+      transition: background 140ms var(--ease), color 140ms var(--ease);
+    }
+    .ws-nav:hover { background: rgba(255, 255, 255, 0.05); color: var(--text); }
+    /* Selected reads independent of hover, which is the whole point of a rail:
+       where you are must be legible without moving the mouse. */
+    .ws-nav.is-on { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+    .ws-nav.is-on .ws-nav-ico { color: var(--accent); }
+    .ws-nav-ico { flex: none; width: 16px; height: 16px; color: var(--text-faint); }
+    .ws-nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ws-nav-n {
+      flex: none; font-family: var(--font-mono); font-size: 11px;
+      font-variant-numeric: tabular-nums; color: var(--text-faint);
+    }
+
+    .ws-rail-sep { height: 1px; background: var(--border); margin: 14px 6px; }
+    .ws-rail-foot { margin-top: auto; padding-top: 14px; }
+
+    /* ───── work area ───── */
+
+    .ws-main {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+      position: relative;
+    }
+
+    .ws-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 20px 24px 14px;
+    }
+    .ws-title {
+      margin: 0; font-family: var(--font-display);
+      font-size: clamp(26px, 3vw, 34px); font-weight: 400; letter-spacing: -0.03em;
+      display: flex; align-items: baseline; gap: 12px;
+    }
+    /* Mono earns its place here: a count that changes as you filter should not
+       reflow the heading beside it. */
+    .ws-title em {
+      font-style: normal; font-family: var(--font-mono); font-size: 13px;
+      font-weight: 500; color: var(--text-faint); font-variant-numeric: tabular-nums;
+    }
+
+    /* Density. The one control the grid needs, because the right size for a
+       card depends on whether you are hunting or admiring. */
+    .ws-density { display: flex; align-items: center; gap: 10px; }
+    .ws-density input[type="range"] { width: 108px; accent-color: var(--accent); cursor: pointer; }
+
+    .ws-scroll {
+      min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+      padding: 0 24px 168px;             /* room for the dock */
+      scroll-behavior: smooth;
+    }
+    /* The dock is hidden on Settings (account.js), so the 168px reserved for it
+       is just a dead gap under the last section. */
+    .ws-scroll:has(> .ws-settings:not([hidden])) { padding-bottom: 48px; }
+
+    /* ───── the feed ───── */
+
+    .ws-day { margin: 0 0 30px; }
+    /* The date is a real heading, so it is set like one: the display face,
+       sentence case, at a size you can read at a glance while scrolling. */
+    .ws-day-head {
+      position: sticky; top: 0; z-index: 2;
+      margin: 0 0 14px; padding: 10px 0;
+      background: linear-gradient(180deg, var(--bg-1) 62%, transparent);
+      font-family: var(--font-body);
+      font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+      color: var(--text-mute);
+    }
+
+    /*
+     * Masonry by columns, and it is the honest choice rather than the pretty
+     * one. Nothing stored on a creation records its dimensions, so any grid
+     * with a fixed aspect-ratio would be cropping every result to a shape we
+     * guessed. Columns let each image arrive at its own height, so a 9:16 ad
+     * and a 1:1 ad both land whole.
+     */
+    .ws-grid {
+      column-gap: 14px;
+      column-fill: balance;
+      columns: var(--ws-col, 220px);
+    }
+
+    .ws-card {
+      break-inside: avoid;
+      display: block;
+      width: 100%;
+      margin: 0 0 14px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--surface-media);
+      cursor: pointer;
+      position: relative;
+      transition: border-color 180ms var(--ease), transform 180ms var(--ease);
+    }
+    .ws-card:hover { border-color: rgba(255, 255, 255, 0.28); transform: translateY(-2px); }
+    .ws-card img, .ws-card video { display: block; width: 100%; height: auto; }
+    /*
+     * A reserved box until the real one is known.
+     *
+     * Nothing stored on a creation records its dimensions, so an <img> with no
+     * width or height reflows the whole masonry column when it lands: the
+     * audit measured exactly that on every card at all three widths. Holding a
+     * plausible 4:5 box and releasing it on load bounds the shift without
+     * pretending to know the final shape, which is the one thing a fixed
+     * aspect-ratio would get wrong.
+     */
+    .ws-card img.is-sizing, .ws-card video.is-sizing { aspect-ratio: 4 / 5; }
+
+    /* Chrome only on hover, so a resting grid is nothing but the work. */
+    .ws-card-meta {
+      position: absolute; inset: auto 0 0 0;
+      padding: 26px 12px 10px;
+      background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.78));
+      font-size: 12.5px; font-weight: 600; color: #fff;
+      opacity: 0; transition: opacity 180ms var(--ease);
+      text-align: left;
+    }
+    .ws-card:hover .ws-card-meta,
+    .ws-card:focus-visible .ws-card-meta { opacity: 1; }
+
+    .ws-card-tag {
+      position: absolute; top: 10px; left: 10px;
+      padding: 5px 10px; border-radius: 999px;
+      font-size: 11.5px; font-weight: 600; letter-spacing: 0.005em;
+      background: rgba(10, 6, 8, 0.66); color: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* A piece still rendering is a real card in the feed at the moment it is
+       accepted, not a row that appears once it finishes. Short rather than
+       full height: it has nothing to show yet, so giving it the same footprint
+       as a finished ad makes an empty box the biggest thing on the screen. */
+    .ws-card.is-pending {
+      min-height: 132px;
+      display: grid; place-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border-style: dashed;
+      border-color: rgba(255, 77, 109, 0.4);
+    }
+    .ws-card.is-failed { border-color: var(--border-strong); }
+    .ws-card-state {
+      font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--accent-soft);
+    }
+    .ws-card.is-failed .ws-card-state { color: var(--text-faint); }
+
+    /* ───── reports, which are documents rather than pictures ───── */
+
+    .ws-reports { display: grid; gap: 12px; max-width: 940px; }
+    .ws-report {
+      display: block; padding: 18px 20px;
+      border-radius: 14px; border: 1px solid var(--border-strong);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
       text-decoration: none; color: var(--text);
       transition: border-color 180ms var(--ease), transform 180ms var(--ease);
     }
-    .acct-report:hover { border-color: rgba(255, 255, 255, 0.24); transform: translateY(-2px); }
-    .acct-report-top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
-    .acct-report-title { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.3; min-width: 0; }
-    .acct-report-when {
-      flex: none; font-family: var(--font-mono); font-size: 11px;
-      letter-spacing: 0.04em; color: var(--text-faint);
+    .ws-report:hover { border-color: rgba(255, 255, 255, 0.24); transform: translateY(-2px); }
+    .ws-report-top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .ws-report-title {
+      margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 400;
+      letter-spacing: -0.015em; line-height: 1.3; min-width: 0;
     }
-    .acct-report-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .acct-tag {
-      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      padding: 5px 9px; border-radius: 999px;
+    .ws-report-when {
+      flex: none; font-size: 12.5px;
+      color: var(--text-faint); font-variant-numeric: tabular-nums;
+    }
+    .ws-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .ws-tag {
+      font-size: 12px; font-weight: 500; letter-spacing: 0;
+      padding: 5px 11px; border-radius: 999px;
       border: 1px solid var(--border); color: var(--text-mute);
     }
-    .acct-tag.is-work { border-color: rgba(255, 77, 109, 0.4); color: var(--accent-soft); }
-    .acct-tag.is-off { border-color: var(--border); color: var(--text-faint); }
-    .acct-tag.is-free { border-color: rgba(255, 255, 255, 0.22); color: var(--text); }
-    .acct-report-verdict {
+    .ws-tag.is-work { border-color: rgba(255, 77, 109, 0.4); color: var(--accent-soft); }
+    .ws-tag.is-free { border-color: rgba(255, 255, 255, 0.22); color: var(--text); }
+    .ws-report-verdict {
       margin: 12px 0 0; font-size: 14px; line-height: 1.5; color: var(--text-mute);
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
 
-    .acct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+    /* ───── states, designed rather than typed ───── */
 
-    .cr-card {
-      display: flex; flex-direction: column;
-      border-radius: var(--tile-radius); overflow: hidden;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+    .ws-state {
+      display: grid; place-items: center; gap: 10px;
+      padding: 72px 20px; text-align: center;
+    }
+    .ws-state h2 { margin: 0; font-family: var(--font-display); font-size: 25px; font-weight: 400; letter-spacing: -0.025em; text-wrap: balance; }
+    .ws-state p { margin: 0; max-width: 44ch; color: var(--text-mute); font-size: 14.5px; line-height: 1.55; }
+    .ws-skeleton { columns: var(--ws-col, 220px); column-gap: 14px; }
+    .ws-skeleton span {
+      display: block; break-inside: avoid; margin: 0 0 14px;
+      border-radius: 14px; background: rgba(255, 255, 255, 0.045);
+      animation: ws-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes ws-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
+
+    /* ───── the dock ───── */
+
+    /*
+     * Always in reach, and it carries its own price.
+     *
+     * The cost belongs inside the button that spends it: a separate "a read is
+     * 1,000 credits" line beside the control is the thing people read last and
+     * act on first. Inside, it cannot be missed and it cannot be stale, because
+     * the same render writes both halves.
+     */
+    .ws-dock {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 0 24px calc(20px + env(safe-area-inset-bottom));
+      pointer-events: none;
+      background: linear-gradient(180deg, transparent, var(--bg-1) 42%);
+    }
+    .ws-dock-inner {
+      pointer-events: auto;
+      max-width: 860px; margin: 0 auto;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 12px;
+      border-radius: 18px;
       border: 1px solid var(--border-strong);
-      text-decoration: none; color: var(--text);
-      transition: transform 180ms var(--ease), box-shadow 180ms var(--ease), border-color 180ms var(--ease);
+      background: rgba(20, 13, 16, 0.92);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-3);
     }
-    .cr-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); border-color: rgba(255, 255, 255, 0.22); }
-    .cr-link { display: flex; flex-direction: column; flex: 1; text-decoration: none; color: inherit; }
-    .cr-thumb { aspect-ratio: 4 / 5; background: var(--surface-media) center/cover no-repeat; position: relative; }
-    .cr-thumb video, .cr-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .cr-badge {
-      position: absolute; top: 10px; left: 10px;
-      padding: 4px 9px; border-radius: 7px; font-family: var(--font-mono);
-      font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-      background: rgba(10, 6, 8, 0.7); color: #fff; backdrop-filter: blur(6px);
+    .ws-dock input {
+      flex: 1 1 300px; min-width: 0;
+      padding: 12px 14px; border-radius: 12px;
+      border: 1px solid transparent; background: rgba(0, 0, 0, 0.35);
+      color: var(--text); font: inherit; font-size: 15px;
+      transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
     }
-    .cr-body { padding: 13px 14px 15px; }
-    .cr-name { font-size: 14.5px; font-weight: 600; margin: 0 0 4px; line-height: 1.25; }
-    .cr-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); letter-spacing: 0.04em; }
-    .cr-card.pending .cr-thumb { display: grid; place-items: center; }
-    .cr-pending-dot { font-family: var(--font-mono); font-size: 11px; color: var(--accent-soft); letter-spacing: 0.1em; text-transform: uppercase; }
-
-    /* Post-render actions: a quiet row of chips under each finished film */
-    .cr-actions {
-      display: flex; flex-wrap: wrap; gap: 6px;
-      padding: 0 14px 13px;
+    .ws-dock input::placeholder { color: rgba(255, 255, 255, 0.3); }
+    .ws-dock input:focus-visible {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.16);
     }
-    .cr-act {
-      font: 600 11.5px/1 inherit; font-family: inherit;
-      color: var(--text-mute);
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 7px 11px;
+    .ws-go {
+      flex: none;
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 12px 20px; border: 0; border-radius: 12px;
+      background: linear-gradient(92deg, var(--accent), var(--accent-deep));
+      color: var(--on-accent);
+      font: inherit; font-size: 15px; font-weight: 700;
       cursor: pointer;
-      transition: color 150ms var(--ease), border-color 150ms var(--ease);
+      transition: transform 160ms var(--ease), box-shadow 160ms var(--ease), filter 160ms var(--ease);
     }
-    .cr-act:hover { color: var(--text); border-color: var(--border-strong); }
-    .cr-act em { font-style: normal; color: var(--accent-soft); }
-    .cr-pick {
-      display: flex; gap: 6px; align-items: center;
-      padding: 0 14px 13px;
+    .ws-go:hover { transform: translateY(-1px); box-shadow: var(--glow-accent); }
+    .ws-go:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
+    .ws-go-cost {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-variant-numeric: tabular-nums; opacity: 0.85;
     }
-    .cr-pick select {
-      flex: 1; min-width: 0;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--border-strong);
-      border-radius: 9px;
-      color: var(--text);
-      font: 500 12.5px/1.2 inherit; font-family: inherit;
-      padding: 8px 9px;
+    .ws-go-cost svg { width: 13px; height: 13px; }
+    /* Short of credits: the button says so and becomes the way to fix it,
+       rather than failing on press. */
+    .ws-go.is-short { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+    .ws-dock-note { flex-basis: 100%; margin: 0; font-size: 12.5px; color: var(--text-faint); }
+    .ws-dock-note.is-err { color: #ff9d9d; }
+
+    /* ───── detail, opened in place ───── */
+
+    /*
+     * Clicking a piece of work used to leave the page for the render screen,
+     * which meant losing the feed, the filter and the scroll position to look
+     * at one image. It opens here instead, with the neighbours one arrow key
+     * away, and closing puts you back exactly where you were.
+     */
+    .ws-detail {
+      position: fixed; inset: 0; z-index: 60;
+      display: grid; grid-template-rows: auto minmax(0, 1fr);
+      background: rgba(8, 5, 7, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
-    .cr-pick button {
-      background: var(--accent); color: #fff; border: 0;
-      border-radius: 9px; font: 700 12px/1 inherit; font-family: inherit;
-      padding: 9px 13px; cursor: pointer;
+    .ws-detail-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--border);
+    }
+    .ws-detail-name { min-width: 0; }
+    .ws-detail-name h2 {
+      margin: 0; font-size: 16px; font-weight: 700;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .ws-detail-name p { margin: 3px 0 0; font-size: 12.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+    .ws-detail-acts { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+    .ws-icon-btn {
+      display: inline-grid; place-items: center;
+      width: 38px; height: 38px; border-radius: 10px;
+      border: 1px solid var(--border-strong); background: rgba(255, 255, 255, 0.04);
+      color: var(--text-mute); cursor: pointer;
+      transition: color 140ms var(--ease), border-color 140ms var(--ease);
+    }
+    .ws-icon-btn:hover { color: var(--text); border-color: var(--text-faint); }
+    .ws-icon-btn:disabled { opacity: 0.35; cursor: default; }
+    .ws-icon-btn svg { width: 16px; height: 16px; }
+    .ws-detail-stage {
+      min-height: 0; display: grid; place-items: center; padding: 20px;
+    }
+    .ws-detail-stage img, .ws-detail-stage video {
+      max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px;
+    }
+    .ws-detail-empty { color: var(--text-mute); font-size: 14.5px; text-align: center; max-width: 42ch; }
+
+    /* ───── settings: one column, grouped ───── */
+
+    /*
+     * A settings screen is a form, and a form reads down a single column. The
+     * old one was a masonry of equal-weight cards, so "delete my account" sat
+     * beside "brand name" at the same size and the eye had no order to follow.
+     *
+     * That argument is right about ORDER and was wrong about WIDTH. Capped at
+     * 720px the form ended around x=710 on a 1440 screen and left roughly half
+     * the page empty, which is what made six sections read as one thin strip.
+     *
+     * So: still one column of sections, still one reading order, but each
+     * section splits its label from its controls the way every settings screen
+     * worth copying does. The heading and its explanation sit in a narrow left
+     * column, the fields sit to their right. Placement is by selector, not by
+     * new wrappers, so no markup moved and nothing can come unpaired.
+     */
+    .ws-settings { max-width: 1120px; padding-bottom: 80px; }
+    .ws-sec { padding: 26px 0; border-top: 1px solid var(--border); }
+    .ws-sec:first-child { border-top: 0; padding-top: 4px; }
+    @media (min-width: 900px) {
+      .ws-sec {
+        display: grid;
+        grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+        column-gap: 32px;
+        align-items: start;
+      }
+      /* The heading and its explanation are one unit. Placing them as two
+         separate grid rows let the right column's first field set row 1's
+         height, which pushed the explanation down away from its own heading. */
+      /* Spans every row rather than sitting in row 1: a five-line explanation
+         is taller than the first field, so pinning it to row 1 made row 1 as
+         tall as the label and dropped a 50px hole under the first input. */
+      /* `1 / -1` resolves against the EXPLICIT grid, which is one row here, so
+         it spanned nothing. A span reaches into the implicit rows the fields
+         actually create. */
+      .ws-sec-head { grid-column: 1; grid-row: 1 / span 50; align-self: start; padding-right: 24px; }
+      .ws-sec-head .ws-sec-sub { margin-bottom: 0; max-width: none; }
+      /* A control in a 1fr column will happily become 800px wide. A button is
+         sized by its label, not by the space it happens to be standing in. */
+      .ws-sec > .ws-btn,
+      .ws-sec > .ws-btn-row,
+      .ws-sec > details,
+      .ws-sec > .ws-packs { justify-self: start; }
+
+      .ws-sec > .ws-field { max-width: 420px; }
     }
 
-    .acct-empty {
-      max-width: 520px; margin: 40px auto; text-align: center;
-      padding: 48px 32px; border-radius: 24px;
-      background: radial-gradient(120% 90% at 50% 0%, rgba(255, 77, 109, 0.12), transparent 62%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
-      border: 1px solid var(--border-strong);
+    /*
+     * Fields run two across, not one down.
+     *
+     * Capping each field at 420px in a column up to 800px wide left every input
+     * trailing half a column of nothing, and stacked six of them, so "Your
+     * brand" alone was a screen and a half of scrolling past mostly empty page.
+     * Measured at 1440px: the panel is 1486px tall two across against 1929px
+     * one down.
+     *
+     * At 1200 and not at 900, which is where the label split starts. Measured
+     * at 1024px, two control columns leave each field 194px wide, and a 194px
+     * box is not somewhere you can read "luxury, revolutionary, game-changing"
+     * back. Between the two widths the split stays but the fields do not.
+     *
+     * Placed by AUTO-PLACEMENT rather than by parity. The heading holds column
+     * 1 across every row, so a field with no explicit column lands in the next
+     * free cell: 2, then 3, then wrap. Parity selectors were the obvious
+     * alternative and are quietly wrong here, because :nth-of-type counts
+     * .ws-sec-head too (it is a div as well), which would open the first field
+     * in the right-hand column. Auto-placement cannot drift that way and needs
+     * no wrapper, so no label is ever separated from its input.
+     */
+    @media (min-width: 1200px) {
+      .ws-sec {
+        /* `1fr`, not a fixed max: the inputs are `width: 100%`, so a track
+           sized from its own content resolves that percentage against nothing
+           and collapses. Measured at 1440px with `minmax(0, 420px)`: every
+           field rendered 0px wide. */
+        grid-template-columns: minmax(200px, 260px) repeat(2, minmax(0, 1fr));
+      }
+      .ws-sec > .ws-field { max-width: none; }
+      /* Everything that is not a field takes a row of its own across both
+         control columns, so a button row or the ledger is never squeezed into
+         half the width. */
+      .ws-sec > :not(.ws-sec-head):not(.ws-field) { grid-column: 2 / -1; }
     }
-    .acct-empty-badge {
-      display: inline-grid; place-items: center; width: 56px; height: 56px; margin-bottom: 18px;
-      border-radius: 16px; background: linear-gradient(160deg, var(--accent), var(--accent-deep));
-      box-shadow: var(--glow-accent);
+    .ws-sec h2 {
+      margin: 0 0 5px; font-family: var(--font-display);
+      font-size: 21px; font-weight: 400; letter-spacing: -0.025em;
     }
-    .acct-empty-badge svg { width: 26px; height: 26px; }
-    .acct-empty h2 { margin: 0 0 10px; font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
-    .acct-empty p { margin: 0 auto 24px; color: var(--text-mute); font-size: 15px; max-width: 380px; }
-    .acct-empty .acct-btn { padding: 12px 22px; font-size: 15px; }
-
-    .acct-state { text-align: center; padding: 60px 20px; color: var(--text-faint); font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; }
-
-    /* ── Tabs ── */
-    .acct-tabs { display: inline-flex; gap: 4px; margin: 0 0 26px; padding: 4px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .acct-tab {
-      padding: 8px 18px; border-radius: 9px; border: none; cursor: pointer;
-      background: transparent; color: var(--text-mute);
-      font-family: inherit; font-size: 13.5px; font-weight: 600;
-      transition: background 160ms var(--ease), color 160ms var(--ease);
-    }
-    .acct-tab:hover { color: var(--text); }
-    .acct-tab.is-active { background: rgba(255, 255, 255, 0.1); color: var(--text); }
-
-    /* ── Welcome onboarding (first sign-in, empty library) ── */
-    @media (max-width: 560px) {
-    }
-    .acct-welcome {
-      border-radius: 24px; padding: clamp(28px, 4.5vw, 48px);
-      background: radial-gradient(130% 100% at 18% 0%, rgba(255, 77, 109, 0.14), transparent 58%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
-      border: 1px solid var(--border-strong);
-    }
-    .acct-welcome-kicker {
-      margin: 0 0 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 600;
-      letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-soft);
-    }
-    .acct-welcome h2 { margin: 0 0 10px; font-family: var(--font-display); font-size: clamp(26px, 3.6vw, 38px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.08; }
-    .acct-welcome > p { margin: 0 0 26px; color: var(--text-mute); font-size: 15.5px; max-width: 520px; line-height: 1.55; }
-    /* The "1 of 3 done" bar came out with the checklist it belonged to. It was
-       drawn at a fixed 33% regardless of what the account had actually done,
-       which is a progress bar that measures nothing. */
-    .acct-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; }
-    .acct-step {
-      padding: 18px 18px 20px; border-radius: 16px;
-      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.09);
-    }
-    .acct-step-num {
-      display: inline-grid; place-items: center; width: 28px; height: 28px; margin-bottom: 12px;
-      border-radius: 9px; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
-      background: rgba(255, 255, 255, 0.07); color: var(--text-mute);
-    }
-    .acct-step.is-done { border-color: rgba(255, 77, 109, 0.35); }
-    .acct-step.is-done .acct-step-num { background: linear-gradient(160deg, var(--accent), var(--accent-deep)); color: #fff; }
-    /* the next step reads as live, not static: done is behind you, this is where you go */
-    .acct-step.is-next { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.05); }
-    .acct-step.is-next .acct-step-num { background: rgba(255, 77, 109, 0.16); color: var(--accent); box-shadow: inset 0 0 0 1px rgba(255, 77, 109, 0.35); }
-    .acct-step h3 { margin: 0 0 5px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
-    .acct-step p { margin: 0; font-size: 13.5px; color: rgba(255, 255, 255, 0.7); line-height: 1.5; }
-    .acct-step.is-done h3 { color: var(--text-mute); text-decoration: line-through; text-decoration-color: rgba(255, 77, 109, 0.5); text-decoration-thickness: 1.5px; }
-    /* The "Make your first ad" button and the "see what others made" strip both
-       left this page, and the second of them pointed at /#reel, a section that
-       was deleted when the execution layer was merged. The composer above the
-       welcome panel is the one way in now, so the panel explains rather than
-       competing with it. */
-    @media (max-width: 720px) {
-      .acct-steps { grid-template-columns: 1fr; }
-    }
-
-    /* ── Settings ── */
-    .acct-settings { margin-top: 0; }
-    .acct-settings-head { margin: 0 0 18px; }
-    .acct-settings-head h2 { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-    .acct-settings-head p { margin: 6px 0 0; color: var(--text-mute); font-size: 14px; }
-    .acct-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
-    .acct-card-set {
-      background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 16px; padding: 20px 20px 18px;
-    }
-    .acct-card-set h3 { margin: 0 0 14px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
-    .acct-field { margin-bottom: 12px; }
-    .acct-field label { display: block; font-size: 12.5px; color: var(--text-mute); margin-bottom: 5px; }
-    .acct-field input {
+    .ws-sec-sub { margin: 0 0 18px; font-size: 13.5px; line-height: 1.55; color: var(--text-mute); max-width: 56ch; }
+    .ws-field { margin-bottom: 14px; max-width: 420px; }
+    .ws-field label { display: block; font-size: 12.5px; color: var(--text-mute); margin-bottom: 5px; }
+    .ws-field input {
       width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px;
-      background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border-strong);
       color: var(--text); font: inherit; font-size: 14px;
+      transition: border-color 160ms var(--ease);
     }
-    .acct-field input:focus { outline: none; border-color: rgba(255, 255, 255, 0.3); }
-    .acct-btn {
-      display: inline-block; padding: 9px 16px; border-radius: 10px; cursor: pointer;
-      background: rgba(255, 255, 255, 0.09); border: 1px solid rgba(255, 255, 255, 0.14);
-      color: var(--text); font-family: inherit; font-size: 13.5px; font-weight: 600; line-height: 1;
-      transition: background 160ms var(--ease);
-    }
-    .acct-btn:hover { background: rgba(255, 255, 255, 0.15); }
-    .acct-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
-    .acct-btn-danger { background: rgba(255, 60, 60, 0.12); border-color: rgba(255, 80, 80, 0.35); color: #ff9d9d; }
-    .acct-btn-danger:hover { background: rgba(255, 60, 60, 0.22); }
-    /* ── Credits ──
-       The balance used to be a 38px numeral at the top of the page, which made
-       the first thing anybody read on signing in a number they cannot act on.
-       It is a nav pill now; this is the card you open to audit it and buy more,
-       so the numeral is sized for a settings card rather than a headline. */
-    .acct-credits-num {
-      margin: 0; font-size: 30px; font-weight: 700; line-height: 1;
-      letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
-    }
-    .acct-credits-unit { font-size: 15px; font-weight: 600; color: var(--text-mute); letter-spacing: 0; }
-    .acct-credits-sub { margin: 8px 0 16px; font-size: 13px; color: var(--text-mute); }
-    .acct-btn-primary { background: var(--accent); border-color: transparent; color: var(--on-accent); font-weight: 700; }
-    .acct-btn-primary:hover { background: var(--accent); filter: brightness(1.08); }
+    .ws-field input:focus-visible { outline: none; border-color: var(--accent); }
 
-    .acct-packs {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 10px;
-      margin-top: 18px;
+    .ws-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 10px 16px; border-radius: 10px;
+      border: 1px solid var(--border-strong); background: rgba(255, 255, 255, 0.05);
+      color: var(--text); font: inherit; font-size: 13.5px; font-weight: 600;
+      cursor: pointer; transition: border-color 140ms var(--ease), background 140ms var(--ease);
     }
-    .acct-pack {
+    .ws-btn:hover { border-color: var(--text-faint); background: rgba(255, 255, 255, 0.08); }
+    .ws-btn:disabled { opacity: 0.5; cursor: default; }
+    .ws-btn-primary {
+      background: linear-gradient(92deg, var(--accent), var(--accent-deep));
+      border-color: transparent; color: var(--on-accent); font-weight: 700;
+    }
+    .ws-btn-primary:hover { filter: brightness(1.08); border-color: transparent; }
+    .ws-btn-danger { border-color: rgba(255, 80, 80, 0.4); color: #ff9d9d; background: rgba(255, 60, 60, 0.08); }
+    .ws-btn-danger:hover { background: rgba(255, 60, 60, 0.16); border-color: rgba(255, 80, 80, 0.6); }
+    .ws-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .ws-note { font-size: 12.5px; color: var(--text-faint); margin: 10px 0 0; min-height: 16px; }
+    .ws-note.is-ok { color: #7ddb9a; }
+    .ws-note.is-err { color: #ff9d9d; }
+
+    .ws-balance { display: flex; align-items: baseline; gap: 8px; margin: 0 0 6px; }
+    .ws-balance b { font-size: 30px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+    .ws-balance span { font-size: 14px; color: var(--text-mute); }
+
+    .ws-packs { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; margin-top: 16px; }
+    .ws-pack {
       display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid var(--border-strong);
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--text);
-      font: inherit;
-      cursor: pointer;
-      text-align: left;
-      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+      padding: 14px 16px; border-radius: 12px;
+      border: 1px solid var(--border-strong); background: rgba(255, 255, 255, 0.03);
+      color: var(--text); font: inherit; cursor: pointer; text-align: left;
+      transition: border-color 180ms var(--ease), background 180ms var(--ease), transform 180ms var(--ease);
     }
-    .acct-pack:hover { border-color: var(--accent); background: rgba(255,77,109,0.09); transform: translateY(-1px); }
-    .acct-pack[disabled] { opacity: 0.5; cursor: wait; transform: none; }
-    .acct-pack-credits { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-    .acct-pack-unit { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em; }
-    .acct-pack-usd { margin-top: 6px; font-size: 14px; font-weight: 600; color: var(--text-mute); }
-    .acct-pack-bonus {
+    .ws-pack:hover { border-color: var(--accent); background: rgba(255, 77, 109, 0.09); transform: translateY(-1px); }
+    .ws-pack[disabled] { opacity: 0.5; cursor: wait; transform: none; }
+    .ws-pack-n { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .ws-pack-u { font-size: 12px; color: var(--text-faint); letter-spacing: 0; }
+    .ws-pack-usd { margin-top: 6px; font-size: 14px; font-weight: 600; color: var(--text-mute); }
+    .ws-pack-bonus {
       margin-top: 6px; padding: 2px 8px; border-radius: 999px;
-      background: rgba(125, 219, 154, 0.16); color: #7ddb9a;
-      font-size: 11px; font-weight: 700;
+      background: rgba(125, 219, 154, 0.16); color: #7ddb9a; font-size: 11px; font-weight: 700;
     }
 
-    /* The statement. Collapsed by default: it is what makes the balance
-       auditable, not what anyone needs on arrival. */
-    .acct-ledger { margin-top: 16px; }
-    .acct-ledger summary {
-      cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-mute);
-      list-style: none; padding: 6px 0;
-    }
-    .acct-ledger summary::-webkit-details-marker { display: none; }
-    .acct-ledger summary::before { content: '▸ '; color: var(--text-faint); }
-    .acct-ledger[open] summary::before { content: '▾ '; }
-    .acct-ledger-row {
+    .ws-ledger { margin-top: 18px; }
+    .ws-ledger summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-mute); list-style: none; padding: 6px 0; }
+    .ws-ledger summary::-webkit-details-marker { display: none; }
+    .ws-ledger summary::before { content: '▸ '; color: var(--text-faint); }
+    .ws-ledger[open] summary::before { content: '▾ '; }
+    .ws-ledger-row {
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
       padding: 9px 0; border-bottom: 1px solid var(--border);
     }
-    .acct-ledger-row:last-child { border-bottom: 0; }
-    .acct-ledger-kind { display: block; font-size: 13.5px; }
-    .acct-ledger-note { display: block; font-size: 12px; color: var(--text-faint); }
-    .acct-ledger-right { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; }
-    .acct-ledger-delta { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; color: var(--text-mute); }
-    .acct-ledger-delta.is-up { color: #7ddb9a; }
-    .acct-ledger-when { font-size: 12px; color: var(--text-faint); }
+    .ws-ledger-row:last-child { border-bottom: 0; }
+    .ws-ledger-kind { display: block; font-size: 13.5px; }
+    .ws-ledger-note { display: block; font-size: 12px; color: var(--text-faint); }
+    .ws-ledger-right { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; }
+    .ws-ledger-delta { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; color: var(--text-mute); }
+    .ws-ledger-delta.is-up { color: #7ddb9a; }
+    .ws-ledger-when { font-size: 12px; color: var(--text-faint); }
 
-    /* ── Shopify connection ──
-       A settings card now, with one line on Home pointing at it. It used to be
-       a full-width block second on the page, which is a lot of room for a
-       setting most accounts never turn on. */
-    .acct-shop-state.is-on::before {
-      content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 9px;
-      border-radius: 50%; background: #7ddb9a; vertical-align: middle;
-    }
-    .acct-shop-sub { margin: 0 0 14px; font-size: 13px; color: var(--text-mute); max-width: 52ch; line-height: 1.5; }
-    .acct-shop-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
-    .acct-shop-form input {
-      flex: 1 1 280px; min-width: 0;
-      padding: 11px 14px; font: inherit; font-size: 14px; color: var(--text);
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-strong); border-radius: 11px;
-    }
-    .acct-shop-form input:focus { outline: none; border-color: rgba(255, 77, 109, 0.55); }
-    .acct-shop-form[hidden] { display: none; }
     .sr-only {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
     }
 
-    .acct-note { font-size: 12.5px; color: var(--text-faint); margin: 10px 0 0; min-height: 16px; }
-    .acct-note.is-ok { color: #7ddb9a; }
-    .acct-note.is-err { color: #ff9d9d; }
-    .acct-danger-copy { font-size: 13px; color: var(--text-mute); margin: 0 0 12px; }
+    /* ───── narrow ───── */
 
-    @media (max-width: 560px) {
-      .acct-user { display: none; }
-      .acct-nav { padding: 14px 16px; gap: 10px; }
-      .acct-nav-right { gap: 10px; }
-      .acct-main { padding: 14px 16px 60px; }
-      .acct-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-      .acct-composer-form button { width: 100%; }
+    /* The rail collapses to a scrolling row rather than a hamburger: four
+       destinations fit on one line, and a menu that hides four things is a
+       tap nobody should have to spend. */
+    @media (max-width: 900px) {
+      .ws { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+      .ws-rail {
+        flex-direction: row; align-items: center; gap: 6px;
+        border-right: 0; border-bottom: 1px solid var(--border);
+        padding: 10px 12px; overflow-x: auto; overflow-y: hidden;
+      }
+      .ws-search, .ws-group, .ws-rail-sep { display: none; }
+      .ws-rail-foot { margin-top: 0; padding-top: 0; }
+      .ws-nav { width: auto; flex: none; padding: 9px 12px; }
+      .ws-nav-label { white-space: nowrap; }
+      .ws-head { padding: 16px 16px 12px; }
+      .ws-title { font-size: 21px; }
+      .ws-scroll { padding: 0 16px 176px; }
+      .ws-dock { padding: 0 16px calc(16px + env(safe-area-inset-bottom)); }
+      .ws-go { flex: 1 1 100%; justify-content: center; }
     }
 
-    /* Touch floors, same 44px rule the studio and the report already keep.
-     * Measured 2026-08-15, first audit run that could reach this page while
-     * signed in: "Add credits" and "Connect Shopify" were 34px (.acct-btn is
-     * 9px of padding on a 13.5px line), and "See what others made first" was
-     * 24px, being a bare text link. Desktop keeps the compact sizing.
-     *
-     * The new controls join the same list rather than being sized by hand: the
-     * balance pill, the two row links, the Shopify line and the "Add credits"
-     * link inside the composer note are all real targets. */
+    /* 44px floors on a touch screen, same rule the rest of the site keeps. */
     @media (pointer: coarse) {
-      .acct-btn,
-      .acct-tab,
-      .acct-pill,
-      .acct-row-more,
-      .acct-link-btn,
-      .cr-act {
+      .ws-nav, .ws-btn, .ws-pill, .ws-signout, .ws-icon-btn, .ws-ledger summary {
         min-height: 44px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
       }
+      .ws-signout { display: inline-flex; align-items: center; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .acct-pill, .acct-report, .acct-row-more, .acct-link-btn { transition: none; }
-      .acct-report:hover { transform: none; }
+      .ws-card, .ws-report, .ws-go, .ws-pack, .ws-nav, .ws-pill { transition: none; }
+      .ws-card:hover, .ws-report:hover, .ws-go:hover, .ws-pack:hover { transform: none; }
+      .ws-skeleton span { animation: none; }
+      .ws-scroll { scroll-behavior: auto; }
     }
   </style>
 </head>
-<body class="acct-body">
+<body class="ws-body">
   <div class="bg-grid" aria-hidden="true"></div>
-  <div class="bg-glow" aria-hidden="true"></div>
 
-  <header class="acct-nav">
-    <a class="brand" href="/" aria-label="Hexa AI home">
-      <img src="assets/brand/hexa-logo.avif" alt="" width="28" height="28" />
-      <span>Hexa<span class="brand-dot">·</span>AI</span>
-    </a>
-    <div class="acct-nav-right">
-      <!-- The balance, demoted. It used to be a 48px numeral at the top of the
-           page, which made the first thing anyone read on signing in a number
-           they cannot act on. It belongs in the chrome: visible always,
-           competing with nothing, one press from the top-up sheet. -->
-      <button class="acct-pill" id="acct-balance" type="button" hidden>
-        <span id="acct-balance-num">0</span> credits
+  <div class="ws">
+    <header class="ws-top">
+      <a class="brand" href="/" aria-label="Hexa AI home">
+        <img src="assets/brand/hexa-logo.avif" alt="" width="26" height="26" />
+        <span>Hexa<span class="brand-dot">·</span>AI</span>
+      </a>
+      <div class="ws-top-right">
+        <button class="ws-pill" id="ws-balance" type="button" hidden>
+          <b id="ws-balance-n">0</b> credits
+        </button>
+        <span class="ws-user" id="ws-user"></span>
+        <button class="ws-signout" id="ws-signout" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <!-- Where the work lives. Counts on everything, because "37" answers a
+         question that "Ads" only raises. -->
+    <nav class="ws-rail" aria-label="Your work">
+      <div class="ws-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <label class="sr-only" for="ws-q">Search your work</label>
+        <input id="ws-q" type="search" placeholder="Search" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <button class="ws-nav is-on" id="nav-all" type="button" data-view="all">
+        <svg class="ws-nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m12 12 8-4.5M12 12v9M12 12 4 7.5"/></svg>
+        <span class="ws-nav-label">All work</span>
+        <span class="ws-nav-n" id="n-all"></span>
       </button>
-      <span class="acct-user" id="acct-user"></span>
-      <button class="acct-signout" id="acct-signout" type="button">Sign out</button>
-    </div>
-  </header>
 
-  <main class="acct-main">
-    <!-- Four sections, in the order somebody actually uses them. Home is where
-         work starts, so it leads; Reports and Library are what has been made;
-         Settings is everything you touch once. The balance and the Shopify
-         connection used to sit above all of this, full width, which put two
-         pieces of plumbing in front of the only thing anyone signs in to do. -->
-    <div class="acct-tabs" role="tablist" aria-label="Account sections">
-      <button class="acct-tab is-active" id="tab-home" type="button" role="tab" aria-selected="true" aria-controls="panel-home">Home</button>
-      <button class="acct-tab" id="tab-reports" type="button" role="tab" aria-selected="false" aria-controls="panel-reports">Reports</button>
-      <button class="acct-tab" id="tab-library" type="button" role="tab" aria-selected="false" aria-controls="panel-library">Library</button>
-      <button class="acct-tab" id="tab-settings" type="button" role="tab" aria-selected="false" aria-controls="panel-settings">Settings</button>
-    </div>
+      <p class="ws-group">Research</p>
+      <button class="ws-nav" id="nav-reports" type="button" data-view="reports">
+        <svg class="ws-nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+        <span class="ws-nav-label">Reports</span>
+        <span class="ws-nav-n" id="n-reports"></span>
+      </button>
 
-    <!-- ── Home ────────────────────────────────────────────────── -->
-    <div id="panel-home" role="tabpanel" aria-labelledby="tab-home">
+      <!-- One row per kind of work, built by account.js from the categories in
+           catalog/studio-data.json, and only for kinds this account actually
+           has. "Video" and "image" are storage types: a photoshoot, a static
+           ad and a poster are all "image", so a rail split that way answers
+           nothing anybody asked. -->
+      <p class="ws-group" id="ws-made-group" hidden>Made</p>
+      <div id="ws-made"></div>
 
-      <!-- The composer, first. This page had no way to start anything on it at
-           all: the only route to work was a "New creation" button in the nav
-           that left for the home page. A signed-in customer arrives wanting the
-           next thing, so the next thing is the first field they see. -->
-      <section class="acct-composer">
-        <h1 class="acct-title" id="acct-greeting">What are we selling next?</h1>
-        <p class="acct-composer-sub">Paste a product link. We read what your buyers actually say first, then build the ad out of what they said.</p>
-        <form class="acct-composer-form" id="acct-composer-form">
-          <label class="sr-only" for="acct-composer-url">Your product link</label>
-          <input id="acct-composer-url" type="url" inputmode="url" autocomplete="url" spellcheck="false"
-                 placeholder="https://yourstore.com/products/…" required />
-          <button class="acct-btn acct-btn-primary" type="submit">Read my market</button>
-        </form>
-        <p class="acct-composer-note" id="acct-composer-note"></p>
-      </section>
+      <div class="ws-rail-sep" aria-hidden="true"></div>
+      <div class="ws-rail-foot">
+        <button class="ws-nav" id="nav-settings" type="button" data-view="settings">
+          <svg class="ws-nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+          <span class="ws-nav-label">Settings</span>
+        </button>
+      </div>
+    </nav>
 
-      <!-- The cold welcome: somebody who made an account without reading
-           anything first. No report to restore, so this is a promise attached
-           to their first read rather than a report band. -->
-      <section class="acct-welcome" id="acct-welcome" hidden>
-        <p class="acct-welcome-kicker">Welcome to Hexa</p>
-        <h2 id="welcome-title">You are in. Run your first read and the first ad is on us.</h2>
-        <p>Paste a link above. We read what your buyers say about products like yours, then make you a static ad from the angle that comes back. The ad costs you nothing.</p>
-        <div class="acct-steps">
-          <div class="acct-step is-done">
-            <span class="acct-step-num" aria-hidden="true">&#10003;</span>
-            <h3>Create your account</h3>
-            <p>Done. Every read and every ad you make lives here.</p>
-          </div>
-          <div class="acct-step is-next">
-            <span class="acct-step-num" aria-hidden="true">2</span>
-            <h3>Paste your product link</h3>
-            <p>Shopify, Amazon or any product page. We read the page, your reviews and the ads your competitors run.</p>
-          </div>
-          <div class="acct-step">
-            <span class="acct-step-num" aria-hidden="true">3</span>
-            <h3>Get the ad</h3>
-            <p>We build a static ad from the angle the research found, free, and it lands in your library.</p>
-          </div>
+    <main class="ws-main">
+      <div class="ws-head">
+        <h1 class="ws-title"><span id="ws-heading">All work</span> <em id="ws-count"></em></h1>
+        <div class="ws-density" id="ws-density">
+          <label class="sr-only" for="ws-size">Card size</label>
+          <input id="ws-size" type="range" min="150" max="360" step="10" value="220" />
         </div>
-      </section>
-
-      <!-- Work in flight, in its own row. It used to be mixed into the library
-           grid in date order, so the thing that is happening right now sat
-           wherever the calendar put it. -->
-      <section class="acct-row" id="acct-inflight" hidden>
-        <h2 class="acct-row-head">Still rendering</h2>
-        <div class="acct-grid" id="acct-inflight-grid"></div>
-      </section>
-
-      <section class="acct-row" id="acct-recent" hidden>
-        <div class="acct-row-top">
-          <h2 class="acct-row-head">Recent work</h2>
-          <button class="acct-row-more" id="acct-see-all" type="button">See all</button>
-        </div>
-        <div class="acct-grid" id="acct-recent-grid"></div>
-      </section>
-
-      <div class="acct-state" id="acct-loading">Loading your creations…</div>
-
-      <!-- Shopify, reduced to one line. It was a full-width block with a form,
-           second on the page, for a feature most accounts never use. -->
-      <p class="acct-shop-line" id="acct-shop-line" hidden>
-        <span id="acct-shop-state">Not connected</span>
-        <button class="acct-link-btn" id="acct-shop-open" type="button">Connect your Shopify store</button>
-      </p>
-    </div>
-
-    <!-- ── Reports ─────────────────────────────────────────────── -->
-    <div id="panel-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
-      <div class="acct-state" id="acct-reports-loading">Loading your reports…</div>
-      <div class="acct-reports" id="acct-reports-list" hidden></div>
-      <div class="acct-empty" id="acct-reports-empty" hidden>
-        <h2>No reads yet</h2>
-        <p>Every product link you paste becomes a report: what your buyers say, which competitor ads have run longest, and the angle to lead with. They all land here.</p>
-        <button class="acct-btn acct-btn-primary" id="acct-reports-start" type="button">Read a market</button>
       </div>
-    </div>
 
-    <!-- ── Library ─────────────────────────────────────────────── -->
-    <div id="panel-library" role="tabpanel" aria-labelledby="tab-library" hidden>
-      <div class="acct-grid" id="acct-grid" hidden></div>
+      <div class="ws-scroll" id="ws-scroll">
+        <!-- feeds and lists render into here -->
+        <div id="ws-view"></div>
 
-      <div class="acct-empty" id="acct-empty" hidden>
-        <span class="acct-empty-badge" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8h.01M12.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7.5"/><path d="m3 16 5-5c.9-.9 2.1-.9 3 0l4 4"/><path d="M14 14l1-1c.9-.9 2.1-.9 3 0l3 3"/><path d="M19 16v6M22 19h-6"/></svg>
-        </span>
-        <h2>Your first creation is one link away</h2>
-        <p>Paste a product link on Home and watch it become an ad built from what your market actually wants. Everything you make lands here.</p>
-        <button class="acct-btn acct-btn-primary" id="acct-empty-start" type="button">Start creating</button>
-      </div>
-    </div>
-
-    <section class="acct-settings" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
-      <div class="acct-settings-head">
-        <h2>Account settings</h2>
-        <p>Your profile, security and data. Changes apply to this account only.</p>
-      </div>
-      <div class="acct-cards">
-
-        <!-- Credits. Moved off the top of the page and into settings, where the
-             rest of the account plumbing lives. The number itself is always in
-             the nav; this is where you audit it and buy more. The ledger below
-             is what makes a balance checkable rather than asserted. -->
-        <div class="acct-card-set" id="acct-credits">
-          <h3>Credits</h3>
-          <p class="acct-credits-num"><span id="acct-credits-value">0</span> <span class="acct-credits-unit">credits</span></p>
-          <p class="acct-credits-sub" id="acct-credits-sub"></p>
-          <button class="acct-btn acct-btn-primary" id="acct-topup" type="button">Add credits</button>
-          <div class="acct-packs" id="acct-packs" hidden><!-- filled by account.js --></div>
-          <details class="acct-ledger">
-            <summary>Where your credits went</summary>
-            <div class="acct-ledger-rows" id="acct-ledger-rows">
-              <p class="acct-note">Loading…</p>
+        <!-- Settings: one column, ordered by how often it is needed and how
+             hard it is to undo. Credits first because that is what people come
+             here for; deleting the account last because it is the one thing
+             that cannot be taken back. Declared as markup rather than built in
+             JS so every label stays bound to its input. -->
+        <div class="ws-settings" id="ws-settings" hidden>
+          <section class="ws-sec">
+            <div class="ws-sec-head">
+              <h2>Credits</h2>
             </div>
-          </details>
-        </div>
+            <p class="ws-balance"><b id="ws-credits-n">0</b> <span>credits</span></p>
+            <p class="ws-sec-sub" id="ws-credits-sub"></p>
+            <button class="ws-btn ws-btn-primary" id="ws-topup" type="button">Add credits</button>
+            <div class="ws-packs" id="ws-packs" hidden></div>
+            <details class="ws-ledger">
+              <summary>Where your credits went</summary>
+              <div id="ws-ledger-rows"><p class="ws-note">Loading…</p></div>
+            </details>
+          </section>
 
-        <div class="acct-card-set" id="acct-shopify">
-          <h3>Your store</h3>
-          <p class="acct-shop-sub" id="acct-shop-sub">Connect Shopify and pick products instead of pasting links. We only ever read your product catalogue.</p>
-          <form class="acct-shop-form" id="acct-shop-form">
-            <label class="sr-only" for="acct-shop-input">Your Shopify store address</label>
-            <input id="acct-shop-input" type="text" autocomplete="off" spellcheck="false"
-                   placeholder="your-store.myshopify.com" />
-            <button class="acct-btn acct-btn-primary" type="submit">Connect Shopify</button>
-          </form>
-          <button class="acct-btn" id="acct-shop-disconnect" type="button" hidden>Disconnect</button>
-          <p class="acct-note" id="acct-shop-note" aria-live="polite"></p>
-        </div>
+          <section class="ws-sec">
+            <div class="ws-sec-head">
+              <h2>Your brand</h2>
+              <p class="ws-sec-sub">Tell us once and every ad we make sounds like you. This shapes the writing, not the facts: what your product does still comes from your page and the research.</p>
+            </div>
+            <div class="ws-field">
+              <label for="brand-name">Brand name</label>
+              <input id="brand-name" type="text" autocomplete="organization" placeholder="Hexa" />
+            </div>
+            <div class="ws-field">
+              <label for="brand-audience">Who you sell to</label>
+              <input id="brand-audience" type="text" placeholder="Lifters who train five days a week" />
+            </div>
+            <div class="ws-field">
+              <label for="brand-tone">How you sound</label>
+              <input id="brand-tone" type="text" placeholder="Blunt, funny, no hype" />
+            </div>
+            <div class="ws-field">
+              <label for="brand-words-use">Words that are yours</label>
+              <input id="brand-words-use" type="text" placeholder="built, honest, everyday" />
+            </div>
+            <div class="ws-field">
+              <label for="brand-words-avoid">Words to never use</label>
+              <input id="brand-words-avoid" type="text" placeholder="luxury, revolutionary, game-changing" />
+            </div>
+            <div class="ws-field">
+              <label for="brand-offer">Standing offer</label>
+              <input id="brand-offer" type="text" placeholder="Free shipping over $50" />
+            </div>
+            <button class="ws-btn" id="brand-save" type="button">Save brand</button>
+            <p class="ws-note" id="brand-note" aria-live="polite"></p>
+          </section>
 
-        <!-- Brand memory. Filled in once, applied to everything afterwards.
-             Shapes how things are said; never what is claimed. -->
-        <div class="acct-card-set">
-          <h3>Your brand</h3>
-          <p class="acct-note" style="margin:0 0 14px">Tell us once and every ad we make sounds like you. This shapes the writing, not the facts: what your product does still comes from your page and the research.</p>
-          <div class="acct-field">
-            <label for="brand-name">Brand name</label>
-            <input id="brand-name" type="text" autocomplete="organization" placeholder="Hexa" />
-          </div>
-          <div class="acct-field">
-            <label for="brand-audience">Who you sell to</label>
-            <input id="brand-audience" type="text" placeholder="Lifters who train five days a week" />
-          </div>
-          <div class="acct-field">
-            <label for="brand-tone">How you sound</label>
-            <input id="brand-tone" type="text" placeholder="Blunt, funny, no hype" />
-          </div>
-          <div class="acct-field">
-            <label for="brand-words-use">Words that are yours</label>
-            <input id="brand-words-use" type="text" placeholder="built, honest, everyday" />
-          </div>
-          <div class="acct-field">
-            <label for="brand-words-avoid">Words to never use</label>
-            <input id="brand-words-avoid" type="text" placeholder="luxury, revolutionary, game-changing" />
-          </div>
-          <div class="acct-field">
-            <label for="brand-offer">Standing offer</label>
-            <input id="brand-offer" type="text" placeholder="Free shipping over $50" />
-          </div>
-          <button class="acct-btn" id="brand-save" type="button">Save brand</button>
-          <p class="acct-note" id="brand-note" aria-live="polite"></p>
-        </div>
+          <section class="ws-sec">
+            <div class="ws-sec-head">
+              <h2>Your store</h2>
+              <p class="ws-sec-sub" id="ws-shop-sub">Connect Shopify and pick products instead of pasting links. We only ever read your product catalogue.</p>
+            </div>
+            <form class="ws-btn-row" id="ws-shop-form">
+              <label class="sr-only" for="ws-shop-input">Your Shopify store address</label>
+              <div class="ws-field" style="margin:0">
+                <input id="ws-shop-input" type="text" autocomplete="off" spellcheck="false" placeholder="your-store.myshopify.com" />
+              </div>
+              <button class="ws-btn ws-btn-primary" type="submit">Connect Shopify</button>
+            </form>
+            <button class="ws-btn" id="ws-shop-disconnect" type="button" hidden>Disconnect</button>
+            <p class="ws-note" id="ws-shop-note" aria-live="polite"></p>
+          </section>
 
-        <div class="acct-card-set">
-          <h3>Profile</h3>
-          <div class="acct-field">
-            <label for="set-name">Name</label>
-            <input id="set-name" type="text" autocomplete="name" />
-          </div>
-          <div class="acct-field">
-            <label for="set-email">Email</label>
-            <input id="set-email" type="email" autocomplete="email" />
-          </div>
-          <button class="acct-btn" id="set-profile-save" type="button">Save profile</button>
-          <p class="acct-note" id="set-profile-note" aria-live="polite"></p>
-        </div>
+          <section class="ws-sec">
+            <div class="ws-sec-head">
+              <h2>Profile</h2>
+            </div>
+            <div class="ws-field">
+              <label for="set-name">Name</label>
+              <input id="set-name" type="text" autocomplete="name" />
+            </div>
+            <div class="ws-field">
+              <label for="set-email">Email</label>
+              <input id="set-email" type="email" autocomplete="email" />
+            </div>
+            <button class="ws-btn" id="set-profile-save" type="button">Save profile</button>
+            <p class="ws-note" id="set-profile-note" aria-live="polite"></p>
+          </section>
 
-        <div class="acct-card-set">
-          <h3>Security</h3>
-          <div class="acct-field">
-            <label for="set-pass">New password</label>
-            <input id="set-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters" />
-          </div>
-          <div class="acct-field">
-            <label for="set-pass2">Repeat new password</label>
-            <input id="set-pass2" type="password" autocomplete="new-password" />
-          </div>
-          <button class="acct-btn" id="set-pass-save" type="button">Change password</button>
-          <button class="acct-btn" id="set-signout-all" type="button" style="margin-left:8px">Sign out everywhere</button>
-          <p class="acct-note" id="set-security-note" aria-live="polite"></p>
-        </div>
+          <section class="ws-sec">
+            <div class="ws-sec-head">
+              <h2>Security</h2>
+            </div>
+            <div class="ws-field">
+              <label for="set-pass">New password</label>
+              <input id="set-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters" />
+            </div>
+            <div class="ws-field">
+              <label for="set-pass2">Repeat new password</label>
+              <input id="set-pass2" type="password" autocomplete="new-password" />
+            </div>
+            <div class="ws-btn-row">
+              <button class="ws-btn" id="set-pass-save" type="button">Change password</button>
+              <button class="ws-btn" id="set-signout-all" type="button">Sign out everywhere</button>
+            </div>
+            <p class="ws-note" id="set-security-note" aria-live="polite"></p>
+          </section>
 
-        <div class="acct-card-set">
-          <h3>Your data</h3>
-          <p class="acct-danger-copy">Download everything Hexa stores about you as one JSON file: your profile, orders and creations.</p>
-          <button class="acct-btn" id="set-export" type="button">Download my data</button>
-          <p class="acct-note" id="set-export-note" aria-live="polite"></p>
-        </div>
+          <section class="ws-sec">
+            <div class="ws-sec-head">
+              <h2>Your data</h2>
+              <p class="ws-sec-sub">Download everything Hexa stores about you as one JSON file: your profile, orders and creations.</p>
+            </div>
+            <button class="ws-btn" id="set-export" type="button">Download my data</button>
+            <p class="ws-note" id="set-export-note" aria-live="polite"></p>
+          </section>
 
-        <div class="acct-card-set">
-          <h3>Delete account</h3>
-          <p class="acct-danger-copy">Deletes your account, orders and library permanently. This cannot be undone. Type your account email to confirm.</p>
-          <div class="acct-field">
-            <label for="set-del-confirm">Account email</label>
-            <input id="set-del-confirm" type="email" autocomplete="off" spellcheck="false" />
-          </div>
-          <button class="acct-btn acct-btn-danger" id="set-delete" type="button" disabled>Delete my account</button>
-          <p class="acct-note" id="set-delete-note" aria-live="polite"></p>
+          <section class="ws-sec">
+            <div class="ws-sec-head">
+              <h2>Delete account</h2>
+              <p class="ws-sec-sub">Deletes your account, orders and library permanently. This cannot be undone. Type your account email to confirm.</p>
+            </div>
+            <div class="ws-field">
+              <label for="set-del-confirm">Account email</label>
+              <input id="set-del-confirm" type="email" autocomplete="off" spellcheck="false" />
+            </div>
+            <button class="ws-btn ws-btn-danger" id="set-delete" type="button" disabled>Delete my account</button>
+            <p class="ws-note" id="set-delete-note" aria-live="polite"></p>
+          </section>
         </div>
-
       </div>
-    </section>
-  </main>
+
+      <!-- The dock. Present on every work view, because the next thing you
+           want to make is never more than one field away. -->
+      <div class="ws-dock" id="ws-dock">
+        <form class="ws-dock-inner" id="ws-dock-form">
+          <label class="sr-only" for="ws-link">Your product link</label>
+          <input id="ws-link" type="url" inputmode="url" autocomplete="url" spellcheck="false"
+                 placeholder="Paste a product link and we read its market…" required />
+          <button class="ws-go" id="ws-go" type="submit">
+            Read my market
+            <span class="ws-go-cost" id="ws-go-cost">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 14.2 8.6 21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4L12 2Z"/></svg>
+              <span id="ws-go-n">1,000</span>
+            </span>
+          </button>
+          <p class="ws-dock-note" id="ws-dock-note" aria-live="polite"></p>
+        </form>
+      </div>
+    </main>
+  </div>
 
   <script src="funnel.js"></script>
   <script src="/vendor/supabase.js"></script>

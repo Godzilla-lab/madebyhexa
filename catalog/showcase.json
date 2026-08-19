@@ -1,0 +1,58 @@
+{
+  "note": "Statics rendered through the same ms_image + style_id path a customer buys, so what is shown here is what the pipeline actually returns. Brands are invented on purpose: putting an invented headline on a real company's product would be a fabricated ad for a business that never hired us. Every item carries the argument it makes, because a gallery of pretty pictures sells a generator and a gallery of arguments sells the research.",
+  "demo": true,
+  "items": [
+    {
+      "id": "skillet-then-vs-now",
+      "brand": "Northbank",
+      "product": "Cast iron skillet, 10 inch",
+      "format": "Then vs Now",
+      "style_id": "ad65db31-3e4f-4aa9-99a4-0e00b994580e",
+      "src": "assets/showcase/skillet-then-vs-now.webp",
+      "w": 880,
+      "h": 1168,
+      "aspect": "3:4",
+      "line": "Your first egg will not stick",
+      "argument": "The complaint under every cast iron thread is the seasoning period, not the pan. So the ad answers the objection that stops the purchase instead of praising the iron."
+    },
+    {
+      "id": "coldbrew-comparison",
+      "brand": "Ferrow",
+      "product": "Cold brew concentrate, 500ml",
+      "format": "Comparison Table",
+      "style_id": "4ac40ba6-79a7-4004-a9e4-95012f8737d5",
+      "src": "assets/showcase/coldbrew-comparison.webp",
+      "w": 1024,
+      "h": 1024,
+      "aspect": "1:1",
+      "line": "One bottle. Fourteen cups.",
+      "argument": "Priced per bottle it looks expensive next to ready to drink. Priced per cup it wins outright, so the ad moves the comparison onto the ground where the product is cheaper."
+    },
+    {
+      "id": "lamp-key-features",
+      "brand": "Suno",
+      "product": "Task lamp",
+      "format": "Key Features",
+      "style_id": "4b71d6d0-4a79-4241-8f3a-60bb766d1945",
+      "src": "assets/showcase/lamp-key-features.webp",
+      "w": 880,
+      "h": 1168,
+      "aspect": "3:4",
+      "line": "It stays where you put it",
+      "argument": "Negative reviews across the category are dominated by arms that droop within a month. The ad opens on the failure every competitor has and does not mention brightness at all."
+    },
+    {
+      "id": "cardholder-spotlight",
+      "brand": "Vellum",
+      "product": "Card holder, tan leather",
+      "format": "Product Spotlight",
+      "style_id": "b5fbe451-ef9b-494d-8460-df16dc31f9a9",
+      "src": "assets/showcase/cardholder-spotlight.webp",
+      "w": 1024,
+      "h": 1024,
+      "aspect": "1:1",
+      "line": "It gets better looking, not worse",
+      "argument": "The hesitation in this category is that leather cracks and stretches. The ad turns ageing from the risk into the reason to buy, which is the one move a spec sheet cannot make."
+    }
+  ]
+}
