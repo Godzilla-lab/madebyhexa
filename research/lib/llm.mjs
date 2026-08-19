@@ -69,17 +69,44 @@ const PROVIDER_KEYS = {
   agentrouter: 'AGENTROUTER_API_KEY',
 };
 
+const DEFAULT_ORDER = ['anthropic', 'xai', 'agentrouter'];
+
 export function providers() {
   const wanted = String(process.env.LLM_PROVIDER || '').trim();
-  const order = wanted
-    ? wanted.split(',').map((x) => x.trim()).filter(Boolean)
-    : ['anthropic', 'xai', 'agentrouter'];
+  const asked = wanted ? wanted.split(',').map((x) => x.trim()).filter(Boolean) : DEFAULT_ORDER;
 
   const list = [];
-  for (const name of order) {
-    const key = PROVIDER_KEYS[name];
-    if (!key) throw new Error('LLM_PROVIDER names an unknown provider: "' + name + '"');
-    if (process.env[key]) list.push(name);
+  for (const name of asked) {
+    if (!PROVIDER_KEYS[name]) {
+      /*
+       * Complain, do not die.
+       *
+       * This threw once, and the blast radius was the whole engine: providers()
+       * runs at module scope, so a single mistyped variable made every import
+       * of this file fail and took the research offline rather than degrading
+       * it. That happened for real on 2026-08-19, when LLM_PROVIDER was set to
+       * the xAI API KEY instead of the word "xai".
+       *
+       * A wrong value must be loud, which is what the original throw was for,
+       * but it must not be fatal. The name is dropped, the log says exactly
+       * what to fix, and the chain falls back to key detection below.
+       */
+      console.error('[llm] LLM_PROVIDER names an unknown provider: "' + name.slice(0, 12)
+        + (name.length > 12 ? '...' : '') + '". Expected one of: ' + Object.keys(PROVIDER_KEYS).join(', ')
+        + '. Ignoring it.');
+      continue;
+    }
+    if (process.env[PROVIDER_KEYS[name]]) list.push(name);
+  }
+
+  /* Every name asked for was unusable. Rather than run with no provider at
+   * all, which silently downgrades every report to evidence-only, fall back to
+   * whichever keys actually exist. */
+  if (!list.length && wanted) {
+    for (const name of DEFAULT_ORDER) {
+      if (process.env[PROVIDER_KEYS[name]]) list.push(name);
+    }
+    if (list.length) console.error('[llm] falling back to key detection: ' + list.join(', '));
   }
   return list;
 }
